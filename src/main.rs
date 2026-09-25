@@ -8,6 +8,7 @@ use bevy::sprite::*;
 use bevy::camera::*;
 use bevy::window::*;
 use world::world_generator::*;
+use world::room::*;
 use components::*;
 use resources::*;
 use constants::*;
