@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::sprite::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
@@ -9,7 +10,9 @@ pub fn load_map(
     players: Query<&Transform, With<Player>>,
     mut pool: ResMut<ChunkPool>,
     asset_server: Res<AssetServer>,
-    seed: Res<WorldSeed>
+    seed: Res<WorldSeed>,
+    regions: Res<RegionPool>,
+    region_query: Query<&Region>
 ) {
 
     for player in players {
@@ -17,84 +20,149 @@ pub fn load_map(
         let player_x = player.translation.x;
         let player_y = player.translation.y;
 
-        let region = generate_region(seed.seed, player_x as i32, player_y as i32);
+        for c_view_x in -CHUNKS_LOADING..=CHUNKS_LOADING {
+            for c_view_y in -CHUNKS_LOADING..=CHUNKS_LOADING {
 
-        let chunk_cords = Cords::new(
-            (player_x / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32,
-            (player_y / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32,
-        );
+                let chunk_cords = Cords::new(
+                    (player_x / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32 + c_view_x as i32,
+                    (player_y / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32 + c_view_y as i32,
+                );
 
-        if !pool.chunks.contains_key(&(chunk_cords.x, chunk_cords.y)) {
-            println!("spawning chunk: {}:{}", player_x, player_y);
+                let region_entity = regions.regions.get(&(0, 0)).unwrap();
+                let region = region_query.get(*region_entity).unwrap();
 
-            let floor_handle: Handle<Image> = asset_server.load("ground_simple.png");
-            let wall_handle: Handle<Image> = asset_server.load("wall_simple.png");
-            let chunk_seed = calc_chunk_seed(seed.seed, player_x as i32, player_y as i32);
-            let tiles = gen_tiles_by_seed(chunk_seed);
+                if !pool.chunks.contains_key(&(chunk_cords.x, chunk_cords.y)) {
+                    println!("player at absolute: {player_x}:{player_y}");
+                    println!("player at tile: {}:{}", (player_x / TILE_SIZE).floor(), (player_y / TILE_SIZE).floor());
+                    println!("player in chunk: {}:{}", chunk_cords.x, chunk_cords.y);
+                    println!(" ");
 
-            let chunk_world_pos = chunk_cords.chunk_to_world();
+                    let floor_handle: Handle<Image> = asset_server.load("ground_simple.png");
+                    let wall_handle: Handle<Image> = asset_server.load("wall_simple.png");
+                    let chunk_seed = calc_chunk_seed(seed.seed, player_x as i32, player_y as i32);
+                    let tiles = gen_tiles(chunk_seed, &region, chunk_cords);
 
-            let chunk = Chunk {
-                tiles: tiles,
-                cords: chunk_cords,
+                    let chunk_world_pos = chunk_cords.chunk_to_world();
 
-            };
+                    let chunk = Chunk {
+                        tiles: tiles,
+                        cords: chunk_cords,
 
-            let chunk_entity = commands.spawn((
-                chunk,
-                Transform::from_xyz(
-                    chunk_world_pos.x,
-                    chunk_world_pos.y,
-                    0.0,
-                ),
-                Visibility::default(),
-            )).id();
+                    };
 
-            commands.entity(chunk_entity).with_children(|parent| {
-                for (local_y, row) in tiles.iter().enumerate() {
-                    for (local_x, tile) in row.iter().enumerate() {
-                        // Berechne World-Position
-                        let world_x = (local_x as f32) * TILE_SIZE;
-                        let world_y = (local_y as f32) * TILE_SIZE;
+                    let chunk_entity = commands.spawn((
+                        chunk,
+                        Transform::from_xyz(
+                            chunk_world_pos.x,
+                            chunk_world_pos.y,
+                            0.0,
+                        ),
+                        Visibility::default(),
+                    )).id();
 
-                        let texture = match tile {
-                            Tile::Floor => asset_server.load("ground_simple.png"),
-                            Tile::Wall => asset_server.load("wall_simple.png"),
-                        };
+                    commands.entity(chunk_entity).with_children(|parent| {
+                        for (local_x, row) in tiles.iter().enumerate() {
+                            for (local_y, tile) in row.iter().enumerate() {
+                                // Berechne World-Position
+                                let world_x = (local_x as f32) * TILE_SIZE;
+                                let world_y = (local_y as f32) * TILE_SIZE;
 
-                        // Spawn Tile-Entity
-                        parent.spawn((
-                            Sprite {
-                                image: texture,
-                                custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
-                                ..default()
-                            },
-                            Transform::from_xyz(world_x, world_y, 0.0),
-                        ));
-                    }
+                                let texture = match tile {
+                                    Tile::Floor => asset_server.load("ground_simple.png"),
+                                    Tile::Wall => asset_server.load("wall_simple.png"),
+                                };
+
+                                // Spawn Tile-Entity
+                                parent.spawn((
+                                    Sprite {
+                                        image: texture,
+                                        custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
+                                        ..default()
+                                    },
+                                    Transform::from_xyz(world_x, world_y, 0.0),
+                                    Anchor::BOTTOM_LEFT,
+                                ));
+                            }
+                        }
+                    });
+
+                    pool.chunks.insert((chunk_cords.x, chunk_cords.y), chunk_entity);
                 }
-            });
-
-            pool.chunks.insert((chunk_cords.x, chunk_cords.y), chunk_entity);
-
+            }
         }
     }
 }
 
-fn gen_tiles_by_seed(seed: u64) -> [[Tile; CHUNK_SIZE]; CHUNK_SIZE] {
-    let mut tile: [[Tile; CHUNK_SIZE]; CHUNK_SIZE] = [[Tile::Floor; CHUNK_SIZE]; CHUNK_SIZE];
-    println!("seed: {seed}");
-    for i in 0..CHUNK_SIZE  {
-        for j in 0..CHUNK_SIZE {
-            if is_even(calc_tile_seed(seed, i as i32, j as i32)) {
-                tile[i][j] = Tile::Wall;
+fn gen_tiles(seed: u64, region: &Region, chunk_cords: Cords) -> [[Tile; CHUNK_SIZE]; CHUNK_SIZE] {
+    let mut tiles: [[Tile; CHUNK_SIZE]; CHUNK_SIZE] = [[Tile::Wall; CHUNK_SIZE]; CHUNK_SIZE];
+
+    for local_x in 0..CHUNK_SIZE {
+        for local_y in 0..CHUNK_SIZE {
+
+            let world_x = chunk_cords.x * CHUNK_SIZE as i32 + local_x as i32;
+            let world_y = chunk_cords.y * CHUNK_SIZE as i32 + local_y as i32;
+
+            tiles[local_x][local_y] = if is_room_wall(world_x as i32, world_y as i32, region) {
+                Tile::Wall
             } else {
-                tile[i][j] = Tile::Floor;
-            }
+                Tile::Floor
+            };
         }
     }
 
-    tile
+    tiles
+}
+
+fn is_room_wall(local_x: i32, local_y: i32, region: &Region) -> bool {
+    for room in &region.rooms {
+        let left   = room.x;
+        let right  = room.x + room.width - 1;
+        let top    = room.y + room.height - 1;
+        let bottom = room.y;
+
+        let on_vertical   = (local_x == left || local_x == right)
+                         && local_y >= bottom && local_y <= top;
+        let on_horizontal = (local_y == top || local_y == bottom)
+                         && local_x >= left && local_x <= right;
+
+        if !on_vertical && !on_horizontal {
+            continue; // Tile gehört nicht zu diesem Room
+        }
+
+        // Ecken sind immer Wand
+        let is_corner = (local_x == left || local_x == right)
+                     && (local_y == top  || local_y == bottom);
+        if is_corner {
+            return true;
+        }
+
+        // Bestimme, auf welcher Seite die Tile liegt
+        let side = if local_y == top    { Direction::NORTH }
+                   else if local_y == bottom { Direction::SOUTH }
+                   else if local_x == left   { Direction::WEST  }
+                   else                      { Direction::EAST  };
+
+        // Wenn diese Seite der Entry ist → keine Wand
+        if side == room.entry {
+            let y_idx = room.y + (room.height / 2);
+
+            if side == Direction::NORTH || side == Direction::SOUTH {
+                let x_idx: i32 = room.x + (room.width / 2) - 1;
+                if local_x == x_idx { return false; }
+            }
+
+            if side == Direction::EAST || side == Direction::WEST {
+                let y_idx: i32 = room.y + (room.height / 2) - 1;
+                if local_y == y_idx { return false; }
+            }
+
+            return true;
+        } else {
+            return true;
+        }
+
+    }
+    false // keine Wand (außerhalb aller Rooms)
 }
 
 fn is_even(num: u64) -> bool {
@@ -103,57 +171,37 @@ fn is_even(num: u64) -> bool {
 
 pub fn generate_region(
     world_seed: u64,
-    region_x: i32, //mittelpunk der region
-    region_y: i32,
+    mid_tile_cords: Cords
 ) -> Region {
     let region_seed = calc_region_seed(
         world_seed,
-        region_x,
-        region_y,
+        mid_tile_cords.x,
+        mid_tile_cords.y,
     );
 
     let rooms = generate_rooms(region_seed);
 //    let connections = connect_rooms(region_seed, &rooms);
 
     Region {
-        x: region_x,
-        y: region_y,
+        cords: mid_tile_cords,
         rooms,
         //connections,
     }
 }
 
-fn room_type(type_seed: u64) -> RoomType {
-    let rest = type_seed as usize % 10;
-
-    match rest {
-        0..=5 => RoomType::SMALL,
-        6..=8 => RoomType::NORMAL,
-        9 => RoomType::LARGE,
-        _ => RoomType::SMALL,
-    }
-}
-
-fn room_size(room_type: RoomType) -> (i32, i32) {
-    match room_type {
-        RoomType::SMALL => (6, 4),
-        RoomType::NORMAL => (10, 8),
-        RoomType::LARGE => (16, 10),
-    }
-}
-
-fn generate_rooms(seed: u64) -> Vec<Room> {
-    let room_count = (seed as usize % 4) + 2;
+pub fn generate_rooms(seed: u64) -> Vec<Room> {
+    let room_count = (seed as usize % 2) + 2;
 
     let mut rooms = Vec::new();
 
     for id in 0..room_count {
-        let room_seed = calc_room_seed(seed, id as i32);
+        let id = id as i32;
+        let room_seed = calc_room_seed(seed, id, id);
         let room_type = room_type(room_seed);
         let (width, height) = room_size(room_type);
 
-        let x = calc_room_seed(seed, width) as i32 % REGION_WORLD_SIZE;
-        let y = calc_room_seed(seed, height) as i32 % REGION_WORLD_SIZE;
+        let x = calc_room_seed(seed, id, width) as i32 % REGION_TILE_SIZE;
+        let y = calc_room_seed(seed, id, height) as i32 % REGION_TILE_SIZE;
 
         let entry = direction_from_seed(room_seed);
 
@@ -188,4 +236,23 @@ fn rooms_overlap(a: &Room, b: &Room) -> bool {
         && a.x + a.width + padding > b.x
         && a.y - padding < b.y + b.height
         && a.y + a.height + padding > b.y
+}
+
+fn room_type(type_seed: u64) -> RoomType {
+    let rest = type_seed as usize % 10;
+
+    match rest {
+        0..=5 => RoomType::SMALL,
+        6..=8 => RoomType::NORMAL,
+        9 => RoomType::LARGE,
+        _ => RoomType::SMALL,
+    }
+}
+
+fn room_size(room_type: RoomType) -> (i32, i32) {
+    match room_type {
+        RoomType::SMALL => (6, 4),
+        RoomType::NORMAL => (10, 8),
+        RoomType::LARGE => (16, 10),
+    }
 }

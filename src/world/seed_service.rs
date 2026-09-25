@@ -19,6 +19,6 @@ pub fn calc_connection_seed(seed: u64, x: i32, y: i32) -> u64 {
     calc_chunk_seed(seed, x, y)
 }
 
-pub fn calc_room_seed(seed: u64, num: i32) -> u64 {
-    calc_chunk_seed(seed, num, num)
+pub fn calc_room_seed(seed: u64, num: i32, index: i32) -> u64 {
+    calc_chunk_seed(seed, num, index)
 }

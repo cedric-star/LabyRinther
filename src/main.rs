@@ -4,6 +4,7 @@ mod resources;
 mod constants;
 
 use bevy::prelude::*;
+use bevy::sprite::*;
 use bevy::camera::*;
 use bevy::window::*;
 use world::world_generator::*;
@@ -11,7 +12,12 @@ use components::*;
 use resources::*;
 use constants::*;
 
-fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn startup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut regions: ResMut<RegionPool>,
+    seed: Res<WorldSeed>,
+) {
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
@@ -23,6 +29,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         }),
         Transform::from_xyz(0.0, 0.0, 1.0),
         Velocity {x: 0.0, y: 0.0 },
+        Anchor::BOTTOM_LEFT,
     ));
 
     commands.spawn((
@@ -34,8 +41,18 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Transform::from_xyz(0.0, 0.0, 1.0),
         Velocity { x: 0.0, y: 0.0 },
+        Anchor::BOTTOM_LEFT,
     ));
 
+    let rooms = generate_rooms(seed.seed);
+    println!("generated init rooms:\n{:?}", rooms);
+
+    let region_entity = commands.spawn(Region {
+        cords: Cords::new(0, 0),
+        rooms,
+    }).id();
+
+    regions.regions.insert((0, 0), region_entity);
 }
 
 fn controls(
@@ -54,25 +71,25 @@ fn controls(
 
         if keys.pressed(KeyCode::KeyW) {
             velocity.y = MOV_SPEED;
-            if transform.translation.y + HALF_PLAYER_HEIGHT >= cam_pos.y + PLAYER_WALK_BORDER_HEIGHT {
+            if transform.translation.y + PLAYER_HEIGHT >= cam_pos.y + PLAYER_WALK_BORDER_HEIGHT {
                 cam_vel.y = MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyS) {
             velocity.y = -MOV_SPEED;
-            if transform.translation.y - HALF_PLAYER_HEIGHT <= cam_pos.y - PLAYER_WALK_BORDER_HEIGHT {
+            if transform.translation.y <= cam_pos.y - PLAYER_WALK_BORDER_HEIGHT {
                 cam_vel.y = -MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyA) {
             velocity.x = -MOV_SPEED;
-            if transform.translation.x - HALF_PLAYER_WIDTH <= cam_pos.x - PLAYER_WALK_BORDER_WIDTH {
+            if transform.translation.x <= cam_pos.x - PLAYER_WALK_BORDER_WIDTH {
                 cam_vel.x = -MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyD) {
             velocity.x = MOV_SPEED;
-            if transform.translation.x + HALF_PLAYER_WIDTH >= cam_pos.x + PLAYER_WALK_BORDER_WIDTH {
+            if transform.translation.x + PLAYER_WIDTH >= cam_pos.x + PLAYER_WALK_BORDER_WIDTH {
                 cam_vel.x = MOV_SPEED;
             }
         }
@@ -107,7 +124,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .init_resource::<ChunkPool>()
-        .insert_resource(WorldSeed{ seed: 67 })
+        .init_resource::<RegionPool>()
+        .insert_resource(WorldSeed{ seed: 2 })
         .add_systems(Startup, startup)
         .add_systems(FixedUpdate, (controls, load_map))
         .add_systems(Update, (movement, mov_cam))

@@ -39,7 +39,7 @@ pub struct Chunk {
     pub cords: Cords,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Cords {
     pub x: i32,
     pub y: i32,
@@ -52,8 +52,8 @@ impl Cords {
 
     pub fn to_world(self) -> Vec2 {
         Vec2 {
-            x: (self.x as f32) * TILE_SIZE + TILE_SIZE / 2.0,
-            y: (self.y as f32) * TILE_SIZE + TILE_SIZE / 2.0,
+            x: (self.x as f32) * TILE_SIZE + TILE_SIZE,
+            y: (self.y as f32) * TILE_SIZE + TILE_SIZE,
         }
 
     }
@@ -80,15 +80,14 @@ impl Cords {
     }
 }
 
+#[derive(Debug, Component)]
 pub struct Region {
-    pub x: i32,
-    pub y: i32,
-
+    pub cords: Cords,
     pub rooms: Vec<Room>,
     //pub connections: Vec<Connection>,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Room {
     pub id: RoomId,
 
@@ -102,7 +101,7 @@ pub struct Room {
     pub room_type: RoomType,
 }
 
-#[derive(Component, Clone, Copy, Debug)]
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
 pub enum Direction {
     NORTH,
     EAST,
@@ -129,4 +128,5 @@ pub enum ConnectionKind {
     Maze,
 }
 
+#[derive(Debug)]
 pub struct RoomId(pub i32);
