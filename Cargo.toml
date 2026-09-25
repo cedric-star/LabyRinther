@@ -5,3 +5,18 @@ edition = "2024"
 
 [dependencies]
 bevy = "0.19"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+codegen-units = 1 # compile to a single crate -> slower compile faster execution
+lto = "thin" # second optimization while compile
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s" # decrease file size and runtime performance
+strip = "debuginfo" # strip debug info for smaller file
