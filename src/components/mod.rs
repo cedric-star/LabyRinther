@@ -39,7 +39,7 @@ pub struct Chunk {
     pub cords: Cords,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Cords {
     pub x: i32,
     pub y: i32,
@@ -97,7 +97,7 @@ pub struct Room {
     pub height: i32,
 
     pub entry: Direction,
-
+    pub entry_cords: Cords,
     pub room_type: RoomType,
 }
 
@@ -114,6 +114,16 @@ pub enum RoomType {
     SMALL,
     NORMAL,
     LARGE,
+}
+
+impl RoomType {
+    pub fn dimensions(self) -> (i32, i32) {
+        match self {
+            RoomType::SMALL => (8, 6),
+            RoomType::NORMAL => (12, 7),
+            RoomType::LARGE => (20, 12),
+        }
+    }
 }
 
 pub struct Connection {

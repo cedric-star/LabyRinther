@@ -19,3 +19,4 @@ pub const CHUNK_WORLD_SIZE: f32 = CHUNK_SIZE as f32 * TILE_SIZE;
 pub const REGION_SIZE: i32 = 32; //in chunks
 pub const REGION_TILE_SIZE: i32 = REGION_SIZE * CHUNK_SIZE as i32;
 pub const REGION_WORLD_SIZE: i32 = REGION_SIZE * CHUNK_WORLD_SIZE as i32; //absolut, in pixeln
+//

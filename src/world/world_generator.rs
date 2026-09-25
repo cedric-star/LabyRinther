@@ -143,26 +143,12 @@ fn is_room_wall(local_x: i32, local_y: i32, region: &Region) -> bool {
                    else                      { Direction::EAST  };
 
         // Wenn diese Seite der Entry ist → keine Wand
-        if side == room.entry {
-            let y_idx = room.y + (room.height / 2);
-
-            if side == Direction::NORTH || side == Direction::SOUTH {
-                let x_idx: i32 = room.x + (room.width / 2) - 1;
-                if local_x == x_idx { return false; }
-            }
-
-            if side == Direction::EAST || side == Direction::WEST {
-                let y_idx: i32 = room.y + (room.height / 2) - 1;
-                if local_y == y_idx { return false; }
-            }
-
-            return true;
-        } else {
-            return true;
-        }
+        let temp_cords = Cords::new(local_x, local_y);
+        if temp_cords == room.entry_cords { return false; }
+        return true;
 
     }
-    false // keine Wand (außerhalb aller Rooms)
+    false
 }
 
 fn is_even(num: u64) -> bool {
@@ -198,12 +184,13 @@ pub fn generate_rooms(seed: u64) -> Vec<Room> {
         let id = id as i32;
         let room_seed = calc_room_seed(seed, id, id);
         let room_type = room_type(room_seed);
-        let (width, height) = room_size(room_type);
+        let (width, height) = room_type.dimensions();
 
         let x = calc_room_seed(seed, id, width) as i32 % REGION_TILE_SIZE;
         let y = calc_room_seed(seed, id, height) as i32 % REGION_TILE_SIZE;
 
         let entry = direction_from_seed(room_seed);
+        let entry_cords = entry_cords_from_direction_and_type(room_seed, x, y, room_type, entry);
 
         rooms.push(Room {
             id: RoomId(id as i32),
@@ -212,6 +199,7 @@ pub fn generate_rooms(seed: u64) -> Vec<Room> {
             width,
             height,
             entry,
+            entry_cords,
             room_type,
         });
     }
@@ -229,6 +217,34 @@ fn direction_from_seed(seed: u64) -> Direction {
     }
 }
 
+fn entry_cords_from_direction_and_type(
+    seed: u64,
+    x: i32,
+    y: i32,
+    room_type: RoomType,
+    entry: Direction,
+) -> Cords {
+    let (width, height) = room_type.dimensions();
+    let nums: (i32, i32) = match entry {
+        Direction::SOUTH => {
+            let offset = (seed % (width as u64 - 2)) as i32 + 1;
+            (x + offset, y)
+        }
+        Direction::NORTH => {
+            let offset = (seed % (width as u64 - 2)) as i32 + 1;
+            (x + offset, y + height - 1)
+        }
+        Direction::WEST => {
+            let offset = (seed % (height as u64 - 2)) as i32 + 1;
+            (x, y + offset)
+        }
+        Direction::EAST => {
+            let offset = (seed % (height as u64 - 2)) as i32 + 1;
+            (x + width - 1 , y + offset)
+        }
+    };
+    Cords::new(nums.0, nums.1)
+}
 fn rooms_overlap(a: &Room, b: &Room) -> bool {
     let padding = 2;
 
@@ -246,13 +262,5 @@ fn room_type(type_seed: u64) -> RoomType {
         6..=8 => RoomType::NORMAL,
         9 => RoomType::LARGE,
         _ => RoomType::SMALL,
-    }
-}
-
-fn room_size(room_type: RoomType) -> (i32, i32) {
-    match room_type {
-        RoomType::SMALL => (6, 4),
-        RoomType::NORMAL => (10, 8),
-        RoomType::LARGE => (16, 10),
     }
 }
