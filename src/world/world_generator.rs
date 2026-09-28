@@ -5,6 +5,7 @@ use crate::resources::*;
 use crate::constants::*;
 use crate::world::seed_service::*;
 use crate::world::room::*;
+use crate::world::region::*;
 
 pub fn load_map(
     mut commands: Commands,
@@ -33,10 +34,10 @@ pub fn load_map(
                 let region = region_query.get(*region_entity).unwrap();
 
                 if !pool.chunks.contains_key(&(chunk_cords.x, chunk_cords.y)) {
-                    println!("player at absolute: {player_x}:{player_y}");
-                    println!("player at tile: {}:{}", (player_x / TILE_SIZE).floor(), (player_y / TILE_SIZE).floor());
-                    println!("player in chunk: {}:{}", chunk_cords.x, chunk_cords.y);
-                    println!(" ");
+                    //println!("player at absolute: {player_x}:{player_y}");
+                    //println!("player at tile: {}:{}", (player_x / TILE_SIZE).floor(), (player_y / TILE_SIZE).floor());
+                    //println!("player in chunk: {}:{}", chunk_cords.x, chunk_cords.y);
+                    //println!(" ");
 
                     let floor_handle: Handle<Image> = asset_server.load("ground_simple.png");
                     let wall_handle: Handle<Image> = asset_server.load("wall_simple.png");
@@ -112,24 +113,4 @@ fn gen_tiles(seed: u64, region: &Region, chunk_cords: Cords) -> [[Tile; CHUNK_SI
 
 fn is_even(num: u64) -> bool {
     num as usize % 2 == 0
-}
-
-pub fn generate_region(
-    world_seed: u64,
-    mid_tile_cords: Cords
-) -> Region {
-    let region_seed = calc_region_seed(
-        world_seed,
-        mid_tile_cords.x,
-        mid_tile_cords.y,
-    );
-
-    let rooms = generate_rooms(region_seed);
-//    let connections = connect_rooms(region_seed, &rooms);
-
-    Region {
-        cords: mid_tile_cords,
-        rooms,
-        //connections,
-    }
 }

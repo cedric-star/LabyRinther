@@ -9,6 +9,7 @@ use bevy::camera::*;
 use bevy::window::*;
 use world::world_generator::*;
 use world::room::*;
+use world::region::*;
 use components::*;
 use resources::*;
 use constants::*;
@@ -45,13 +46,7 @@ fn startup(
         Anchor::BOTTOM_LEFT,
     ));
 
-    let rooms = generate_rooms(seed.seed);
-    println!("generated init rooms:\n{:?}", rooms);
-
-    let region_entity = commands.spawn(Region {
-        cords: Cords::new(0, 0),
-        rooms,
-    }).id();
+    let region_entity = commands.spawn(generate_region(seed.seed, 0, 0)).id();
 
     regions.regions.insert((0, 0), region_entity);
 }

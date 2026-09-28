@@ -84,6 +84,7 @@ impl Cords {
 pub struct Region {
     pub cords: Cords,
     pub rooms: Vec<Room>,
+    pub paths: Vec<Cords>,
     //pub connections: Vec<Connection>,
 }
 

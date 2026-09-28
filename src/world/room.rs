@@ -4,6 +4,7 @@ use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
 use crate::world::seed_service::*;
+use crate::world::region::*;
 
 pub fn generate_rooms(seed: u64) -> Vec<Room> {
     let room_count = (seed as usize % 2) + 2;
@@ -37,21 +38,19 @@ pub fn generate_rooms(seed: u64) -> Vec<Room> {
 
 }
 
-pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
-    let init_filler_tile = Tile::Wall;
-
-    for room in &region.rooms {
-        let room_tile = set_room_tile(x, y, room);
-
-        if room_tile != init_filler_tile { return room_tile; }
-    }
-    return init_filler_tile;
-}
-
 //nimm alle räume und erstelle eine liste an koordinaten
 //-> gemalte koordinaten sind pfad
-pub fn calc_region_rooms_path(rooms: Vec<Room>) -> Vec<Cords> {
-    Vec::new()
+pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
+    let mut paths: Vec<Cords> = Vec::new();
+    for (index, room) in rooms.iter().enumerate() {
+        let next_room = match rooms.get(index + 1) {
+            Some(room) => room,
+            None => { break; },
+        };
+        paths.append(&mut depth_search((room, next_room)));
+    }
+
+    paths
 }
 
 //suchalgo implementiert
@@ -60,8 +59,20 @@ pub fn calc_region_rooms_path(rooms: Vec<Room>) -> Vec<Cords> {
 //  - keine max eine richtungsänderung alle zwei tiles
 //  - immer mind. einen tile abstand (wall) zwischen wegen
 //      -> dafür evtl bereits besuchte in liste speichern und hier übergeben
-pub fn depth_search(rooms: (Room, Room)) -> Vec<Cords> {
-    Vec::new()
+pub fn depth_search(rooms: (&Room, &Room)) -> Vec<Cords> {
+    let c1 = Cords {
+        x: 1,
+        y:1,
+    };
+    let c2 = Cords {
+        x: 2,
+        y:3,
+    };
+    let c3 = Cords {
+        x: 3,
+        y:2,
+    };
+    return vec![c1, c2, c3];
 }
 
 //checke, ob ein punk um einen room ist
