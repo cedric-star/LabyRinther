@@ -53,44 +53,81 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     paths
 }
 
+fn manhattan(a: &Cords, b: &Cords) -> i32 {
+    (a.x - b.x).abs() + (a.y - b.y).abs()
+}
+
+fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
+    // Start- und Zieleingang sind immer begehbar, sonst kommt man nie rein/raus
+    if c == start || c == target {
+        return false;
+    }
+    rooms.iter().any(|r| {
+        c.x >= r.cords.x && c.x < r.cords.x + r.width &&
+        c.y >= r.cords.y && c.y < r.cords.y + r.height
+    })
+}
+
 pub fn depth_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let mut visited: Vec<Cords> = Vec::new();
     visited.push(rooms.0.entry_cords);
-    let target = rooms.1.entry_cords;
+    let snd: Cords = match rooms.0.entry {
+        Direction::NORTH => { Cords { x: rooms.0.entry_cords.x, y: rooms.0.entry_cords.y + 1} }
+        Direction::EAST => { Cords { x: rooms.0.entry_cords.x + 1, y: rooms.0.entry_cords.y} }
+        Direction::SOUTH => { Cords { x: rooms.0.entry_cords.x, y: rooms.0.entry_cords.y - 1} }
+        Direction::WEST => { Cords { x: rooms.0.entry_cords.x - 1, y: rooms.0.entry_cords.y} }
+    };
+    visited.push(snd);
 
-    println!("{:?} -> {:?}", rooms.0.entry_cords, target);
+    let target = Cords {
+        x: match rooms.1.entry {
+            Direction::EAST => rooms.1.entry_cords.x + 1,
+            Direction::WEST => rooms.1.entry_cords.x - 1,
+            _ => rooms.1.entry_cords.x,
+        },
+        y: match rooms.1.entry {
+            Direction::NORTH => rooms.1.entry_cords.y + 1,
+            Direction::SOUTH => rooms.1.entry_cords.y - 1,
+            _ => rooms.1.entry_cords.y,
+        },
+    };
+
+    println!("find way: {:?} -> {:?}", rooms.0.entry_cords, target);
 
     while true {
-        let last = visited.last().unwrap();
-        if last == &target {
+        let last = visited.pop().unwrap();
+        let before_last = visited.last().unwrap();
+        if last == target {
             return visited;
         }
 
-        let new_x =
-        if last.x < target.x { last.x + 1 }
-        else if last.x > target.x { last.x - 1 }
-        else { last.x };
+        let mut neighbours: Vec<Cords> = Vec::new();
+        let top_n = Cords { x: last.x, y: last.y + 1 };
+        let right_n = Cords { x: last.x + 1, y: last.y };
+        let bottom_n = Cords { x: last.x, y: last.y - 1};
+        let left_n = Cords { x: last.x - 1, y: last.y};
 
-        let new_y =
-        if last.y < target.y { last.y + 1 }
-        else if last.y > target.y { last.y - 1 }
-        else { last.y };
-
-        let mut new_cords = Cords {
-            x: new_x,
-            y: new_y,
+        if top_n != *before_last {
+            neighbours.push(top_n)
         };
-
-        for my_room in all_rooms.iter() {
-            match is_cord_near_room(new_cords, my_room) {
-                None => { },
-                Some(Direction::NORTH) => { new_cords.y -= 1; },
-                Some(Direction::SOUTH) => { new_cords.y += 1; },
-                Some(Direction::EAST) => { new_cords.x -= 1; },
-                Some(Direction::WEST) => { new_cords.x += 1; },
-            }
+        if right_n != *before_last {
+            neighbours.push(right_n);
         }
-        visited.push(new_cords);
+        if bottom_n != *before_last {
+            neighbours.push(bottom_n);
+        }
+        if left_n != *before_last {
+            neighbours.push(left_n);
+        }
+
+        println!("neighbours: {:?}", neighbours);
+        let neighbours = neighbours.iter().filter(|n| !is_blocked(**n, all_rooms, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
+        println!("neighbours: {:?}", neighbours);
+        let my_cords = neighbours.iter().min_by_key(|r| manhattan(r, &target));
+        println!("neighbours: {:?}", neighbours);
+
+        visited.push(last);
+        visited.push(*my_cords.unwrap().clone());
     }
 
     return Vec::new();
