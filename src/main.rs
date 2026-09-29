@@ -121,7 +121,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
-        .insert_resource(WorldSeed{ seed: 2 })
+        .insert_resource(WorldSeed{ seed: 3 })
         .add_systems(Startup, startup)
         .add_systems(FixedUpdate, (controls, load_map))
         .add_systems(Update, (movement, mov_cam))
