@@ -92,8 +92,7 @@ pub struct Region {
 pub struct Room {
     pub id: RoomId,
 
-    pub x: i32,
-    pub y: i32,
+    pub cords: Cords,
     pub width: i32,
     pub height: i32,
 

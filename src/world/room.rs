@@ -5,6 +5,7 @@ use crate::resources::*;
 use crate::constants::*;
 use crate::world::seed_service::*;
 use crate::world::region::*;
+use std::collections::{VecDeque, HashMap, HashSet};
 
 pub fn generate_rooms(seed: u64) -> Vec<Room> {
     let room_count = (seed as usize % 2) + 2;
@@ -25,8 +26,7 @@ pub fn generate_rooms(seed: u64) -> Vec<Room> {
 
         rooms.push(Room {
             id: RoomId(id as i32),
-            x,
-            y,
+            cords: Cords {x, y},
             width,
             height,
             entry,
@@ -47,46 +47,80 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
             Some(room) => room,
             None => { break; },
         };
-        paths.append(&mut depth_search((room, next_room)));
+        paths.append(&mut depth_search((room, next_room), &rooms, seed));
     }
 
     paths
 }
 
-//suchalgo implementiert
-//tiefensuch, für schöne lange pfade
-//regeln zu implementieren:
-//  - keine max eine richtungsänderung alle zwei tiles
-//  - immer mind. einen tile abstand (wall) zwischen wegen
-//      -> dafür evtl bereits besuchte in liste speichern und hier übergeben
-pub fn depth_search(rooms: (&Room, &Room)) -> Vec<Cords> {
-    let c1 = Cords {
-        x: 1,
-        y:1,
-    };
-    let c2 = Cords {
-        x: 2,
-        y:3,
-    };
-    let c3 = Cords {
-        x: 3,
-        y:2,
-    };
-    return vec![c1, c2, c3];
+pub fn depth_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
+    let mut visited: Vec<Cords> = Vec::new();
+    visited.push(rooms.0.entry_cords);
+    let target = rooms.1.entry_cords;
+
+    println!("{:?} -> {:?}", rooms.0.entry_cords, target);
+
+    while true {
+        let last = visited.last().unwrap();
+        if last == &target {
+            return visited;
+        }
+
+        let new_x =
+        if last.x < target.x { last.x + 1 }
+        else if last.x > target.x { last.x - 1 }
+        else { last.x };
+
+        let new_y =
+        if last.y < target.y { last.y + 1 }
+        else if last.y > target.y { last.y - 1 }
+        else { last.y };
+
+        let mut new_cords = Cords {
+            x: new_x,
+            y: new_y,
+        };
+
+        for my_room in all_rooms.iter() {
+            match is_cord_near_room(new_cords, my_room) {
+                None => { },
+                Some(Direction::NORTH) => { new_cords.y -= 1; },
+                Some(Direction::SOUTH) => { new_cords.y += 1; },
+                Some(Direction::EAST) => { new_cords.x -= 1; },
+                Some(Direction::WEST) => { new_cords.x += 1; },
+            }
+        }
+        visited.push(new_cords);
+    }
+
+    return Vec::new();
 }
 
 //checke, ob ein punk um einen room ist
 //-> damit pfadsuche nicht durch raum geht
-pub fn is_cord_near_room(cords: Cords, room: Room) -> bool {
-    false
-}
+//liefert none, wenn es nicht near ist, aber die jeweilige direction in der room ist
+//
+pub fn is_cord_near_room(cords: Cords, room: &Room) -> Option<Direction> {
+    if
+        cords.x > (room.cords.x) &&
+        cords.x < (room.cords.x + room.width - 1) &&
+        cords.y > (room.cords.y) &&
+        cords.y < (room.cords.y + room.height - 1) {
 
+        if cords.x <= room.cords.x { return Some(Direction::EAST); }
+        else if cords.x >= (room.cords.x + room.width -1) { return Some(Direction::WEST); }
+        else if cords.y <= room.cords.y { return Some(Direction::NORTH); }
+        else if cords.y >= (room.cords.y + room.height -1) { return Some(Direction::SOUTH); }
+        return Some(Direction::NORTH);
+    }
+    None
+}
 pub fn set_room_tile(local_x: i32, local_y: i32, room: &Room) -> Tile {
 
-        let left   = room.x;
-        let right  = room.x + room.width - 1;
-        let top    = room.y + room.height - 1;
-        let bottom = room.y;
+        let left   = room.cords.x;
+        let right  = room.cords.x + room.width - 1;
+        let top    = room.cords.y + room.height - 1;
+        let bottom = room.cords.y;
 
         if local_x > left && local_x < right && local_y < top && local_y > bottom {
             return Tile::Floor;
@@ -165,10 +199,10 @@ fn direction_from_seed(seed: u64) -> Direction {
 fn rooms_overlap(a: &Room, b: &Room) -> bool {
     let padding = 2;
 
-    a.x - padding < b.x + b.width
-        && a.x + a.width + padding > b.x
-        && a.y - padding < b.y + b.height
-        && a.y + a.height + padding > b.y
+    a.cords.x - padding < b.cords.x + b.width
+        && a.cords.x + a.width + padding > b.cords.x
+        && a.cords.y - padding < b.cords.y + b.height
+        && a.cords.y + a.height + padding > b.cords.y
 }
 
 fn room_type(type_seed: u64) -> RoomType {
