@@ -2,6 +2,7 @@ mod world;
 mod components;
 mod resources;
 mod constants;
+mod util;
 
 use bevy::prelude::*;
 use bevy::sprite::*;
@@ -46,7 +47,7 @@ fn startup(
         Anchor::BOTTOM_LEFT,
     ));
 
-    let region_entity = commands.spawn(generate_region(seed.seed, 0, 0)).id();
+    let region_entity = commands.spawn(generate_region(seed.seed, 0 - REGION_TILE_SIZE/2, 0 - REGION_TILE_SIZE/2 )).id();
 
     regions.regions.insert((0, 0), region_entity);
 }

@@ -3,11 +3,11 @@ use bevy::sprite::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
-use crate::world::seed_service::*;
+use crate::util::seed_service::*;
 use crate::world::region::*;
 use std::collections::{VecDeque, HashMap, HashSet};
 
-pub fn generate_rooms(seed: u64) -> Vec<Room> {
+pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
     let room_count = (seed as usize % 2) + 2;
 
     let mut rooms = Vec::new();
@@ -18,8 +18,8 @@ pub fn generate_rooms(seed: u64) -> Vec<Room> {
         let room_type = room_type(room_seed);
         let (width, height) = room_type.dimensions();
 
-        let x = calc_room_seed(seed, id, width) as i32 % REGION_TILE_SIZE;
-        let y = calc_room_seed(seed, id, height) as i32 % REGION_TILE_SIZE;
+        let x = region_cords.x + (calc_room_seed(seed, id, width) as i32 % REGION_TILE_SIZE).abs();
+        let y = region_cords.y + (calc_room_seed(seed, id, height) as i32 % REGION_TILE_SIZE).abs();
 
         let entry = direction_from_seed(room_seed);
         let entry_cords = entry_cords_from_direction_and_type(room_seed, x, y, room_type, entry);
@@ -47,7 +47,7 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
             Some(room) => room,
             None => { break; },
         };
-        paths.append(&mut depth_search((room, next_room), &rooms, seed));
+        paths.append(&mut my_search((room, next_room), &rooms, seed));
     }
 
     paths
@@ -58,7 +58,7 @@ fn manhattan(a: &Cords, b: &Cords) -> i32 {
 }
 
 fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
-    // Start- und Zieleingang sind immer begehbar, sonst kommt man nie rein/raus
+
     if c == start || c == target {
         return false;
     }
@@ -68,7 +68,7 @@ fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
     })
 }
 
-pub fn depth_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
+pub fn my_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let mut visited: Vec<Cords> = Vec::new();
     visited.push(rooms.0.entry_cords);
     let snd: Cords = match rooms.0.entry {
@@ -120,11 +120,11 @@ pub fn depth_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> 
             neighbours.push(left_n);
         }
 
-        println!("neighbours: {:?}", neighbours);
+        //println!("neighbours: {:?}", neighbours);
         let neighbours = neighbours.iter().filter(|n| !is_blocked(**n, all_rooms, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
-        println!("neighbours: {:?}", neighbours);
+        //println!("neighbours: {:?}", neighbours);
         let my_cords = neighbours.iter().min_by_key(|r| manhattan(r, &target));
-        println!("neighbours: {:?}", neighbours);
+        //println!("neighbours: {:?}", neighbours);
 
         visited.push(last);
         visited.push(*my_cords.unwrap().clone());

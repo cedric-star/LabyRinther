@@ -3,7 +3,7 @@ use bevy::sprite::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
-use crate::world::seed_service::*;
+use crate::util::seed_service::*;
 use crate::world::room::*;
 use crate::world::region::*;
 
