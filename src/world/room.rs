@@ -106,12 +106,24 @@ fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
 
 fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
         let mut neighbours: Vec<Cords> = Vec::new();
-    for i in 1..=padding {
+    for dx in -padding..=padding {
+        for dy in -padding..=padding {
+            if dx == 0 && dy == 0 { continue; }
+
+            neighbours.push(Cords {x: cords.x + dx, y: cords.y + dy})
+        }
+    }
+    neighbours
+}
+
+fn get_touching_neighnbour_cords(cords: Cords) -> Vec<Cords> {
+        let mut neighbours: Vec<Cords> = Vec::new();
+    let i = 1;
         neighbours.push(Cords { x: cords.x, y: cords.y + i });
         neighbours.push(Cords {x: cords.x + i, y: cords.y });
         neighbours.push(Cords { x: cords.x, y: cords.y - i});
         neighbours.push(Cords { x: cords.x - i, y: cords.y});
-    }
+
     neighbours
 }
 
@@ -134,7 +146,7 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
             return visited;
         }
 
-        let neighbours = get_neighnbour_cords(last, 1);
+        let neighbours = get_touching_neighnbour_cords(last);
         let mut true_neighbours = Vec::new();
 
         for neighbour in neighbours.iter() {
