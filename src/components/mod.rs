@@ -39,7 +39,7 @@ pub struct Chunk {
     pub cords: Cords,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Hash, Copy, Debug, PartialEq)]
 pub struct Cords {
     pub x: i32,
     pub y: i32,

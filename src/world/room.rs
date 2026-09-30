@@ -147,11 +147,13 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
 
     println!("find way: {:?} -> {:?}", cords.0, target);
 
+    let mut counter = 0;
+
     while true {
         let last = visited.pop().unwrap();
         let before_last = visited.last().unwrap();
         if last == target {
-        visited.append(&mut way_padding);
+            visited.append(&mut way_padding);
             return visited;
         }
 
@@ -173,9 +175,24 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
 
         visited.push(last);
 
-        visited.push(*my_cords.unwrap().clone());
+        match my_cords {
+            Some(c) => {visited.push(**c);},
+            None => {
+                visited.append(&mut way_padding);
+                return visited;
+            }
+        }
+
         let mut pad_neighbours = get_neighnbour_cords(last, PATH_PADDING);
         way_padding.append(&mut pad_neighbours);
+
+        counter += 1;
+        if counter >= 100000 {
+            println!("reached searching limit stopping !!!");
+            visited.append(&mut way_padding);
+            return visited;
+        }
+
     }
 
     return Vec::new();
