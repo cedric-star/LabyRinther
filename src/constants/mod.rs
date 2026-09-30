@@ -13,6 +13,8 @@ pub const CHUNKS_LOADING: i32 = 20;
 
 pub const MOV_SPEED: f32 = 4.0 * 4.0;
 
+pub const PATH_PADDING: i32 = 1;// tatsächlicher weg ist dann 1 + padding * 2
+
 pub const TILE_SIZE: f32 = 16.0;
 pub const CHUNK_SIZE: usize = 8;
 pub const CHUNK_WORLD_SIZE: f32 = CHUNK_SIZE as f32 * TILE_SIZE;

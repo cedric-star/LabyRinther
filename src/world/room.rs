@@ -47,23 +47,46 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
             Some(room) => room,
             None => { break; },
         };
+        let mut starts = get_moved_entry_cords(room);
+        let start_cords = starts.last().unwrap();
+        let mut targets = get_moved_entry_cords(next_room);
+        let target_cords = targets.last().unwrap();
 
-        let start_cords = get_moved_entry_cords(room);
-        let target_cords = get_moved_entry_cords(next_room);
+        println!("starts: {:?}", starts);
+        paths.append(&mut starts.clone());
+        paths.append(&mut targets.clone());
 
-        paths.append(&mut my_search((start_cords, target_cords), &rooms, seed));
+        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed));
     }
 
     paths
 }
 
-fn get_moved_entry_cords(room: &Room) -> Cords {
+fn get_moved_entry_cords(room: &Room) -> Vec<Cords> {
+    let mut cords = Vec::new();
     match room.entry {
-            Direction::NORTH => Cords {x: room.entry_cords.x, y: room.entry_cords.y + 1},
-            Direction::EAST => Cords {x: room.entry_cords.x + 1, y: room.entry_cords.y},
-            Direction::SOUTH => Cords {x: room.entry_cords.x - 1, y: room.entry_cords.y},
-            Direction::WEST => Cords {x: room.entry_cords.x - 1, y: room.entry_cords.y},
-    }
+            Direction::NORTH => {
+                for i in 1..=(PATH_PADDING + 1) {
+                     cords.push(Cords {x: room.entry_cords.x, y: room.entry_cords.y + i});
+                }
+            },
+            Direction::EAST => {
+                for i in 1..=(PATH_PADDING + 1) {
+                     cords.push(Cords {x: room.entry_cords.x + i, y: room.entry_cords.y});
+                }
+            }
+            Direction::SOUTH => {
+                for i in 1..=(PATH_PADDING + 1) {
+                     cords.push(Cords {x: room.entry_cords.x, y: room.entry_cords.y - i});
+                }
+            },
+            Direction::WEST => {
+                for i in 1..=(PATH_PADDING + 1) {
+                     cords.push(Cords {x: room.entry_cords.x - i, y: room.entry_cords.y});
+                }
+            },
+    };
+    cords
 }
 
 fn manhattan(a: &Cords, b: &Cords) -> i32 {
@@ -76,13 +99,26 @@ fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
         return false;
     }
     rooms.iter().any(|r| {
-        c.x >= r.cords.x && c.x < r.cords.x + r.width &&
-        c.y >= r.cords.y && c.y < r.cords.y + r.height
+        c.x >= (r.cords.x - PATH_PADDING) && c.x < (r.cords.x + r.width + PATH_PADDING) &&
+        c.y >= (r.cords.y - PATH_PADDING) && c.y < (r.cords.y + r.height + PATH_PADDING)
     })
+}
+
+fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
+        let mut neighbours: Vec<Cords> = Vec::new();
+    for i in 1..=padding {
+        neighbours.push(Cords { x: cords.x, y: cords.y + i });
+        neighbours.push(Cords {x: cords.x + i, y: cords.y });
+        neighbours.push(Cords { x: cords.x, y: cords.y - i});
+        neighbours.push(Cords { x: cords.x - i, y: cords.y});
+    }
+    neighbours
 }
 
 pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let mut visited: Vec<Cords> = Vec::new();
+    let mut way_padding: Vec<Cords> = Vec::new();
+
     visited.push(cords.0);
     visited.push(cords.0);
 
@@ -94,36 +130,30 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
         let last = visited.pop().unwrap();
         let before_last = visited.last().unwrap();
         if last == target {
+        visited.append(&mut way_padding);
             return visited;
         }
 
-        let mut neighbours: Vec<Cords> = Vec::new();
-        let top_n = Cords { x: last.x, y: last.y + 1 };
-        let right_n = Cords { x: last.x + 1, y: last.y };
-        let bottom_n = Cords { x: last.x, y: last.y - 1};
-        let left_n = Cords { x: last.x - 1, y: last.y};
+        let neighbours = get_neighnbour_cords(last, 1);
+        let mut true_neighbours = Vec::new();
 
-        if top_n != *before_last {
-            neighbours.push(top_n)
-        };
-        if right_n != *before_last {
-            neighbours.push(right_n);
-        }
-        if bottom_n != *before_last {
-            neighbours.push(bottom_n);
-        }
-        if left_n != *before_last {
-            neighbours.push(left_n);
+        for neighbour in neighbours.iter() {
+            if neighbour != before_last {
+                true_neighbours.push(neighbour);
+            }
         }
 
         //println!("neighbours: {:?}", neighbours);
-        let neighbours = neighbours.iter().filter(|n| !is_blocked(**n, all_rooms, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
+        let neighbours = true_neighbours.into_iter().filter(|n| !is_blocked(**n, all_rooms, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
         //println!("neighbours: {:?}", neighbours);
         let my_cords = neighbours.iter().min_by_key(|r| manhattan(r, &target));
         //println!("neighbours: {:?}", neighbours);
 
         visited.push(last);
+
         visited.push(*my_cords.unwrap().clone());
+        let mut pad_neighbours = get_neighnbour_cords(last, PATH_PADDING);
+        way_padding.append(&mut pad_neighbours);
     }
 
     return Vec::new();
