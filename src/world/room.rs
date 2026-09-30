@@ -93,15 +93,19 @@ fn manhattan(a: &Cords, b: &Cords) -> i32 {
     (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
-fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
+fn is_blocked(c: Cords, rooms: &[Room], blocked_cords: &Vec<Cords>, start: Cords, target: Cords) -> bool {
 
     if c == start || c == target {
         return false;
     }
+
+    if blocked_cords.iter().any(|bc| c == *bc) { return true; }
+
     rooms.iter().any(|r| {
         c.x >= (r.cords.x - PATH_PADDING) && c.x < (r.cords.x + r.width + PATH_PADDING) &&
         c.y >= (r.cords.y - PATH_PADDING) && c.y < (r.cords.y + r.height + PATH_PADDING)
     })
+
 }
 
 fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
@@ -127,8 +131,13 @@ fn get_touching_neighnbour_cords(cords: Cords) -> Vec<Cords> {
     neighbours
 }
 
+fn calc_noise(seed: u64, cords: &Cords) -> i32 {
+    (calc_any_hash_2(seed, cords.x, cords.y) % NOISE_RANGE as u64) as i32
+}
+
 pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let mut visited: Vec<Cords> = Vec::new();
+    let mut seen: Vec<Cords> = Vec::new();
     let mut way_padding: Vec<Cords> = Vec::new();
 
     visited.push(cords.0);
@@ -156,9 +165,10 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
         }
 
         //println!("neighbours: {:?}", neighbours);
-        let neighbours = true_neighbours.into_iter().filter(|n| !is_blocked(**n, all_rooms, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
+        seen.push(*before_last);
+        let neighbours = true_neighbours.into_iter().filter(|n| !is_blocked(**n, all_rooms, &seen, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
         //println!("neighbours: {:?}", neighbours);
-        let my_cords = neighbours.iter().min_by_key(|r| manhattan(r, &target));
+        let my_cords = neighbours.iter().min_by_key(|r| (manhattan(r, &target) + calc_noise(seed, r)));
         //println!("neighbours: {:?}", neighbours);
 
         visited.push(last);
