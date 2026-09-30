@@ -47,10 +47,23 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
             Some(room) => room,
             None => { break; },
         };
-        paths.append(&mut my_search((room, next_room), &rooms, seed));
+
+        let start_cords = get_moved_entry_cords(room);
+        let target_cords = get_moved_entry_cords(next_room);
+
+        paths.append(&mut my_search((start_cords, target_cords), &rooms, seed));
     }
 
     paths
+}
+
+fn get_moved_entry_cords(room: &Room) -> Cords {
+    match room.entry {
+            Direction::NORTH => Cords {x: room.entry_cords.x, y: room.entry_cords.y + 1},
+            Direction::EAST => Cords {x: room.entry_cords.x + 1, y: room.entry_cords.y},
+            Direction::SOUTH => Cords {x: room.entry_cords.x - 1, y: room.entry_cords.y},
+            Direction::WEST => Cords {x: room.entry_cords.x - 1, y: room.entry_cords.y},
+    }
 }
 
 fn manhattan(a: &Cords, b: &Cords) -> i32 {
@@ -68,31 +81,14 @@ fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
     })
 }
 
-pub fn my_search(rooms: (&Room, &Room), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
+pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let mut visited: Vec<Cords> = Vec::new();
-    visited.push(rooms.0.entry_cords);
-    let snd: Cords = match rooms.0.entry {
-        Direction::NORTH => { Cords { x: rooms.0.entry_cords.x, y: rooms.0.entry_cords.y + 1} }
-        Direction::EAST => { Cords { x: rooms.0.entry_cords.x + 1, y: rooms.0.entry_cords.y} }
-        Direction::SOUTH => { Cords { x: rooms.0.entry_cords.x, y: rooms.0.entry_cords.y - 1} }
-        Direction::WEST => { Cords { x: rooms.0.entry_cords.x - 1, y: rooms.0.entry_cords.y} }
-    };
-    visited.push(snd);
+    visited.push(cords.0);
+    visited.push(cords.0);
 
-    let target = Cords {
-        x: match rooms.1.entry {
-            Direction::EAST => rooms.1.entry_cords.x + 1,
-            Direction::WEST => rooms.1.entry_cords.x - 1,
-            _ => rooms.1.entry_cords.x,
-        },
-        y: match rooms.1.entry {
-            Direction::NORTH => rooms.1.entry_cords.y + 1,
-            Direction::SOUTH => rooms.1.entry_cords.y - 1,
-            _ => rooms.1.entry_cords.y,
-        },
-    };
+    let target = cords.1;
 
-    println!("find way: {:?} -> {:?}", rooms.0.entry_cords, target);
+    println!("find way: {:?} -> {:?}", cords.0, target);
 
     while true {
         let last = visited.pop().unwrap();
