@@ -18,15 +18,15 @@ pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
         if cord.x == x && cord.y == y { return Tile::Floor; }
     }
 
-    for cords in &region.connection_tiles {
+    for (_, cords) in &region.connection_tiles {
         if cords.x == x && cords.y == y { return Tile::Floor; }
     }
 
     return init_filler_tile;
 }
 
-fn set_region_connections(cords: Cords, seed: u64) -> Vec<Cords> {
-    let mut connections: Vec<Cords> = Vec::new();
+fn set_region_connections(cords: Cords, seed: u64) -> Vec<(Direction, Cords)> {
+    let mut connections: Vec<(Direction, Cords)> = Vec::new();
 
     let directions: Vec<Direction> = vec![Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST];
     for (i, direction) in directions.iter().enumerate() {
@@ -39,13 +39,13 @@ fn set_region_connections(cords: Cords, seed: u64) -> Vec<Cords> {
             let val = ((iter_seed % (REGION_TILE_SIZE - 8) as u64) + 4) as i32;
 
             match direction {
-                Direction::NORTH => {connections.push(Cords { x: cords.x + val, y: cords.y + REGION_TILE_SIZE}); }
+                Direction::NORTH => {connections.push((*direction, Cords { x: cords.x + val, y: cords.y + REGION_TILE_SIZE})); }
 
-                Direction::EAST => {connections.push(Cords { x: cords.x + REGION_TILE_SIZE, y: cords.y + val}); }
+                Direction::EAST => {connections.push((*direction, Cords { x: cords.x + REGION_TILE_SIZE, y: cords.y + val})); }
 
-                Direction::SOUTH => {connections.push(Cords { x: cords.x + val, y: cords.y}); }
+                Direction::SOUTH => {connections.push((*direction, Cords { x: cords.x + val, y: cords.y})); }
 
-                Direction::WEST => {connections.push(Cords { x: cords.x, y: cords.y + val}); }
+                Direction::WEST => {connections.push((*direction, Cords { x: cords.x, y: cords.y + val})); }
             }
         }
     }
@@ -53,18 +53,27 @@ fn set_region_connections(cords: Cords, seed: u64) -> Vec<Cords> {
     connections
 }
 
-fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<Cords>, region_bounds: Cords, seed: u64, rooms: &Vec<Room>) -> Vec<Cords> {
+fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<(Direction, Cords)>, region_bounds: Cords, seed: u64, rooms: &Vec<Room>) -> Vec<Cords> {
     let mut paths: Vec<Cords> = Vec::new();
 
-    for connection in connections {
-        let target = find_nearest(connection, current_paths);
+    for (direction, connection) in connections {
+        let mut connection = connection.clone();
+        match direction {
+            Direction::NORTH => { connection.y -= PATH_PADDING + 1; }
+            Direction::EAST => { connection.x -= PATH_PADDING + 1; }
+            Direction::SOUTH => { connection.y += PATH_PADDING + 1; }
+            Direction::WEST => { connection.x += PATH_PADDING + 1; }
+        }
+        let target = find_nearest(&connection, current_paths);
 
         println!("starting searching {:?} -> {:?}", connection, target);
 
         let my_seed = calc_any_hash_2(seed, connection.x, connection.y);
 
-        let mut connection_path = my_search((*connection, target), rooms, my_seed, region_bounds);
+        let mut connection_path = my_search((connection, target), rooms, my_seed, region_bounds);
         paths.append(&mut connection_path);
+
+        println!("\n");
     }
 
     paths
