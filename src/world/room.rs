@@ -57,7 +57,7 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64, region_cords: Cords) ->
         paths.append(&mut starts.clone());
         paths.append(&mut targets.clone());
 
-        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed, region_cords));
+        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed, region_cords, true));
     }
 
     paths

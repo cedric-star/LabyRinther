@@ -109,7 +109,7 @@ pub fn too_close(c: Cords, path: &[Cords]) -> bool {
 //
 //
 
-pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u64, region_cords: Cords) -> Vec<Cords> {
+pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u64, region_cords: Cords, noise: bool) -> Vec<Cords> {
 
     let mut visited: Vec<Cords> = vec![start];          // aktueller Weg
     let mut seen: HashSet<Cords> = HashSet::new();      // alles je Besuchte, wird NIE gekürzt
@@ -161,7 +161,7 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
 
         let my_cords = candidates
             .into_iter()
-            .min_by_key(|r| manhattan(r, &target) + calc_noise(seed, r));
+            .min_by_key(|r| manhattan(r, &target) + (if noise { calc_noise(seed, r) } else { 0 }));
 
         match my_cords {
             Some(c) => {

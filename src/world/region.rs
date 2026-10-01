@@ -70,7 +70,7 @@ fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<(Di
 
         let my_seed = calc_any_hash_2(seed, connection.x, connection.y);
 
-        let mut connection_path = my_search((connection, target), rooms, my_seed, region_bounds);
+        let mut connection_path = my_search((connection, target), rooms, my_seed, region_bounds, true);
         paths.append(&mut connection_path);
 
         println!("\n");
@@ -90,6 +90,104 @@ pub fn find_nearest(c: &Cords, cords: &Vec<Cords>) -> Cords {
 
 }
 
+//returns x,y and x+w,y+h in a tupel
+fn find_empty_spaces(paths: &Vec<Cords>, region_cords: Cords, n: usize) -> Vec<(Cords, Cords)> {
+    let size = REGION_TILE_SIZE as usize;
+    let mut grid = vec![vec![false; size]; size]; // grid[y][x], true = belegt
+
+    for p in paths {
+        let gx = p.x - region_cords.x;
+        let gy = p.y - region_cords.y;
+        if gx >= 0 && gy >= 0 && (gx as usize) < size && (gy as usize) < size {
+            grid[gy as usize][gx as usize] = true;
+        }
+    }
+
+    let mut spaces: Vec<(Cords, Cords)> = Vec::new();
+
+    for _ in 0..n {
+        match largest_empty_rect(&grid, size) {
+            Some((x0, y0, x1, y1)) => {
+                // Fläche als belegt markieren, damit das nächste Rechteck disjunkt ist
+                for y in y0..y1 {
+                    for x in x0..x1 {
+                        grid[y][x] = true;
+                    }
+                }
+                spaces.push((
+                    Cords { x: region_cords.x + x0 as i32, y: region_cords.y + y0 as i32 },
+                    Cords { x: region_cords.x + x1 as i32, y: region_cords.y + y1 as i32 },
+                ));
+            }
+            None => break, // nichts Freies mehr
+        }
+    }
+
+    spaces
+}
+
+//largest free rectangle in grid, returns (x0, y0, x1, y1) with x1/y1 exclusive
+fn largest_empty_rect(grid: &Vec<Vec<bool>>, size: usize) -> Option<(usize, usize, usize, usize)> {
+    let mut heights = vec![0usize; size];
+    let mut best_area = 0;
+    let mut best = None;
+
+    for y in 0..size {
+        // Histogramm: wie viele freie Tiles liegen direkt übereinander (bis Zeile y)
+        for x in 0..size {
+            heights[x] = if grid[y][x] { 0 } else { heights[x] + 1 };
+        }
+
+        // größtes Rechteck im Histogramm mit Stack (Index, Höhe)
+        let mut stack: Vec<(usize, usize)> = Vec::new();
+        for x in 0..=size {
+            let h = if x < size { heights[x] } else { 0 }; // 0 am Ende leert den Stack
+            let mut start = x;
+
+            while let Some(&(sx, sh)) = stack.last() {
+                if sh <= h { break; }
+                stack.pop();
+                let area = sh * (x - sx);
+                if area > best_area {
+                    best_area = area;
+                    // Rechteck endet in Zeile y (inklusive), ist sh hoch und reicht von sx bis x
+                    best = Some((sx, y + 1 - sh, x, y + 1));
+                }
+                start = sx;
+            }
+            stack.push((start, h));
+        }
+    }
+
+    best
+}
+
+//sucht nach größeren flächen und mahlt senk- und waagerechte verbindungen (lange strecken)
+fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64) -> Vec<Cords> {
+    let mut arr: Vec<Cords> = Vec::new();
+    for mut square in find_empty_spaces(cords, region_cords, EMPTY_ROOMS) {
+        let path_num = (calc_any_hash_2(seed, square.0.x, square.0.y) % (MAX_EMPTY_PATHS - MIN_EMPTY_PATHS + 1)) + MIN_EMPTY_PATHS;
+
+        println!("generated square: {:?}, path_num: {path_num}", square);
+        square.0.x += PATH_PADDING + 1;
+        square.0.y += PATH_PADDING + 1;
+        square.1.x -= PATH_PADDING + 1;
+        square.1.y -= PATH_PADDING + 1;
+
+        let width = square.1.x - square.0.x;
+        let height = square.1.y - square.0.y;
+
+        for i in 0..path_num as i32 {
+            let x = (calc_any_hash_2(seed, width, i) % width as u64) as i32 + square.0.x;
+            let y = (calc_any_hash_2(seed, height, i) % height as u64) as i32 + square.0.y;
+
+            arr.push(Cords { x: x as i32, y: y as i32});
+
+        }
+    }
+    arr
+}
+
 pub fn generate_region(
     world_seed: u64,
     x: i32,
@@ -105,7 +203,11 @@ pub fn generate_region(
 
     paths.append(&mut connect_connections_2_paths(&paths, &connection_tiles, cords, world_seed, &rooms));
 
+    let mut more_connections = set_connection_lines(&paths, cords, world_seed);
+
     println!("region boundings: ({:?}) -> ({:?})", cords, Cords {x: cords.x+REGION_TILE_SIZE, y: cords.y+REGION_TILE_SIZE});
+
+    paths.append(&mut more_connections);
 
     Region {
         cords,
