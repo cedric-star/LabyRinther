@@ -155,6 +155,21 @@ fn straight_run(path: &[Cords]) -> (i32, i32, i32) {
     (dx, dy, run)
 }
 
+fn too_close(c: Cords, path: &[Cords]) -> bool {
+    let d = 2 * PATH_PADDING + 1 + MIN_GAP;
+
+    // Die letzten 2*d Felder gehören zur "eigenen Nachbarschaft" (Kurven, Ecken)
+    // und werden nicht geprüft, sonst könnte der Weg nie abbiegen.
+    let skip = (2 * d) as usize;
+    if path.len() <= skip {
+        return false;
+    }
+
+    path[..path.len() - skip]
+        .iter()
+        .any(|p| (p.x - c.x).abs() < d && (p.y - c.y).abs() < d)
+}
+
 pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
     let start = cords.0;
     let target = cords.1;
@@ -188,6 +203,7 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
             .into_iter()
             .filter(|n| !seen.contains(n))
             .filter(|n| !is_blocked(*n, all_rooms, start, target))
+            .filter(|n| *n == target || !too_close(*n, &visited))
             .collect();
 
             // Abbiegen verbieten, solange der gerade Abschnitt noch zu kurz ist
