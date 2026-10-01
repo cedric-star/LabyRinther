@@ -14,15 +14,19 @@ pub const CHUNKS_LOADING: i32 = 20;
 pub const MOV_SPEED: f32 = 4.0 * 4.0;
 
 pub const PATH_PADDING: i32 = 1;// tatsächlicher weg ist dann 1 + padding * 2
-pub const NOISE_RANGE: i32 = 30;
+pub const NOISE_RANGE: i32 = 10;
 pub const MIN_STRAIGHT: i32 = 7;
 pub const MIN_GAP: i32 = 2; // wände zwischen path
 pub const EMPTY_ROOMS: usize = 4; //leere räume für extra pfade
-pub const MAX_EMPTY_PATHS: u64 = 4;
-pub const MIN_EMPTY_PATHS: u64 = 2;
 
-pub const MAX_REGION_SIDE_CONNECTIONS: u64 = 5;
-pub const MIN_REGION_SIDE_CONNECTIONS: u64 = 3;
+pub const MAX_EMPTY_PATHS: u64 = 6; //zusätzliche pfade random in großen leeren feldern generiert
+pub const MIN_EMPTY_PATHS: u64 = 5;
+
+pub const MAX_REGION_SIDE_CONNECTIONS: u64 = 6;
+pub const MIN_REGION_SIDE_CONNECTIONS: u64 = 4;
+
+pub const MIN_ROOM_NUM: usize = 3;
+pub const MAX_ROOM_NUM: usize = 5;
 
 pub const TILE_SIZE: f32 = 16.0;
 pub const CHUNK_SIZE: usize = 8;

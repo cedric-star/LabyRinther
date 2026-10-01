@@ -163,10 +163,11 @@ fn largest_empty_rect(grid: &Vec<Vec<bool>>, size: usize) -> Option<(usize, usiz
 }
 
 //sucht nach größeren flächen und mahlt senk- und waagerechte verbindungen (lange strecken)
-fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64) -> Vec<Cords> {
+fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64, rooms: &Vec<Room>) -> Vec<Cords> {
     let mut arr: Vec<Cords> = Vec::new();
     for mut square in find_empty_spaces(cords, region_cords, EMPTY_ROOMS) {
-        let path_num = (calc_any_hash_2(seed, square.0.x, square.0.y) % (MAX_EMPTY_PATHS - MIN_EMPTY_PATHS + 1)) + MIN_EMPTY_PATHS;
+        let seed = calc_any_hash_2(seed, square.0.x, square.0.y);
+        let path_num = (seed % (MAX_EMPTY_PATHS - MIN_EMPTY_PATHS + 1)) + MIN_EMPTY_PATHS;
 
         println!("generated square: {:?}, path_num: {path_num}", square);
         square.0.x += PATH_PADDING + 1;
@@ -180,9 +181,14 @@ fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64) -> V
         for i in 0..path_num as i32 {
             let x = (calc_any_hash_2(seed, width, i) % width as u64) as i32 + square.0.x;
             let y = (calc_any_hash_2(seed, height, i) % height as u64) as i32 + square.0.y;
+            let my_start = Cords { x: x as i32, y: y as i32};
+            let seed = calc_any_hash_2(seed, x, y);
 
-            arr.push(Cords { x: x as i32, y: y as i32});
+            let nearest = find_nearest(&my_start, cords);
 
+            arr.append(&mut my_search((my_start, nearest), rooms, seed, region_cords, true));
+
+            arr.push(my_start);
         }
     }
     arr
@@ -203,7 +209,7 @@ pub fn generate_region(
 
     paths.append(&mut connect_connections_2_paths(&paths, &connection_tiles, cords, world_seed, &rooms));
 
-    let mut more_connections = set_connection_lines(&paths, cords, world_seed);
+    let mut more_connections = set_connection_lines(&paths, cords, world_seed, &rooms);
 
     println!("region boundings: ({:?}) -> ({:?})", cords, Cords {x: cords.x+REGION_TILE_SIZE, y: cords.y+REGION_TILE_SIZE});
 

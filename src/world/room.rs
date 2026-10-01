@@ -9,7 +9,7 @@ use crate::util::finder::*;
 use std::collections::{VecDeque, HashMap, HashSet};
 
 pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
-    let room_count = (seed as usize % 2) + 2;
+    let room_count = (seed as usize % (MAX_ROOM_NUM - MIN_ROOM_NUM)) + MIN_ROOM_NUM;
 
     let mut rooms = Vec::new();
 
