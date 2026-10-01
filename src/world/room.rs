@@ -93,13 +93,13 @@ fn manhattan(a: &Cords, b: &Cords) -> i32 {
     (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
-fn is_blocked(c: Cords, rooms: &[Room], blocked_cords: &Vec<Cords>, start: Cords, target: Cords) -> bool {
+fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
 
     if c == start || c == target {
         return false;
     }
 
-    if blocked_cords.iter().any(|bc| c == *bc) { return true; }
+//    if blocked_cords.iter().any(|bc| c == *bc) { return true; }
 
     rooms.iter().any(|r| {
         c.x >= (r.cords.x - PATH_PADDING) && c.x < (r.cords.x + r.width + PATH_PADDING) &&
@@ -121,8 +121,9 @@ fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
 }
 
 fn get_touching_neighnbour_cords(cords: Cords) -> Vec<Cords> {
-        let mut neighbours: Vec<Cords> = Vec::new();
+    let mut neighbours: Vec<Cords> = Vec::new();
     let i = 1;
+
         neighbours.push(Cords { x: cords.x, y: cords.y + i });
         neighbours.push(Cords {x: cords.x + i, y: cords.y });
         neighbours.push(Cords { x: cords.x, y: cords.y - i});
@@ -135,67 +136,102 @@ fn calc_noise(seed: u64, cords: &Cords) -> i32 {
     (calc_any_hash_2(seed, cords.x, cords.y) % NOISE_RANGE as u64) as i32
 }
 
+fn straight_run(path: &[Cords]) -> (i32, i32, i32) {
+    let n = path.len();
+    if n < 2 {
+        return (0, 0, 0);
+    }
+    let dx = path[n - 1].x - path[n - 2].x;
+    let dy = path[n - 1].y - path[n - 2].y;
+    let mut run = 1;
+    let mut i = n - 1;
+    while i >= 2
+        && path[i - 1].x - path[i - 2].x == dx
+        && path[i - 1].y - path[i - 2].y == dy
+    {
+        run += 1;
+        i -= 1;
+    }
+    (dx, dy, run)
+}
+
 pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
-    let mut visited: Vec<Cords> = Vec::new();
-    let mut seen: Vec<Cords> = Vec::new();
-    let mut way_padding: Vec<Cords> = Vec::new();
-
-    visited.push(cords.0);
-    visited.push(cords.0);
-
+    let start = cords.0;
     let target = cords.1;
 
-    println!("find way: {:?} -> {:?}", cords.0, target);
+    let mut visited: Vec<Cords> = vec![start];          // aktueller Weg
+    let mut seen: HashSet<Cords> = HashSet::new();      // alles je Besuchte, wird NIE gekürzt
+    let mut way_padding: Vec<Cords> = Vec::new();
+    seen.insert(start);
+
+    // Fallback: bester Stand, falls kein Weg gefunden wird
+    let mut best = visited.clone();
+    let mut best_dist = manhattan(&start, &target);
+
+    println!("find way: {:?} -> {:?}", start, target);
 
     let mut counter = 0;
 
-    while true {
-        let last = visited.pop().unwrap();
-        let before_last = visited.last().unwrap();
+    loop {
+        let last = *visited.last().unwrap();
         if last == target {
-            visited.append(&mut way_padding);
-            return visited;
+            break;
         }
-
-        let neighbours = get_touching_neighnbour_cords(last);
-        let mut true_neighbours = Vec::new();
-
-        for neighbour in neighbours.iter() {
-            if neighbour != before_last {
-                true_neighbours.push(neighbour);
-            }
-        }
-
-        //println!("neighbours: {:?}", neighbours);
-        seen.push(*before_last);
-        let neighbours = true_neighbours.into_iter().filter(|n| !is_blocked(**n, all_rooms, &seen, *visited.get(0).unwrap(), target)).collect::<Vec<&Cords>>();
-        //println!("neighbours: {:?}", neighbours);
-        let my_cords = neighbours.iter().min_by_key(|r| (manhattan(r, &target) + calc_noise(seed, r)));
-        //println!("neighbours: {:?}", neighbours);
-
-        visited.push(last);
-
-        match my_cords {
-            Some(c) => {visited.push(**c);},
-            None => {
-                visited.append(&mut way_padding);
-                return visited;
-            }
-        }
-
-        let mut pad_neighbours = get_neighnbour_cords(last, PATH_PADDING);
-        way_padding.append(&mut pad_neighbours);
 
         counter += 1;
         if counter >= 100000 {
-            println!("reached searching limit stopping !!!");
-            visited.append(&mut way_padding);
-            return visited;
+            visited = best;
+            break;
         }
 
+        let mut candidates: Vec<Cords> = get_touching_neighnbour_cords(last)
+            .into_iter()
+            .filter(|n| !seen.contains(n))
+            .filter(|n| !is_blocked(*n, all_rooms, start, target))
+            .collect();
+
+            // Abbiegen verbieten, solange der gerade Abschnitt noch zu kurz ist
+        let (dx, dy, run) = straight_run(&visited);
+        if run > 0 && run < MIN_STRAIGHT {
+            let ahead = Cords { x: last.x + dx, y: last.y + dy };
+            // nur erzwingen, wenn geradeaus möglich ist und nicht vom Ziel wegführt
+            if candidates.contains(&ahead) && manhattan(&ahead, &target) <= manhattan(&last, &target) {
+                candidates = vec![ahead];
+            }
+        }
+
+        let my_cords = candidates
+            .into_iter()
+            .min_by_key(|r| manhattan(r, &target) + calc_noise(seed, r));
+
+        match my_cords {
+            Some(c) => {
+                seen.insert(c);
+            visited.push(c);
+
+                let d = manhattan(&c, &target);
+                if d < best_dist {
+                    best_dist = d;
+                    best = visited.clone();
+                }
+            }
+            None => {
+                // Sackgasse: einen Schritt zurück, seen bleibt unverändert
+                visited.pop();
+                if visited.is_empty() {
+                    visited = best;   // alles erschöpft -> Teilweg zurückgeben
+                    break;
+                }
+            }
+        }
     }
 
-    return Vec::new();
+    // Padding erst am Ende, nur für den tatsächlichen Weg
+    for c in &visited {
+        way_padding.append(&mut get_neighnbour_cords(*c, PATH_PADDING));
+    }
+    visited.append(&mut way_padding);
+    visited
 }
 
 //checke, ob ein punk um einen room ist
