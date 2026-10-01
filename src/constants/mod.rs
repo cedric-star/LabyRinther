@@ -15,7 +15,7 @@ pub const MOV_SPEED: f32 = 4.0 * 4.0;
 
 pub const PATH_PADDING: i32 = 1;// tatsächlicher weg ist dann 1 + padding * 2
 pub const NOISE_RANGE: i32 = 50;
-pub const MIN_STRAIGHT: i32 = 10;
+pub const MIN_STRAIGHT: i32 = 1;
 pub const MIN_GAP: i32 = 3; // wände zwischen path
 
 pub const MAX_REGION_SIDE_CONNECTIONS: u64 = 5;

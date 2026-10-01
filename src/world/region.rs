@@ -62,7 +62,7 @@ pub fn generate_region(
     let cords = Cords {x, y};
     let rooms = generate_rooms(&cords, world_seed);
     //println!("generated init rooms:\n{:?}", rooms);
-    let paths = generate_room_paths(&rooms, world_seed);
+    let paths = generate_room_paths(&rooms, world_seed, cords);
     let connection_tiles = set_region_connections(cords, world_seed);
 
     println!("region boundings: ({:?}) -> ({:?})", cords, Cords {x: cords.x+REGION_TILE_SIZE, y: cords.y+REGION_TILE_SIZE});

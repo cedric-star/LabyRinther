@@ -40,7 +40,7 @@ pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
 
 //nimm alle räume und erstelle eine liste an koordinaten
 //-> gemalte koordinaten sind pfad
-pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
+pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64, region_cords: Cords) -> Vec<Cords> {
     let mut paths: Vec<Cords> = Vec::new();
     for (index, room) in rooms.iter().enumerate() {
         let next_room = match rooms.get(index + 1) {
@@ -56,7 +56,7 @@ pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
         paths.append(&mut starts.clone());
         paths.append(&mut targets.clone());
 
-        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed));
+        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed, region_cords));
     }
 
     paths
@@ -93,13 +93,24 @@ fn manhattan(a: &Cords, b: &Cords) -> i32 {
     (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
-fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords) -> bool {
+fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords, region_cords: Cords) -> bool {
 
     if c == start || c == target {
         return false;
     }
 
 //    if blocked_cords.iter().any(|bc| c == *bc) { return true; }
+
+    if c.x - 1 - PATH_PADDING <= region_cords.x || c.y - 1 - PATH_PADDING <= region_cords.y {
+        return true;
+    }
+    if c.x + 1 + PATH_PADDING >= region_cords.x + REGION_TILE_SIZE {
+        return true;
+    }
+
+    if c.y + 1 + PATH_PADDING >= region_cords.y + REGION_TILE_SIZE {
+        return true;
+    }
 
     rooms.iter().any(|r| {
         c.x >= (r.cords.x - PATH_PADDING) && c.x < (r.cords.x + r.width + PATH_PADDING) &&
@@ -170,9 +181,7 @@ fn too_close(c: Cords, path: &[Cords]) -> bool {
         .any(|p| (p.x - c.x).abs() < d && (p.y - c.y).abs() < d)
 }
 
-pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec<Cords> {
-    let start = cords.0;
-    let target = cords.1;
+pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u64, region_cords: Cords) -> Vec<Cords> {
 
     let mut visited: Vec<Cords> = vec![start];          // aktueller Weg
     let mut seen: HashSet<Cords> = HashSet::new();      // alles je Besuchte, wird NIE gekürzt
@@ -196,13 +205,14 @@ pub fn my_search(cords: (Cords, Cords), all_rooms: &Vec<Room>, seed: u64) -> Vec
         counter += 1;
         if counter >= 100000 {
             visited = best;
+            println!("reached limit while searching!");
             break;
         }
 
         let mut candidates: Vec<Cords> = get_touching_neighnbour_cords(last)
             .into_iter()
             .filter(|n| !seen.contains(n))
-            .filter(|n| !is_blocked(*n, all_rooms, start, target))
+            .filter(|n| !is_blocked(*n, all_rooms, start, target, region_cords))
             .filter(|n| *n == target || !too_close(*n, &visited))
             .collect();
 
