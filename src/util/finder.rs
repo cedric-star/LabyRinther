@@ -132,8 +132,8 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
 
         counter += 1;
         if counter >= 100000 {
+            println!("best_dist: {}, best last: {:?}", best_dist, best.last());
             visited = best;
-            println!("reached limit while searching!");
             break;
         }
 
@@ -144,6 +144,11 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
             .filter(|n| *n == target || !too_close(*n, &visited))
             .collect();
 
+        // Ziel direkt nehmen, sobald es erreichbar ist
+        if candidates.contains(&target) {
+            visited.push(target);
+            continue;
+        }
             // Abbiegen verbieten, solange der gerade Abschnitt noch zu kurz ist
         let (dx, dy, run) = straight_run(&visited);
         if run > 0 && run < MIN_STRAIGHT {
