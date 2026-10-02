@@ -62,7 +62,8 @@ fn controls(
     mut velocity: Single<&mut Velocity, (With<Player>, Without<Camera2d>)>,
     transform: Single<&Transform, (With<Player>, Without<Camera2d>)>,
     mut cam_vel: Single<&mut Velocity, (With<Camera2d>, Without<Player>)>,
-    cam_transform: Single<&Transform, (With<Camera2d>, Without<Player>)>
+    cam_transform: Single<&Transform, (With<Camera2d>, Without<Player>)>,
+    s: Res<GameSettings>,
 ) {
         velocity.x = 0.0;
         velocity.y = 0.0;
@@ -72,27 +73,27 @@ fn controls(
         let cam_pos = cam_transform.translation;
 
         if keys.pressed(KeyCode::KeyW) {
-            velocity.y = MOV_SPEED;
+            velocity.y = s.MOV_SPEED;
             if transform.translation.y + PLAYER_HEIGHT >= cam_pos.y + PLAYER_WALK_BORDER_HEIGHT {
-                cam_vel.y = MOV_SPEED;
+                cam_vel.y = s.MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyS) {
-            velocity.y = -MOV_SPEED;
+            velocity.y = -s.MOV_SPEED;
             if transform.translation.y <= cam_pos.y - PLAYER_WALK_BORDER_HEIGHT {
-                cam_vel.y = -MOV_SPEED;
+                cam_vel.y = -s.MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyA) {
-            velocity.x = -MOV_SPEED;
+            velocity.x = -s.MOV_SPEED;
             if transform.translation.x <= cam_pos.x - PLAYER_WALK_BORDER_WIDTH {
-                cam_vel.x = -MOV_SPEED;
+                cam_vel.x = -s.MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyD) {
-            velocity.x = MOV_SPEED;
+            velocity.x = s.MOV_SPEED;
             if transform.translation.x + PLAYER_WIDTH >= cam_pos.x + PLAYER_WALK_BORDER_WIDTH {
-                cam_vel.x = MOV_SPEED;
+                cam_vel.x = s.MOV_SPEED;
             }
         }
 
@@ -170,10 +171,36 @@ fn mov_cam(mut query_cam: Query<(&mut Transform, &Velocity), With<Camera2d>>) {
 
 }
 
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum GameState {
+    #[default]
+    Welcome,
+    Ingame,
+}
+
+fn button_scene() -> impl Scene {
+  bsn! {
+    Button
+    Node {
+      width: px(150),
+      height: px(65),
+      justify_content: JustifyContent::Center,
+      align_items: AlignItems::Center,
+    }
+    BackgroundColor(Color::BLACK)
+    Children [
+      (
+        Text::new("Button")
+        TextColor(Color::srgb(0.9, 0.9, 0.9))
+      )
+    ]
+  }
+}
 fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .init_resource::<GameSettings>()
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
         .insert_resource(WorldSeed{ seed: 3 })

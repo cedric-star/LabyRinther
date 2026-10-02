@@ -1,3 +1,18 @@
+use bevy::prelude::*;
+
+#[derive(Resource)]
+pub struct GameSettings {
+    pub MOV_SPEED: f32,
+}
+
+impl Default for GameSettings {
+    fn default() -> Self {
+        Self {
+            MOV_SPEED: 4.0,
+        }
+    }
+}
+
 pub const CAMERA_MULT: f32 = 2.0;
 
 pub const CAMERA_WIDTH: f32 = 480.0 * CAMERA_MULT;
@@ -13,7 +28,7 @@ pub const PLAYER_HEIGHT: f32 = 32.0;
 
 pub const CHUNKS_LOADING: i32 = 3;
 
-pub const MOV_SPEED: f32 = 4.0;
+//pub const MOV_SPEED: f32 = 4.0;
 
 pub const MAX_REGION_SIDE_CONNECTIONS: u64 = 6;
 pub const MIN_REGION_SIDE_CONNECTIONS: u64 = 4;
