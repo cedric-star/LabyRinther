@@ -19,6 +19,30 @@ pub fn load_map(
         let player_chunk_x = (player.translation.x / CHUNK_WORLD_SIZE).floor() as i32;
         let player_chunk_y = (player.translation.y / CHUNK_WORLD_SIZE).floor() as i32;
 
+        let player_chunks: Vec<Cords> = players
+            .iter()
+            .map(|t| Cords::new(
+                (t.translation.x / CHUNK_WORLD_SIZE).floor() as i32,
+                (t.translation.y / CHUNK_WORLD_SIZE).floor() as i32,
+            ))
+            .collect();
+
+        let out_of_scope: Vec<Cords> = pool
+            .chunks
+            .keys()
+            .copied()
+            .filter(|c| {
+                !player_chunks.iter().any(|p| {
+                    (c.x - p.x).abs() <= CHUNKS_LOADING && (c.y - p.y).abs() <= CHUNKS_LOADING
+                })
+            })
+            .collect();
+
+        for c in out_of_scope {
+            if let Some(entity) = pool.chunks.remove(&c) {
+                commands.entity(entity).despawn(); // despawnt in Bevy 0.16+ auch die Kinder (Sprites)
+            }
+        }
         for c_view_x in -CHUNKS_LOADING..=CHUNKS_LOADING {
             for c_view_y in -CHUNKS_LOADING..=CHUNKS_LOADING {
                 let chunk_cords = Cords::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
