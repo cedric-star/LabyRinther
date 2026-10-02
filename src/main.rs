@@ -9,7 +9,6 @@ use bevy::sprite::*;
 use bevy::camera::*;
 use bevy::window::*;
 use world::world_generator::*;
-use world::room::*;
 use world::region::*;
 use components::*;
 use resources::*;
@@ -45,12 +44,12 @@ fn startup(
             image: asset_server.load("character_simple.png"),
             ..default()
         },
-        Transform::from_xyz(0.0, 0.0, 1.0),
+        Transform::from_xyz(16.0, 16.0, 1.0),
         Velocity { x: 0.0, y: 0.0 },
         Anchor::BOTTOM_LEFT,
     ));
 
-    let region_entity = commands.spawn(generate_region(seed.seed, 0 - REGION_TILE_SIZE/2, 0 - REGION_TILE_SIZE/2 )).id();
+    let region_entity = commands.spawn(generate_region(seed.seed, 0, 0)).id();
 
     regions.regions.insert((0, 0), region_entity);
 

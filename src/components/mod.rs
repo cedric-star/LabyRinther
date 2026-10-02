@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use crate::constants::*;
 use std::collections::HashSet;
-use indexmap::IndexSet;
 
 #[derive(Component, Default)]
 pub struct Velocity {
@@ -33,6 +32,19 @@ struct Collider {
 pub enum Tile {
     Wall,
     Floor,
+    RoomFloor,
+    RoomEntry,
+}
+
+impl Tile {
+    pub fn asset(self) -> &'static str {
+        match self {
+            Tile::Wall => "wall_simple.png",
+            Tile::Floor => "ground_simple.png",
+            Tile::RoomFloor => "room_ground_simple.png", // später eigene Textur
+            Tile::RoomEntry => "ground_simple.png",     // später eigene Textur
+        }
+    }
 }
 
 #[derive(Component)]
@@ -85,9 +97,8 @@ impl Cords {
 #[derive(Component, Clone, Debug)]
 pub struct Region {
     pub cords: Cords,
-    pub rooms: IndexSet<Room>,                    // war: Vec<Room>
-    pub paths: IndexSet<Cords>,
-    pub connection_tiles: IndexSet<(Direction, Cords)>, // ggf. IndexSet, s.u.
+    pub rooms: Vec<Room>,
+    pub map: crate::world::region::RegionMap,
 }
 
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
@@ -118,12 +129,17 @@ pub enum RoomType {
 }
 
 impl RoomType {
-    pub fn dimensions(self) -> (i32, i32) {
+    pub fn cells(self) -> (usize, usize) {
         match self {
-            RoomType::SMALL => (8, 6),
-            RoomType::NORMAL => (12, 7),
-            RoomType::LARGE => (20, 12),
+            RoomType::SMALL => (2, 2),
+            RoomType::NORMAL => (3, 2),
+            RoomType::LARGE => (5, 3),
         }
+    }
+
+    pub fn dimensions(self) -> (i32, i32) {
+        let (w, h) = self.cells();
+        (w as i32 * CELL_PITCH - 1, h as i32 * CELL_PITCH - 1)
     }
 }
 

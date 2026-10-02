@@ -4,7 +4,6 @@ use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
 use crate::util::seed_service::*;
-use crate::world::room::*;
 use crate::world::region::*;
 
 pub fn load_map(
@@ -69,10 +68,7 @@ pub fn load_map(
                                 let world_x = (local_x as f32) * TILE_SIZE;
                                 let world_y = (local_y as f32) * TILE_SIZE;
 
-                                let texture = match tile {
-                                    Tile::Floor => asset_server.load("ground_simple.png"),
-                                    Tile::Wall => asset_server.load("wall_simple.png"),
-                                };
+                                let texture = asset_server.load(tile.asset());
 
                                 // Spawn Tile-Entity
                                 parent.spawn((
