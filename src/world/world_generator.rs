@@ -12,85 +12,75 @@ pub fn load_map(
     mut pool: ResMut<ChunkPool>,
     asset_server: Res<AssetServer>,
     seed: Res<WorldSeed>,
-    regions: Res<RegionPool>,
-    region_query: Query<&Region>
+    mut regions: ResMut<RegionPool>,
+    region_query: Query<&Region>,
 ) {
-
-    for player in players {
-
-        let player_x = player.translation.x;
-        let player_y = player.translation.y;
+    for player in &players {
+        let player_chunk_x = (player.translation.x / CHUNK_WORLD_SIZE).floor() as i32;
+        let player_chunk_y = (player.translation.y / CHUNK_WORLD_SIZE).floor() as i32;
 
         for c_view_x in -CHUNKS_LOADING..=CHUNKS_LOADING {
             for c_view_y in -CHUNKS_LOADING..=CHUNKS_LOADING {
+                let chunk_cords = Cords::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
 
-                let chunk_cords = Cords::new(
-                    (player_x / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32 + c_view_x as i32,
-                    (player_y / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32 + c_view_y as i32,
+                if pool.chunks.contains_key(&chunk_cords) {
+                    continue;
+                }
+
+                // Region, zu der dieser Chunk gehört
+                let region_key = Cords::new(
+                    chunk_cords.x.div_euclid(REGION_SIZE),
+                    chunk_cords.y.div_euclid(REGION_SIZE),
                 );
 
-                let region_entity = regions.regions.get(&(0, 0)).unwrap();
-                let region = region_query.get(*region_entity).unwrap();
+                let region_entity = regions.regions.get(&region_key).copied();
+                let Some(region_entity) = region_entity else {
+                    let e = commands
+                        .spawn(generate_region(seed.seed, region_key))
+                        .id();
+                    regions.regions.insert(region_key, e);
+                    continue; // Region ist erst im nächsten Frame abfragbar
+                };
+                let Ok(region) = region_query.get(region_entity) else {
+                    continue;
+                };
 
-                if !pool.chunks.contains_key(&(chunk_cords.x, chunk_cords.y)) {
-                    //println!("player at absolute: {player_x}:{player_y}");
-                    //println!("player at tile: {}:{}", (player_x / TILE_SIZE).floor(), (player_y / TILE_SIZE).floor());
-                    //println!("player in chunk: {}:{}", chunk_cords.x, chunk_cords.y);
-                    //println!(" ");
+                let tiles = gen_tiles(seed.seed, region, chunk_cords);
+                let chunk_world_pos = chunk_cords.chunk_to_world();
 
-                    let floor_handle: Handle<Image> = asset_server.load("ground_simple.png");
-                    let wall_handle: Handle<Image> = asset_server.load("wall_simple.png");
-                    let chunk_seed = calc_chunk_seed(seed.seed, player_x as i32, player_y as i32);
-                    let tiles = gen_tiles(chunk_seed, &region, chunk_cords);
-
-                    let chunk_world_pos = chunk_cords.chunk_to_world();
-
-                    let chunk = Chunk {
-                        tiles: tiles,
-                        cords: chunk_cords,
-
-                    };
-
-                    let chunk_entity = commands.spawn((
-                        chunk,
-                        Transform::from_xyz(
-                            chunk_world_pos.x,
-                            chunk_world_pos.y,
-                            0.0,
-                        ),
+                let chunk_entity = commands
+                    .spawn((
+                        Chunk { tiles, cords: chunk_cords },
+                        Transform::from_xyz(chunk_world_pos.x, chunk_world_pos.y, 0.0),
                         Visibility::default(),
-                    )).id();
+                    ))
+                    .id();
 
-                    commands.entity(chunk_entity).with_children(|parent| {
-                        for (local_x, row) in tiles.iter().enumerate() {
-                            for (local_y, tile) in row.iter().enumerate() {
-                                // Berechne World-Position
-                                let world_x = (local_x as f32) * TILE_SIZE;
-                                let world_y = (local_y as f32) * TILE_SIZE;
-
-                                let texture = asset_server.load(tile.asset());
-
-                                // Spawn Tile-Entity
-                                parent.spawn((
-                                    Sprite {
-                                        image: texture,
-                                        custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
-                                        ..default()
-                                    },
-                                    Transform::from_xyz(world_x, world_y, 0.0),
-                                    Anchor::BOTTOM_LEFT,
-                                ));
-                            }
+                commands.entity(chunk_entity).with_children(|parent| {
+                    for (local_x, row) in tiles.iter().enumerate() {
+                        for (local_y, tile) in row.iter().enumerate() {
+                            parent.spawn((
+                                Sprite {
+                                    image: asset_server.load(tile.asset()),
+                                    custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
+                                    ..default()
+                                },
+                                Transform::from_xyz(
+                                    local_x as f32 * TILE_SIZE,
+                                    local_y as f32 * TILE_SIZE,
+                                    0.0,
+                                ),
+                                Anchor::BOTTOM_LEFT,
+                            ));
                         }
-                    });
+                    }
+                });
 
-                    pool.chunks.insert((chunk_cords.x, chunk_cords.y), chunk_entity);
-                }
+                pool.chunks.insert(chunk_cords, chunk_entity);
             }
         }
     }
 }
-
 fn gen_tiles(seed: u64, region: &Region, chunk_cords: Cords) -> [[Tile; CHUNK_SIZE]; CHUNK_SIZE] {
     let mut tiles: [[Tile; CHUNK_SIZE]; CHUNK_SIZE] = [[Tile::Wall; CHUNK_SIZE]; CHUNK_SIZE];
 

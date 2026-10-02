@@ -183,6 +183,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
     // Jede Zelle ist ein Gangblock
     for cy in 0..GRID_SIZE {
         for cx in 0..GRID_SIZE {
+            if taken[cell(cx, cy)] { continue; }
             map.fill(origin(cx), origin(cy), CELL_FLOOR, CELL_FLOOR, Tile::Floor);
         }
     }
@@ -268,13 +269,13 @@ pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
 }
 
 // rx, ry = Regionsindex (nicht Tile-Koordinaten)
-pub fn generate_region(world_seed: u64, rx: i32, ry: i32) -> Region {
-    let (mut map, mut rooms) = generate_maze(calc_region_seed(world_seed, rx, ry));
-    carve_exits(&mut map, world_seed, rx, ry);
+pub fn generate_region(world_seed: u64, r: Cords) -> Region {
+    let (mut map, mut rooms) = generate_maze(calc_region_seed(world_seed, r.x, r.y));
+    carve_exits(&mut map, world_seed, r.x, r.y);
 
     let cords = Cords {
-        x: rx * REGION_TILE_SIZE,
-        y: ry * REGION_TILE_SIZE,
+        x: r.x * REGION_TILE_SIZE,
+        y: r.y * REGION_TILE_SIZE,
     };
 
     for room in rooms.iter_mut() {

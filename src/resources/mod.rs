@@ -7,11 +7,11 @@ pub struct WorldSeed{ pub seed: u64, }
 
 #[derive(Resource, Default)]
 pub struct ChunkPool {
-    pub chunks: HashMap<(i32, i32), Entity>, }
+    pub chunks: HashMap<Cords, Entity>, }
 
 #[derive(Resource, Default)]
 pub struct RegionPool {
-    pub regions: HashMap<(i32, i32), Entity>,
+    pub regions: HashMap<Cords, Entity>,
 }
 
 #[derive(Resource)]

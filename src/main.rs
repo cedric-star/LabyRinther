@@ -49,9 +49,9 @@ fn startup(
         Anchor::BOTTOM_LEFT,
     ));
 
-    let region_entity = commands.spawn(generate_region(seed.seed, 0, 0)).id();
+    let region_entity = commands.spawn(generate_region(seed.seed, Cords::new(0, 0))).id();
 
-    regions.regions.insert((0, 0), region_entity);
+    regions.regions.insert(Cords::new(0, 0), region_entity);
 
     let end_t = start_t.elapsed().as_millis();
     println!("startup_time: {}ms", end_t);
