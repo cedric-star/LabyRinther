@@ -14,8 +14,8 @@ pub const CHUNKS_LOADING: i32 = 20;
 pub const MOV_SPEED: f32 = 4.0 * 4.0;
 
 pub const PATH_PADDING: i32 = 1;// tatsächlicher weg ist dann 1 + padding * 2
-pub const NOISE_RANGE: i32 = 10;
-pub const MIN_STRAIGHT: i32 = 7;
+pub const NOISE_RANGE: i32 = 20;
+pub const MIN_STRAIGHT: i32 = 8;
 pub const MIN_GAP: i32 = 2; // wände zwischen path
 pub const EMPTY_ROOMS: usize = 4; //leere räume für extra pfade
 

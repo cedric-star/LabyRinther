@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use crate::constants::*;
+use std::collections::HashSet;
+use indexmap::IndexSet;
 
 #[derive(Component, Default)]
 pub struct Velocity {
@@ -80,15 +82,15 @@ impl Cords {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Component, Clone, Debug)]
 pub struct Region {
     pub cords: Cords,
-    pub rooms: Vec<Room>,
-    pub paths: Vec<Cords>,
-    pub connection_tiles: Vec<(Direction, Cords)>,
+    pub rooms: IndexSet<Room>,                    // war: Vec<Room>
+    pub paths: IndexSet<Cords>,
+    pub connection_tiles: IndexSet<(Direction, Cords)>, // ggf. IndexSet, s.u.
 }
 
-#[derive(Component, Debug)]
+#[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub struct Room {
     pub id: RoomId,
 
@@ -100,8 +102,7 @@ pub struct Room {
     pub entry_cords: Cords,
     pub room_type: RoomType,
 }
-
-#[derive(Component, Clone, Copy, Debug, PartialEq)]
+#[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum Direction {
     NORTH,
     EAST,
@@ -109,7 +110,7 @@ pub enum Direction {
     WEST,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum RoomType {
     SMALL,
     NORMAL,
@@ -138,5 +139,5 @@ pub enum ConnectionKind {
     Maze,
 }
 
-#[derive(Debug)]
+#[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub struct RoomId(pub i32);

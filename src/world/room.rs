@@ -6,12 +6,13 @@ use crate::constants::*;
 use crate::util::seed_service::*;
 use crate::world::region::*;
 use crate::util::finder::*;
-use std::collections::{VecDeque, HashMap, HashSet};
+use std::collections::{VecDeque, HashMap};
+use indexmap::IndexSet;
 
-pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
+pub fn generate_rooms(region_cords: &Cords, seed: u64) -> IndexSet<Room> {
     let room_count = (seed as usize % (MAX_ROOM_NUM - MIN_ROOM_NUM)) + MIN_ROOM_NUM;
 
-    let mut rooms = Vec::new();
+    let mut rooms = IndexSet::new();
 
     for id in 0..room_count {
         let id = id as i32;
@@ -25,7 +26,7 @@ pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
         let entry = direction_from_seed(room_seed);
         let entry_cords = entry_cords_from_direction_and_type(room_seed, x, y, room_type, entry);
 
-        rooms.push(Room {
+        rooms.insert(Room {
             id: RoomId(id as i32),
             cords: Cords {x, y},
             width,
@@ -41,49 +42,50 @@ pub fn generate_rooms(region_cords: &Cords, seed: u64) -> Vec<Room> {
 
 //nimm alle räume und erstelle eine liste an koordinaten
 //-> gemalte koordinaten sind pfad
-pub fn generate_room_paths(rooms: &Vec<Room>, seed: u64, region_cords: Cords) -> Vec<Cords> {
-    let mut paths: Vec<Cords> = Vec::new();
-    for (index, room) in rooms.iter().enumerate() {
-        let next_room = match rooms.get(index + 1) {
+pub fn generate_room_paths(rooms: &IndexSet<Room>, seed: u64, region_cords: Cords) -> IndexSet<Cords> {
+    let mut paths: IndexSet<Cords> = IndexSet::new();
+    let rooms_vec: Vec<&Room> = rooms.iter().collect();
+    for (index, room) in rooms_vec.iter().enumerate() {
+        let next_room = match rooms_vec.get(index + 1) {
             Some(room) => room,
             None => { break; },
         };
         let mut starts = get_moved_entry_cords(room);
-        let start_cords = starts.last().unwrap();
+        let start_cords = starts.iter().last().unwrap();
         let mut targets = get_moved_entry_cords(next_room);
-        let target_cords = targets.last().unwrap();
+        let target_cords = targets.iter().last().unwrap();
 
         println!("starts: {:?}", starts);
-        paths.append(&mut starts.clone());
-        paths.append(&mut targets.clone());
+        paths.extend(starts.clone());
+        paths.extend(targets.clone());
 
-        paths.append(&mut my_search((start_cords.clone(), target_cords.clone()), &rooms, seed, region_cords, true));
+        paths.extend(my_search((start_cords.clone(), target_cords.clone()), &rooms, seed, region_cords, true));
     }
 
     paths
 }
 
-fn get_moved_entry_cords(room: &Room) -> Vec<Cords> {
-    let mut cords = Vec::new();
+fn get_moved_entry_cords(room: &Room) -> IndexSet<Cords> {
+    let mut cords = IndexSet::new();
     match room.entry {
             Direction::NORTH => {
                 for i in 1..=(PATH_PADDING + 1) {
-                     cords.push(Cords {x: room.entry_cords.x, y: room.entry_cords.y + i});
+                     cords.insert(Cords {x: room.entry_cords.x, y: room.entry_cords.y + i});
                 }
             },
             Direction::EAST => {
                 for i in 1..=(PATH_PADDING + 1) {
-                     cords.push(Cords {x: room.entry_cords.x + i, y: room.entry_cords.y});
+                     cords.insert(Cords {x: room.entry_cords.x + i, y: room.entry_cords.y});
                 }
             }
             Direction::SOUTH => {
                 for i in 1..=(PATH_PADDING + 1) {
-                     cords.push(Cords {x: room.entry_cords.x, y: room.entry_cords.y - i});
+                     cords.insert(Cords {x: room.entry_cords.x, y: room.entry_cords.y - i});
                 }
             },
             Direction::WEST => {
                 for i in 1..=(PATH_PADDING + 1) {
-                     cords.push(Cords {x: room.entry_cords.x - i, y: room.entry_cords.y});
+                     cords.insert(Cords {x: room.entry_cords.x - i, y: room.entry_cords.y});
                 }
             },
     };

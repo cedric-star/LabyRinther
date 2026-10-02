@@ -7,6 +7,7 @@ name = "LabyRinther"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "indexmap",
 ]
 
 [[package]]

@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = "0.19"
+indexmap = "2.14.2"
 
 [profile.dev]
 opt-level = 1

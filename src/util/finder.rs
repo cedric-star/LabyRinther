@@ -3,7 +3,8 @@ use crate::resources::*;
 use crate::constants::*;
 use crate::util::seed_service::*;
 use crate::world::region::*;
-use std::collections::{VecDeque, HashMap, HashSet};
+use std::collections::{VecDeque, HashMap};
+use indexmap::IndexSet;
 
 //calc manhattan distance
 pub fn manhattan(a: &Cords, b: &Cords) -> i32 {
@@ -11,7 +12,7 @@ pub fn manhattan(a: &Cords, b: &Cords) -> i32 {
 }
 
 //check if a tile is blocked, checking collision with other rooms input path, region bounds
-pub fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords, region_cords: Cords) -> bool {
+pub fn is_blocked(c: Cords, rooms: &IndexSet<Room>, start: Cords, target: Cords, region_cords: Cords) -> bool {
 
     if c == start || c == target {
         return false;
@@ -38,13 +39,13 @@ pub fn is_blocked(c: Cords, rooms: &[Room], start: Cords, target: Cords, region_
 }
 
 //returning star like cords around a cords with a padding (starsize)
-pub fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
-        let mut neighbours: Vec<Cords> = Vec::new();
+pub fn get_neighnbour_cords(cords: Cords, padding: i32) -> IndexSet<Cords> {
+        let mut neighbours: IndexSet<Cords> = IndexSet::new();
     for dx in -padding..=padding {
         for dy in -padding..=padding {
             if dx == 0 && dy == 0 { continue; }
 
-            neighbours.push(Cords {x: cords.x + dx, y: cords.y + dy})
+            neighbours.insert(Cords {x: cords.x + dx, y: cords.y + dy});
         }
     }
     neighbours
@@ -52,14 +53,14 @@ pub fn get_neighnbour_cords(cords: Cords, padding: i32) -> Vec<Cords> {
 
 //similar to get_neighnbour_cords
 //returns only the touching neighbours of a cords
-pub fn get_touching_neighnbour_cords(cords: Cords) -> Vec<Cords> {
-    let mut neighbours: Vec<Cords> = Vec::new();
+pub fn get_touching_neighnbour_cords(cords: Cords) -> IndexSet<Cords> {
+    let mut neighbours: IndexSet<Cords> = IndexSet::new();
     let i = 1;
 
-        neighbours.push(Cords { x: cords.x, y: cords.y + i });
-        neighbours.push(Cords {x: cords.x + i, y: cords.y });
-        neighbours.push(Cords { x: cords.x, y: cords.y - i});
-        neighbours.push(Cords { x: cords.x - i, y: cords.y});
+        neighbours.insert(Cords { x: cords.x, y: cords.y + i });
+        neighbours.insert(Cords {x: cords.x + i, y: cords.y });
+        neighbours.insert(Cords { x: cords.x, y: cords.y - i});
+        neighbours.insert(Cords { x: cords.x - i, y: cords.y});
 
     neighbours
 }
@@ -70,6 +71,7 @@ pub fn calc_noise(seed: u64, cords: &Cords) -> i32 {
 }
 
 //calc, how long the last turn is away (with delta x and y, and run = distance)
+// Nimmt intern einen Vec, damit Indexierung möglich ist.
 pub fn straight_run(path: &[Cords]) -> (i32, i32, i32) {
     let n = path.len();
     if n < 2 {
@@ -90,6 +92,7 @@ pub fn straight_run(path: &[Cords]) -> (i32, i32, i32) {
 }
 
 // checking, if path is too close to itself
+// Nimmt intern einen Vec, damit Slicing möglich ist.
 pub fn too_close(c: Cords, path: &[Cords]) -> bool {
     let d = 2 * PATH_PADDING + 1 + MIN_GAP;
 
@@ -109,11 +112,12 @@ pub fn too_close(c: Cords, path: &[Cords]) -> bool {
 //
 //
 
-pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u64, region_cords: Cords, noise: bool) -> Vec<Cords> {
+pub fn my_search((start, target): (Cords, Cords), all_rooms: &IndexSet<Room>, seed: u64, region_cords: Cords, noise: bool) -> IndexSet<Cords> {
 
-    let mut visited: Vec<Cords> = vec![start];          // aktueller Weg
-    let mut seen: HashSet<Cords> = HashSet::new();      // alles je Besuchte, wird NIE gekürzt
-    let mut way_padding: Vec<Cords> = Vec::new();
+    // Interner Vec für Reihenfolge/Indexzugriff; IndexSet für O(1)-Lookup.
+    let mut visited: Vec<Cords> = vec![start];          // aktueller Weg (Reihenfolge wichtig!)
+    let mut seen: IndexSet<Cords> = IndexSet::new();      // alles je Besuchte, wird NIE gekürzt
+    let mut way_padding: IndexSet<Cords> = IndexSet::new();
     seen.insert(start);
 
     // Fallback: bester Stand, falls kein Weg gefunden wird
@@ -137,7 +141,7 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
             break;
         }
 
-        let mut candidates: Vec<Cords> = get_touching_neighnbour_cords(last)
+        let mut candidates: IndexSet<Cords> = get_touching_neighnbour_cords(last)
             .into_iter()
             .filter(|n| !seen.contains(n))
             .filter(|n| !is_blocked(*n, all_rooms, start, target, region_cords))
@@ -155,7 +159,7 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
             let ahead = Cords { x: last.x + dx, y: last.y + dy };
             // nur erzwingen, wenn geradeaus möglich ist und nicht vom Ziel wegführt
             if candidates.contains(&ahead) && manhattan(&ahead, &target) <= manhattan(&last, &target) {
-                candidates = vec![ahead];
+                candidates = IndexSet::from([ahead]);
             }
         }
 
@@ -187,8 +191,8 @@ pub fn my_search((start, target): (Cords, Cords), all_rooms: &Vec<Room>, seed: u
 
     // Padding erst am Ende, nur für den tatsächlichen Weg
     for c in &visited {
-        way_padding.append(&mut get_neighnbour_cords(*c, PATH_PADDING));
+        way_padding.extend(get_neighnbour_cords(*c, PATH_PADDING));
     }
-    visited.append(&mut way_padding);
-    visited
+    visited.extend(way_padding);
+    visited.into_iter().collect()
 }

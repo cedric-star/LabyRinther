@@ -14,6 +14,7 @@ use world::region::*;
 use components::*;
 use resources::*;
 use constants::*;
+use std::time::*;
 
 fn startup(
     mut commands: Commands,
@@ -21,6 +22,8 @@ fn startup(
     mut regions: ResMut<RegionPool>,
     seed: Res<WorldSeed>,
 ) {
+    let start_t = Instant::now();
+
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
@@ -50,6 +53,9 @@ fn startup(
     let region_entity = commands.spawn(generate_region(seed.seed, 0 - REGION_TILE_SIZE/2, 0 - REGION_TILE_SIZE/2 )).id();
 
     regions.regions.insert((0, 0), region_entity);
+
+    let end_t = start_t.elapsed().as_millis();
+    println!("startup_time: {}ms", end_t);
 }
 
 fn controls(

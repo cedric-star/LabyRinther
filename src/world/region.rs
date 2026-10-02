@@ -4,6 +4,7 @@ use crate::constants::*;
 use crate::components::*;
 use crate::util::seed_service::*;
 use crate::util::finder::*;
+use indexmap::IndexSet;
 
 pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
     let init_filler_tile = Tile::Wall;
@@ -25,8 +26,8 @@ pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
     return init_filler_tile;
 }
 
-fn set_region_connections(cords: Cords, seed: u64) -> Vec<(Direction, Cords)> {
-    let mut connections: Vec<(Direction, Cords)> = Vec::new();
+fn set_region_connections(cords: Cords, seed: u64) -> IndexSet<(Direction, Cords)> {
+    let mut connections: IndexSet<(Direction, Cords)> = IndexSet::new();
 
     let directions: Vec<Direction> = vec![Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST];
     for (i, direction) in directions.iter().enumerate() {
@@ -39,13 +40,13 @@ fn set_region_connections(cords: Cords, seed: u64) -> Vec<(Direction, Cords)> {
             let val = ((iter_seed % (REGION_TILE_SIZE - 8) as u64) + 4) as i32;
 
             match direction {
-                Direction::NORTH => {connections.push((*direction, Cords { x: cords.x + val, y: cords.y + REGION_TILE_SIZE})); }
+                Direction::NORTH => {connections.insert((*direction, Cords { x: cords.x + val, y: cords.y + REGION_TILE_SIZE})); }
 
-                Direction::EAST => {connections.push((*direction, Cords { x: cords.x + REGION_TILE_SIZE, y: cords.y + val})); }
+                Direction::EAST => {connections.insert((*direction, Cords { x: cords.x + REGION_TILE_SIZE, y: cords.y + val})); }
 
-                Direction::SOUTH => {connections.push((*direction, Cords { x: cords.x + val, y: cords.y})); }
+                Direction::SOUTH => {connections.insert((*direction, Cords { x: cords.x + val, y: cords.y})); }
 
-                Direction::WEST => {connections.push((*direction, Cords { x: cords.x, y: cords.y + val})); }
+                Direction::WEST => {connections.insert((*direction, Cords { x: cords.x, y: cords.y + val})); }
             }
         }
     }
@@ -53,8 +54,8 @@ fn set_region_connections(cords: Cords, seed: u64) -> Vec<(Direction, Cords)> {
     connections
 }
 
-fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<(Direction, Cords)>, region_bounds: Cords, seed: u64, rooms: &Vec<Room>) -> Vec<Cords> {
-    let mut paths: Vec<Cords> = Vec::new();
+fn connect_connections_2_paths(current_paths: &IndexSet<Cords>, connections: &IndexSet<(Direction, Cords)>, region_bounds: Cords, seed: u64, rooms: &IndexSet<Room>) -> IndexSet<Cords> {
+    let mut paths: IndexSet<Cords> = IndexSet::new();
 
     for (direction, connection) in connections {
         let mut connection = connection.clone();
@@ -71,7 +72,7 @@ fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<(Di
         let my_seed = calc_any_hash_2(seed, connection.x, connection.y);
 
         let mut connection_path = my_search((connection, target), rooms, my_seed, region_bounds, true);
-        paths.append(&mut connection_path);
+        paths.extend(connection_path);
 
         println!("\n");
     }
@@ -79,7 +80,7 @@ fn connect_connections_2_paths(current_paths: &Vec<Cords>, connections: &Vec<(Di
     paths
 }
 
-pub fn find_nearest(c: &Cords, cords: &Vec<Cords>) -> Cords {
+pub fn find_nearest(c: &Cords, cords: &IndexSet<Cords>) -> Cords {
     match cords.iter().min_by_key(|target| manhattan(c, target)) {
         Some(goal) => {return *goal;}
         None => {
@@ -91,7 +92,7 @@ pub fn find_nearest(c: &Cords, cords: &Vec<Cords>) -> Cords {
 }
 
 //returns x,y and x+w,y+h in a tupel
-fn find_empty_spaces(paths: &Vec<Cords>, region_cords: Cords, n: usize) -> Vec<(Cords, Cords)> {
+fn find_empty_spaces(paths: &IndexSet<Cords>, region_cords: Cords, n: usize) -> Vec<(Cords, Cords)> {
     let size = REGION_TILE_SIZE as usize;
     let mut grid = vec![vec![false; size]; size]; // grid[y][x], true = belegt
 
@@ -163,8 +164,8 @@ fn largest_empty_rect(grid: &Vec<Vec<bool>>, size: usize) -> Option<(usize, usiz
 }
 
 //sucht nach größeren flächen und mahlt senk- und waagerechte verbindungen (lange strecken)
-fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64, rooms: &Vec<Room>) -> Vec<Cords> {
-    let mut arr: Vec<Cords> = Vec::new();
+fn set_connection_lines(cords: &IndexSet<Cords>, region_cords: Cords, seed: u64, rooms: &IndexSet<Room>) -> IndexSet<Cords> {
+    let mut arr: IndexSet<Cords> = IndexSet::new();
     for mut square in find_empty_spaces(cords, region_cords, EMPTY_ROOMS) {
         let seed = calc_any_hash_2(seed, square.0.x, square.0.y);
         let path_num = (seed % (MAX_EMPTY_PATHS - MIN_EMPTY_PATHS + 1)) + MIN_EMPTY_PATHS;
@@ -186,9 +187,9 @@ fn set_connection_lines(cords: &Vec<Cords>, region_cords: Cords, seed: u64, room
 
             let nearest = find_nearest(&my_start, cords);
 
-            arr.append(&mut my_search((my_start, nearest), rooms, seed, region_cords, true));
+            arr.extend(my_search((my_start, nearest), rooms, seed, region_cords, true));
 
-            arr.push(my_start);
+            arr.insert(my_start);
         }
     }
     arr
@@ -203,17 +204,17 @@ pub fn generate_region(
     let cords = Cords {x, y};
     let rooms = generate_rooms(&cords, world_seed);
     //println!("generated init rooms:\n{:?}", rooms);
-    let mut paths = generate_room_paths(&rooms, world_seed, cords);
+    let mut paths: IndexSet<Cords> = generate_room_paths(&rooms, world_seed, cords);
 
-    let connection_tiles = set_region_connections(cords, world_seed);
+    let mut connection_tiles: IndexSet<(Direction, Cords)> = set_region_connections(cords, world_seed);
 
-    paths.append(&mut connect_connections_2_paths(&paths, &connection_tiles, cords, world_seed, &rooms));
+    paths.extend(connect_connections_2_paths(&paths, &connection_tiles, cords, world_seed, &rooms));
 
-    let mut more_connections = set_connection_lines(&paths, cords, world_seed, &rooms);
+    let mut more_connections: IndexSet<Cords> = set_connection_lines(&paths, cords, world_seed, &rooms);
 
     println!("region boundings: ({:?}) -> ({:?})", cords, Cords {x: cords.x+REGION_TILE_SIZE, y: cords.y+REGION_TILE_SIZE});
 
-    paths.append(&mut more_connections);
+    paths.extend(more_connections);
 
     Region {
         cords,
