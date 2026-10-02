@@ -98,19 +98,68 @@ fn controls(
 
 }
 
-fn movement(
-    mut query_player: Query<(&mut Transform, &Velocity), With<Player>>
-)
-     {
+fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
+    let cs = CHUNK_SIZE as i32;
+    let key = Cords::new(tx.div_euclid(cs), ty.div_euclid(cs));
 
-    for (mut transform, velocity) in &mut query_player {
+    // nicht geladener Chunk gilt als Wand
+    let Some(&entity) = pool.chunks.get(&key) else { return true; };
+    let Ok(chunk) = chunks.get(entity) else { return true; };
 
-        transform.translation.x += velocity.x;
-        transform.translation.y += velocity.y;
-    }
-
+    chunk.tiles[tx.rem_euclid(cs) as usize][ty.rem_euclid(cs) as usize] == Tile::Wall
 }
 
+fn collides(x: f32, y: f32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
+    let x0 = (x / TILE_SIZE).floor() as i32;
+    let x1 = ((x + PLAYER_WIDTH - 0.01) / TILE_SIZE).floor() as i32;
+    let y0 = (y / TILE_SIZE).floor() as i32;
+    let y1 = ((y + PLAYER_HEIGHT - 0.01) / TILE_SIZE).floor() as i32;
+
+    for tx in x0..=x1 {
+        for ty in y0..=y1 {
+            if is_wall(tx, ty, pool, chunks) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn movement(
+    mut query_player: Query<(&mut Transform, &Velocity), With<Player>>,
+    chunk_pool: Res<ChunkPool>,
+    chunks: Query<&Chunk>,
+) {
+    for (mut transform, velocity) in &mut query_player {
+        let mut pos = transform.translation;
+
+        // X-Achse
+        let nx = pos.x + velocity.x;
+        if collides(nx, pos.y, &chunk_pool, &chunks) {
+            if velocity.x > 0.0 {
+                pos.x = ((nx + PLAYER_WIDTH) / TILE_SIZE).floor() * TILE_SIZE - PLAYER_WIDTH;
+            } else if velocity.x < 0.0 {
+                pos.x = ((nx / TILE_SIZE).floor() + 1.0) * TILE_SIZE;
+            }
+        } else {
+            pos.x = nx;
+        }
+
+        // Y-Achse
+        let ny = pos.y + velocity.y;
+        if collides(pos.x, ny, &chunk_pool, &chunks) {
+            if velocity.y > 0.0 {
+                pos.y = ((ny + PLAYER_HEIGHT) / TILE_SIZE).floor() * TILE_SIZE - PLAYER_HEIGHT;
+            } else if velocity.y < 0.0 {
+                pos.y = ((ny / TILE_SIZE).floor() + 1.0) * TILE_SIZE;
+            }
+        } else {
+            pos.y = ny;
+        }
+
+        transform.translation = pos;
+    }
+}
 fn mov_cam(mut query_cam: Query<(&mut Transform, &Velocity), With<Camera2d>>) {
 
     for (mut transform, velocity) in &mut query_cam {
