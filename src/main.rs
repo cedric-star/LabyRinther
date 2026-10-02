@@ -178,24 +178,47 @@ enum GameState {
     Ingame,
 }
 
-fn button_scene() -> impl Scene {
-  bsn! {
-    Button
-    Node {
-      width: px(150),
-      height: px(65),
-      justify_content: JustifyContent::Center,
-      align_items: AlignItems::Center,
-    }
-    BackgroundColor(Color::BLACK)
-    Children [
-      (
-        Text::new("Button")
-        TextColor(Color::srgb(0.9, 0.9, 0.9))
-      )
-    ]
-  }
+fn button_scene(mut commands: &mut Commands) {
+
+    let container = (
+        BackgroundColor(Color::srgba(0.0,0.0,0.0,0.65)),
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+    );
+
+    let quit_btn = (
+        Button,
+        BackgroundColor(Color::srgb(1.0,0.0,0.0)),
+        Node {
+            width: Val::Percent(30.0),
+            height: Val::Percent(10.0),
+            top: Val::Percent(10.9),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        Text::new("Here is some text"),
+        TextColor(Color::BLACK),
+        TextLayout::justify(Justify::Center),
+        TextFont{
+            font_size: vh(3.0).into(),
+            ..default()
+        }
+
+    );
+
+commands.spawn((container, children![(quit_btn)]));
+
 }
+
+fn spawn_ui(mut commands: Commands) {
+    button_scene(&mut commands);
+}
+
 fn main() {
 
     App::new()
@@ -204,7 +227,7 @@ fn main() {
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
         .insert_resource(WorldSeed{ seed: 3 })
-        .add_systems(Startup, startup)
+        .add_systems(Startup, (startup, spawn_ui))
         .add_systems(FixedUpdate, (controls, load_map))
         .add_systems(Update, (movement, mov_cam))
         .run();
