@@ -2,6 +2,13 @@ use bevy::prelude::*;
 use crate::constants::*;
 use std::collections::HashSet;
 
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum GameState {
+    #[default]
+    Welcome,
+    InGame,
+}
+
 #[derive(Component, Default)]
 pub struct Velocity {
     pub x: f32,
