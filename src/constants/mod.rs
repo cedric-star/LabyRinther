@@ -1,18 +1,5 @@
 use bevy::prelude::*;
 
-#[derive(Resource)]
-pub struct GameSettings {
-    pub MOV_SPEED: f32,
-}
-
-impl Default for GameSettings {
-    fn default() -> Self {
-        Self {
-            MOV_SPEED: 4.0,
-        }
-    }
-}
-
 pub const CAMERA_MULT: f32 = 2.0;
 
 pub const CAMERA_WIDTH: f32 = 480.0 * CAMERA_MULT;

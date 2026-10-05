@@ -8,6 +8,7 @@ use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
 use std::time::*;
+use crate::settings::settings_screen::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app

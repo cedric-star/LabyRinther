@@ -7,6 +7,7 @@ pub enum GameState {
     #[default]
     Welcome,
     InGame,
+    Settings,
 }
 
 #[derive(Component, Default)]
