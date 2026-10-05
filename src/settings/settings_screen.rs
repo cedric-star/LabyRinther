@@ -15,6 +15,8 @@ use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
 use std::time::*;
+use crate::util::ui::constants::*;
+use crate::util::ui::buttons::*;
 
 #[derive(Resource)]
 pub struct GameSettings {
@@ -81,7 +83,12 @@ pub fn settings_plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Settings), settings_setup)
         .add_systems(
             Update,
-            (go_back_button, update_slider_pos, update_value_texts).run_if(in_state(GameState::Settings)),
+            (
+                go_back_button,
+                update_slider_pos,
+                update_value_texts,
+                button_visuals,
+            ).run_if(in_state(GameState::Settings)),
         )
         .add_observer(on_setting_change);
 }
@@ -103,7 +110,7 @@ fn settings_setup(mut commands: Commands, settings: Res<GameSettings>) {
                 row_gap: px(10),
                 ..default()
             },
-            BackgroundColor(Color::srgb(0.0, 0.0, 0.0)),
+            BackgroundColor(BG_COL),
         ))
         .id();
 

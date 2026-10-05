@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::app::*;
 use crate::components::*;
+use crate::util::ui::buttons::*;
+use crate::util::ui::constants::*;
 
 pub fn welcome_plugin(app: &mut App) {
     app
@@ -9,6 +11,7 @@ pub fn welcome_plugin(app: &mut App) {
             welcome_button,
             quit_button,
             settings_button,
+            button_visuals,
         ).run_if(in_state(GameState::Welcome)));
 }
 
@@ -21,7 +24,9 @@ struct QuitButton;
 #[derive(Component)]
 struct SettingsButton;
 
-fn welcome_setup(mut commands: Commands) {
+fn welcome_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let images = ButtonImages::load(&asset_server);
+
     commands.spawn((
         DespawnOnExit(GameState::Welcome),
         Node {
@@ -32,92 +37,63 @@ fn welcome_setup(mut commands: Commands) {
             flex_direction: FlexDirection::Column,
             ..default()
         },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.65)),
-        children![(
-            Button,
-            StartButton,
-            Node {
-                width: px(300),
-                height: px(65),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
-            children![(
-                Text::new("Start"),
-                TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            )],
-        ),(
-            Button,
-            SettingsButton,
-            Node {
-                width: px(300),
-                height: px(65),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
-            children![(
-                Text::new("Settings"),
-                TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            )],
-
-        ),(
-            Button,
-            QuitButton,
-            Node {
-                width: px(300),
-                height: px(65),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(1.0, 0.15,0.15)),
-            children![(
-                Text::new("Quit"),
-                TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            )],
-
-        )],
+        BackgroundColor(BG_COL),
+        children![
+            my_button(StartButton, "Start", 100.0, &images),
+            my_button(SettingsButton, "Settings", 100.0, &images),
+            my_button(QuitButton, "Quit", 100.0, &images),
+        ],
     ));
 }
-
 fn welcome_button(
     query: Query<&Interaction, (Changed<Interaction>, With<StartButton>)>,
+    mut was_pressed: Local<bool>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     for interaction in &query {
-        if *interaction == Interaction::Pressed {
-            println!("ingame!");
-            next_state.set(GameState::InGame);
+        match *interaction {
+            Interaction::Pressed => *was_pressed = true,
+            Interaction::Hovered if *was_pressed => {
+                *was_pressed = false;
+                println!("ingame!");
+                next_state.set(GameState::InGame);
+            }
+            _ => *was_pressed = false,
         }
     }
 }
 
 fn quit_button(
     query: Query<&Interaction, (Changed<Interaction>, With<QuitButton>)>,
+    mut was_pressed: Local<bool>,
     mut app_exit_writer: MessageWriter<AppExit>,
 ) {
     for interaction in &query {
-        if *interaction == Interaction::Pressed {
-            println!("exit!!!");
-            app_exit_writer.write(AppExit::Success);
+        match *interaction {
+            Interaction::Pressed => *was_pressed = true,
+            Interaction::Hovered if *was_pressed => {
+                *was_pressed = false;
+                println!("exit!!!");
+                app_exit_writer.write(AppExit::Success);
+            }
+            _ => *was_pressed = false,
         }
     }
 }
 
 fn settings_button(
     query: Query<&Interaction, (Changed<Interaction>, With<SettingsButton>)>,
+    mut was_pressed: Local<bool>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     for interaction in &query {
-        if *interaction == Interaction::Pressed {
-            next_state.set(GameState::Settings);
+        match *interaction {
+            Interaction::Pressed => *was_pressed = true,
+            Interaction::Hovered if *was_pressed => {
+                *was_pressed = false;
+                next_state.set(GameState::Settings);
+            }
+            _ => *was_pressed = false,
         }
     }
 }
