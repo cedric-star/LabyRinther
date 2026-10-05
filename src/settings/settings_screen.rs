@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 use bevy::prelude::*;
 use bevy::sprite::*;
 use bevy::camera::*;
@@ -7,7 +5,10 @@ use bevy::window::*;
 use bevy::input_focus::tab_navigation::{TabIndex, TabNavigationPlugin};
 use bevy::input_focus::InputDispatchPlugin;
 use bevy::picking::hover::Hovered;
-use bevy::ui_widgets::*;
+use bevy::ui_widgets::{
+    Slider, SliderPlugin, SliderRange, SliderThumb, SliderValue, TrackClick, UiWidgetsPlugins,
+    ValueChange,
+};
 use crate::world::world_generator::*;
 use crate::world::region::*;
 use crate::components::*;
@@ -58,12 +59,11 @@ struct DemoSlider;
 #[derive(Component)]
 struct DemoSliderThumb;
 
+#[derive(Component)]
+struct SettingValueText(fn(&GameSettings) -> u64);
+
 const SLIDER_TRACK: Color = Color::srgb(0.35, 0.35, 0.35);
 const SLIDER_THUMB: Color = Color::srgb(0.9, 0.9, 0.9);
-
-// ---------------------------------------------------------------------------
-// Plugin
-// ---------------------------------------------------------------------------
 
 pub fn settings_plugin(app: &mut App) {
     // Widget-Plugins nur hinzufügen, falls sie nicht schon woanders aktiv sind.
@@ -81,7 +81,7 @@ pub fn settings_plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Settings), settings_setup)
         .add_systems(
             Update,
-            (go_back_button, update_slider_pos).run_if(in_state(GameState::Settings)),
+            (go_back_button, update_slider_pos, update_value_texts).run_if(in_state(GameState::Settings)),
         )
         .add_observer(on_setting_change);
 }
@@ -156,7 +156,13 @@ fn setting_row(b: SettingBinding, settings: &GameSettings) -> impl Bundle {
                 slider(b.min as f32, b.max as f32, (b.get)(settings) as f32),
                 b,
             ),
-        ],
+            (
+                Text::new((b.get)(settings).to_string()),
+                TextFont { font_size: FontSize::Px(33.0), ..default() },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                Node { width: px(60), ..default() }, // feste Breite, damit das Layout nicht springt
+                SettingValueText(b.get),
+)        ],
     )
 }
 
@@ -271,5 +277,17 @@ fn go_back_button(
             println!("go back to menu");
             next_state.set(GameState::Welcome);
         }
+    }
+}
+
+fn update_value_texts(
+    settings: Res<GameSettings>,
+    mut texts: Query<(&SettingValueText, &mut Text)>,
+) {
+    if !settings.is_changed() {
+        return;
+    }
+    for (value, mut text) in &mut texts {
+        text.0 = (value.0)(&settings).to_string();
     }
 }
