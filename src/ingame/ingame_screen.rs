@@ -73,29 +73,29 @@ fn controls(
         cam_vel.y = 0.0;
 
         let cam_pos = cam_transform.translation;
-
+        let MOV_SPEED = s.MOV_SPEED as f32;
         if keys.pressed(KeyCode::KeyW) {
-            velocity.y = s.MOV_SPEED;
+            velocity.y = MOV_SPEED;
             if transform.translation.y + PLAYER_HEIGHT >= cam_pos.y + PLAYER_WALK_BORDER_HEIGHT {
-                cam_vel.y = s.MOV_SPEED;
+                cam_vel.y = MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyS) {
-            velocity.y = -s.MOV_SPEED;
+            velocity.y = -MOV_SPEED;
             if transform.translation.y <= cam_pos.y - PLAYER_WALK_BORDER_HEIGHT {
-                cam_vel.y = -s.MOV_SPEED;
+                cam_vel.y = -MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyA) {
-            velocity.x = -s.MOV_SPEED;
+            velocity.x = -MOV_SPEED;
             if transform.translation.x <= cam_pos.x - PLAYER_WALK_BORDER_WIDTH {
-                cam_vel.x = -s.MOV_SPEED;
+                cam_vel.x = -MOV_SPEED;
             }
         }
         if keys.pressed(KeyCode::KeyD) {
-            velocity.x = s.MOV_SPEED;
+            velocity.x = MOV_SPEED;
             if transform.translation.x + PLAYER_WIDTH >= cam_pos.x + PLAYER_WALK_BORDER_WIDTH {
-                cam_vel.x = s.MOV_SPEED;
+                cam_vel.x = MOV_SPEED;
             }
         }
 
