@@ -25,7 +25,8 @@ struct QuitButton;
 struct SettingsButton;
 
 fn welcome_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let images = ButtonImages::load(&asset_server);
+    let btn_images = ButtonImages::load_btn(&asset_server);
+    let radio_images = ButtonImages::load_btn_radio(&asset_server);
 
     commands.spawn((
         DespawnOnExit(GameState::Welcome),
@@ -39,9 +40,9 @@ fn welcome_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         BackgroundColor(BG_COL),
         children![
-            my_button(StartButton, "Start", 100.0, &images),
-            my_button(SettingsButton, "Settings", 100.0, &images),
-            my_button(QuitButton, "Quit", 100.0, &images),
+            my_button(StartButton, "Start", 100.0, &btn_images),
+            my_button(SettingsButton, "Settings", 100.0, &btn_images),
+            my_button(QuitButton, "Quit", 100.0, &btn_images),
         ],
     ));
 }

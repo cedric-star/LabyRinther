@@ -10,6 +10,12 @@ pub enum GameState {
     Settings,
 }
 
+#[derive(Resource, Default, Debug)]
+pub struct LastState(pub Option<GameState>);
+
+#[derive(Component)]
+pub struct GameEntity;
+
 #[derive(Component, Default)]
 pub struct Velocity {
     pub x: f32,

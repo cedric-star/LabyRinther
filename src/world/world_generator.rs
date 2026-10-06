@@ -41,7 +41,7 @@ pub fn load_map(
 
         for c in out_of_scope {
             if let Some(entity) = pool.chunks.remove(&c) {
-                commands.entity(entity).despawn(); // despawnt in Bevy 0.16+ auch die Kinder (Sprites)
+                commands.entity(entity).despawn();
             }
         }
         for c_view_x in -s.chunks_loading..=s.chunks_loading {
@@ -61,7 +61,7 @@ pub fn load_map(
                 let region_entity = regions.regions.get(&region_key).copied();
                 let Some(region_entity) = region_entity else {
                     let e = commands
-                        .spawn(generate_region(seed.seed, region_key))
+                        .spawn((GameEntity, generate_region(seed.seed, region_key)))
                         .id();
                     regions.regions.insert(region_key, e);
                     continue; // Region ist erst im nächsten Frame abfragbar
@@ -75,6 +75,7 @@ pub fn load_map(
 
                 let chunk_entity = commands
                     .spawn((
+                        GameEntity,
                         Chunk { tiles, cords: chunk_cords },
                         Transform::from_xyz(chunk_world_pos.x, chunk_world_pos.y, 0.0),
                         Visibility::default(),
@@ -85,6 +86,7 @@ pub fn load_map(
                     for (local_x, row) in tiles.iter().enumerate() {
                         for (local_y, tile) in row.iter().enumerate() {
                             parent.spawn((
+                                GameEntity,
                                 Sprite {
                                     image: asset_server.load(tile.asset()),
                                     custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),

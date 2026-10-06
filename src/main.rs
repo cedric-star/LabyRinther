@@ -57,17 +57,28 @@ fn update_cam(
     }
 }
 
+fn track_previous_state(
+    mut reader: MessageReader<StateTransitionEvent<GameState>>,
+    mut previous: ResMut<LastState>,
+) {
+    for event in reader.read() {
+        previous.0 = event.exited.clone();
+    }
+}
+
 fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .init_state::<GameState>()
         .init_resource::<GameSettings>()
+        .init_resource::<LastState>()
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
         .insert_resource(WorldSeed{ seed: 3 })
         .add_systems(Startup, setup_cam)
-        .add_systems(Update, update_cam)
+        .add_systems(StateTransition, track_previous_state.before(EnterSchedules::<GameState>::default()),)
+        .add_systems(Update, (update_cam, track_previous_state))
         .add_plugins((welcome_plugin, ingame_plugin, settings_plugin))
         .run();
 }

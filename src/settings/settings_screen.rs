@@ -7,7 +7,7 @@ use bevy::input_focus::InputDispatchPlugin;
 use bevy::picking::hover::Hovered;
 use bevy::ui_widgets::{
     Slider, SliderPlugin, SliderRange, SliderThumb, SliderValue, TrackClick, UiWidgetsPlugins,
-    ValueChange,
+    ValueChange, SliderDragState,
 };
 use crate::world::world_generator::*;
 use crate::world::region::*;
@@ -121,9 +121,6 @@ struct DemoSliderThumb;
 #[derive(Component)]
 struct SettingValueText(SettingBinding);
 
-const SLIDER_TRACK: Color = Color::srgb(0.35, 0.35, 0.35);
-const SLIDER_THUMB: Color = Color::srgb(0.9, 0.9, 0.9);
-
 pub fn settings_plugin(app: &mut App) {
     // Widget-Plugins nur hinzufügen, falls sie nicht schon woanders aktiv sind.
     if !app.is_plugin_added::<SliderPlugin>() {
@@ -145,6 +142,7 @@ pub fn settings_plugin(app: &mut App) {
                 update_slider_pos,
                 update_value_texts,
                 button_visuals,
+                slider_thumb_visuals,
             ).run_if(in_state(GameState::Settings)),
         )
         .add_observer(on_setting_change);
@@ -154,7 +152,19 @@ pub fn settings_plugin(app: &mut App) {
 // UI-Aufbau
 // ---------------------------------------------------------------------------
 
-fn settings_setup(mut commands: Commands, settings: Res<GameSettings>) {
+fn settings_setup(
+    mut commands: Commands,
+    settings: Res<GameSettings>,
+    asset_server: Res<AssetServer>,
+    previous: Res<LastState>,
+) {
+    let radio_images = ButtonImages::load_btn_radio(&asset_server);
+    let prev_text = match previous.0 {
+        Some(GameState::Welcome) => { "Go Back" },
+        Some(GameState::InGame) => { "Unpause" },
+        _ => { "nonono not nog ):" },
+    };
+
     let root = commands
         .spawn((
             DespawnOnExit(GameState::Settings),
@@ -173,7 +183,7 @@ fn settings_setup(mut commands: Commands, settings: Res<GameSettings>) {
 
     commands.entity(root).with_children(|p| {
         for b in SETTINGS {
-            p.spawn(setting_row(*b, &settings));
+            p.spawn(setting_row(*b, &settings, &radio_images));
         }
 
         p.spawn((
@@ -188,7 +198,7 @@ fn settings_setup(mut commands: Commands, settings: Res<GameSettings>) {
             },
             BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
             children![(
-                Text::new("Go Back"),
+                Text::new(prev_text),
                 TextFont { font_size: FontSize::Px(33.0), ..default() },
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             )],
@@ -197,7 +207,8 @@ fn settings_setup(mut commands: Commands, settings: Res<GameSettings>) {
 }
 
 /// Eine Zeile: Label links, Slider rechts. Das Binding sitzt direkt auf dem Slider.
-fn setting_row(b: SettingBinding, settings: &GameSettings) -> impl Bundle {
+fn setting_row(b: SettingBinding, settings: &GameSettings, imgs: &ButtonImages) -> impl Bundle {
+
     (
         Node {
             width: percent(80),
@@ -217,7 +228,7 @@ fn setting_row(b: SettingBinding, settings: &GameSettings) -> impl Bundle {
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ),
             (
-                slider(b.min, b.max, (b.get)(settings)),
+                slider(b.min, b.max, (b.get)(settings), DemoSlider, DemoSliderThumb, &imgs),
                 b,
             ),
             (
@@ -227,70 +238,6 @@ fn setting_row(b: SettingBinding, settings: &GameSettings) -> impl Bundle {
                 Node { width: px(60), ..default() }, // feste Breite, damit das Layout nicht springt
                 SettingValueText(b),
 )        ],
-    )
-}
-
-fn slider(min: f32, max: f32, value: f32) -> impl Bundle {
-    (
-        Node {
-            display: Display::Flex,
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Stretch,
-            justify_items: JustifyItems::Center,
-            column_gap: px(4),
-            height: px(12),
-            width: percent(30),
-            ..default()
-        },
-        Name::new("Slider"),
-        Hovered::default(),
-        DemoSlider,
-        Slider {
-            track_click: TrackClick::Snap,
-            ..Default::default()
-        },
-        SliderValue(value),
-        SliderRange::new(min, max),
-        TabIndex(0),
-        Children::spawn((
-            // Slider background rail
-            Spawn((
-                Node {
-                    height: px(6),
-                    border_radius: BorderRadius::all(px(3)),
-                    ..default()
-                },
-                BackgroundColor(SLIDER_TRACK),
-            )),
-            // Unsichtbarer Track, damit der Thumb per Prozent positioniert werden kann.
-            // 12px kürzer, damit der Thumb Platz hat.
-            Spawn((
-                Node {
-                    display: Display::Flex,
-                    position_type: PositionType::Absolute,
-                    left: px(0),
-                    right: px(12),
-                    top: px(0),
-                    bottom: px(0),
-                    ..default()
-                },
-                children![(
-                    DemoSliderThumb,
-                    SliderThumb,
-                    Node {
-                        display: Display::Flex,
-                        width: px(12),
-                        height: px(12),
-                        position_type: PositionType::Absolute,
-                        left: percent(0), // wird von update_slider_pos gesetzt
-                        border_radius: BorderRadius::MAX,
-                        ..default()
-                    },
-                    BackgroundColor(SLIDER_THUMB),
-                )],
-            )),
-        )),
     )
 }
 
@@ -344,11 +291,15 @@ fn update_slider_pos(
 fn go_back_button(
     query: Query<&Interaction, (Changed<Interaction>, With<GoBackButton>)>,
     mut next_state: ResMut<NextState<GameState>>,
+    previous: Res<LastState>,
 ) {
     for interaction in &query {
         if *interaction == Interaction::Pressed {
-            println!("go back to menu");
-            next_state.set(GameState::Welcome);
+            println!("go back to {:?}", previous);
+            match previous.0 {
+                Some(GameState::InGame) => next_state.set(GameState::InGame),
+                _ => next_state.set(GameState::Welcome)
+            }
         }
     }
 }

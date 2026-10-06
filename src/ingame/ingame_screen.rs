@@ -12,7 +12,11 @@ use crate::settings::settings_screen::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
-        .add_systems(OnEnter(GameState::InGame), startup)
+        .add_systems(
+            OnEnter(GameState::InGame),
+            startup.run_if(not(any_with_component::<Player>)),
+        )
+        .add_systems(OnEnter(GameState::Welcome), cleanup_game)
         .add_systems(
             FixedUpdate,
             (controls, load_map).run_if(in_state(GameState::InGame)),
@@ -31,6 +35,7 @@ fn startup(
     let start_t = Instant::now();
 
     commands.spawn((
+        GameEntity,
         Player {id: 0, x: 0.0, y: 0.0},
         Sprite {
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
@@ -50,6 +55,28 @@ fn startup(
     println!("startup_time: {}ms", end_t);
 }
 
+fn cleanup_game(
+    mut commands: Commands,
+    entities: Query<Entity, With<GameEntity>>,
+    mut regions: ResMut<RegionPool>,
+    mut chunk_pool: ResMut<ChunkPool>,
+    mut cams: Query<(&mut Transform, &mut Velocity), With<Camera2d>>,
+) {
+    for e in &entities {
+        commands.entity(e).despawn();
+    }
+    regions.regions.clear();
+    chunk_pool.chunks.clear();
+
+    // Kamera zurücksetzen
+    for (mut t, mut v) in &mut cams {
+        t.translation = Vec3::new(0.0, 0.0, 1.0);
+        v.x = 0.0;
+        v.y = 0.0;
+    }
+}
+
+//
 //
 //
 //
@@ -66,6 +93,7 @@ fn controls(
     mut cam_vel: Single<&mut Velocity, (With<Camera2d>, Without<Player>)>,
     cam_transform: Single<&Transform, (With<Camera2d>, Without<Player>)>,
     s: Res<GameSettings>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
         velocity.x = 0.0;
         velocity.y = 0.0;
@@ -98,7 +126,9 @@ fn controls(
                 cam_vel.x = mov_speed;
             }
         }
-
+    if keys.pressed(KeyCode::Escape) {
+        next_state.set(GameState::Settings);
+    }
 }
 
 fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
