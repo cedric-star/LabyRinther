@@ -1,21 +1,7 @@
 use bevy::prelude::*;
 
-pub const CAMERA_MULT: f32 = 2.0;
-
-pub const CAMERA_WIDTH: f32 = 480.0 * CAMERA_MULT;
-pub const CAMERA_HEIGHT: f32 = 270.0 * CAMERA_MULT;
-pub const MAX_WIDTH: f32 = CAMERA_WIDTH;
-pub const MAX_HEIGHT: f32 = CAMERA_HEIGHT;
-
-pub const PLAYER_WALK_BORDER_WIDTH: f32 = MAX_WIDTH / (1.5 * CAMERA_MULT);
-pub const PLAYER_WALK_BORDER_HEIGHT: f32 = MAX_HEIGHT / (1.5 * CAMERA_MULT);
-
 pub const PLAYER_WIDTH: f32 = 32.0;
 pub const PLAYER_HEIGHT: f32 = 32.0;
-
-pub const CHUNKS_LOADING: i32 = 3;
-
-//pub const MOV_SPEED: f32 = 4.0;
 
 pub const MAX_REGION_SIDE_CONNECTIONS: u64 = 6;
 pub const MIN_REGION_SIDE_CONNECTIONS: u64 = 4;

@@ -20,39 +20,96 @@ use crate::util::ui::buttons::*;
 
 #[derive(Resource)]
 pub struct GameSettings {
-    pub MOV_SPEED: u64,
+    pub mov_speed: u64,
+    pub camera_mult: f32,
+    pub camera_width: f32,
+    pub camera_height: f32,
+    pub player_walk_border_width: f32,
+    pub player_walk_border_height: f32,
+    pub chunks_loading: i32,
 }
 
 impl Default for GameSettings {
+
     fn default() -> Self {
+        #![allow(non_upper_case_globals)]
+        const camera_mult: f32 = 2.0;
+        const camera_width: f32 = 480.0 * camera_mult;
+        const camera_height: f32 = 270.0 * camera_mult;
+
         Self {
-            MOV_SPEED: 4,
+            mov_speed: 4,
+
+            camera_mult,
+            camera_width,
+            camera_height,
+
+            player_walk_border_width: camera_width / (1.5 * camera_mult),
+            player_walk_border_height: camera_height / (1.5 * camera_mult),
+
+            chunks_loading: 4,
         }
     }
 }
 
+macro_rules! setting {
+    ($label:expr, $field:ident, $min:expr, $max:expr, $step:expr) => {
+        SettingBinding {
+            label: $label,
+            get: |s| s.$field as f32,
+            set: |s, v| s.$field = v as _, // `as _` nimmt automatisch den Typ des Feldes
+            min: $min,
+            max: $max,
+            step: $step,
+        }
+    };
+}
+
 const SETTINGS: &[SettingBinding] = &[
+    setting!("Move Speed", mov_speed, 1.0, 12.0, 1.0),
     SettingBinding {
-        label: "Move Speed",
-        get: |s| s.MOV_SPEED,
-        set: |s, v| s.MOV_SPEED = v,
-        min: 1,
-        max: 30,
+        label: "Camera Zoom",
+        get: |s| s.camera_mult,
+        set: |s, v| {
+            s.camera_mult = v;
+            s.camera_width = 480.0 * v;
+            s.camera_height = 270.0 * v;
+            s.player_walk_border_width = s.camera_width / (1.5 * v);
+            s.player_walk_border_height = s.camera_height / (1.5 * v);
+        },
+        min: 2.0,
+        max: 8.0,
+        step: 0.1,
     },
-    // weitere Settings hier ...
+    setting!("Chunks Loading", chunks_loading, 2.0, 16.0, 1.0),
+    // neues Setting = eine neue Zeile
 ];
 
 #[derive(Component)]
 struct GoBackButton;
 
-/// Bindung zwischen Slider-Entity und einem Feld in GameSettings.
 #[derive(Component, Clone, Copy)]
 struct SettingBinding {
     label: &'static str,
-    get: fn(&GameSettings) -> u64,
-    set: fn(&mut GameSettings, u64),
-    min: u64,
-    max: u64,
+    get: fn(&GameSettings) -> f32,
+    set: fn(&mut GameSettings, f32),
+    min: f32,
+    max: f32,
+    step: f32, // 1.0 für ganze Zahlen, 0.1 für Kommazahlen
+}
+
+impl SettingBinding {
+    fn snap(&self, v: f32) -> f32 {
+        ((v / self.step).round() * self.step).clamp(self.min, self.max)
+    }
+
+    fn format(&self, v: f32) -> String {
+        if self.step >= 1.0 {
+            format!("{:.0}", v)
+        } else {
+            format!("{:.1}", v)
+        }
+    }
 }
 
 #[derive(Component)]
@@ -62,7 +119,7 @@ struct DemoSlider;
 struct DemoSliderThumb;
 
 #[derive(Component)]
-struct SettingValueText(fn(&GameSettings) -> u64);
+struct SettingValueText(SettingBinding);
 
 const SLIDER_TRACK: Color = Color::srgb(0.35, 0.35, 0.35);
 const SLIDER_THUMB: Color = Color::srgb(0.9, 0.9, 0.9);
@@ -160,15 +217,15 @@ fn setting_row(b: SettingBinding, settings: &GameSettings) -> impl Bundle {
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ),
             (
-                slider(b.min as f32, b.max as f32, (b.get)(settings) as f32),
+                slider(b.min, b.max, (b.get)(settings)),
                 b,
             ),
             (
-                Text::new((b.get)(settings).to_string()),
+                Text::new(b.format((b.get)(settings))),
                 TextFont { font_size: FontSize::Px(33.0), ..default() },
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
                 Node { width: px(60), ..default() }, // feste Breite, damit das Layout nicht springt
-                SettingValueText(b.get),
+                SettingValueText(b),
 )        ],
     )
 }
@@ -241,22 +298,31 @@ fn slider(min: f32, max: f32, value: f32) -> impl Bundle {
 // Logik
 // ---------------------------------------------------------------------------
 
-/// Wird bei jeder Slider-Änderung aufgerufen: Slider-Wert übernehmen und
-/// in GameSettings zurückschreiben.
 fn on_setting_change(
     change: On<ValueChange<f32>>,
     mut commands: Commands,
     bindings: Query<&SettingBinding>,
     mut settings: ResMut<GameSettings>,
 ) {
-    // Headless-Slider ändert seinen Wert nicht selbst.
-    commands.entity(change.source).insert(SliderValue(change.value));
-
     if let Ok(b) = bindings.get(change.source) {
-        (b.set)(&mut settings, change.value.round() as u64);
+        let value = b.snap(change.value);
+        commands.entity(change.source).insert(SliderValue(value));
+        (b.set)(&mut settings, value);
     }
 }
 
+fn update_value_texts(
+    settings: Res<GameSettings>,
+    mut texts: Query<(&SettingValueText, &mut Text)>,
+) {
+    if !settings.is_changed() {
+        return;
+    }
+    for (value, mut text) in &mut texts {
+        let b = value.0;
+        text.0 = b.format((b.get)(&settings));
+    }
+}
 /// Thumb-Position aus dem Slider-Wert berechnen.
 fn update_slider_pos(
     sliders: Query<
@@ -284,17 +350,5 @@ fn go_back_button(
             println!("go back to menu");
             next_state.set(GameState::Welcome);
         }
-    }
-}
-
-fn update_value_texts(
-    settings: Res<GameSettings>,
-    mut texts: Query<(&SettingValueText, &mut Text)>,
-) {
-    if !settings.is_changed() {
-        return;
-    }
-    for (value, mut text) in &mut texts {
-        text.0 = (value.0)(&settings).to_string();
     }
 }

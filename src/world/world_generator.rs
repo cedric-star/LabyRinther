@@ -5,7 +5,7 @@ use crate::resources::*;
 use crate::constants::*;
 use crate::util::seed_service::*;
 use crate::world::region::*;
-
+use crate::settings::settings_screen::*;
 pub fn load_map(
     mut commands: Commands,
     players: Query<&Transform, With<Player>>,
@@ -14,6 +14,7 @@ pub fn load_map(
     seed: Res<WorldSeed>,
     mut regions: ResMut<RegionPool>,
     region_query: Query<&Region>,
+    s: Res<GameSettings>,
 ) {
     for player in &players {
         let player_chunk_x = (player.translation.x / CHUNK_WORLD_SIZE).floor() as i32;
@@ -33,7 +34,7 @@ pub fn load_map(
             .copied()
             .filter(|c| {
                 !player_chunks.iter().any(|p| {
-                    (c.x - p.x).abs() <= CHUNKS_LOADING && (c.y - p.y).abs() <= CHUNKS_LOADING
+                    (c.x - p.x).abs() <= s.chunks_loading && (c.y - p.y).abs() <= s.chunks_loading
                 })
             })
             .collect();
@@ -43,8 +44,8 @@ pub fn load_map(
                 commands.entity(entity).despawn(); // despawnt in Bevy 0.16+ auch die Kinder (Sprites)
             }
         }
-        for c_view_x in -CHUNKS_LOADING..=CHUNKS_LOADING {
-            for c_view_y in -CHUNKS_LOADING..=CHUNKS_LOADING {
+        for c_view_x in -s.chunks_loading..=s.chunks_loading {
+            for c_view_y in -s.chunks_loading..=s.chunks_loading {
                 let chunk_cords = Cords::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
 
                 if pool.chunks.contains_key(&chunk_cords) {
