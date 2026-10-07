@@ -41,6 +41,7 @@ pub struct Item {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ItemId {
     Apple,
+    JucyWoddenDagger,
     WoddenDagger,
     #[default]
     Thing,
@@ -111,8 +112,26 @@ impl Tier {
     }
 }
 
+pub struct Recipe {
+    pub items: &'static [(ItemId, i32)], //item + anzahl des items
+    pub station: Option<CraftStation>,
+}
 
-pub const ITEMS: &[ItemDef; 2] = &[
+pub struct CraftStation;
+
+pub const RECIOES: &[Recipe; 1] = &[
+    Recipe {
+        items: &[
+            (ItemId::WoddenDagger, 1),
+            (ItemId::Apple, 2),
+        ],
+        station: None,
+    }
+];
+
+
+
+pub const ITEMS: &[ItemDef; 3] = &[
     ItemDef {
         id: ItemId::Apple, 
         label: "Apple", 
@@ -124,7 +143,7 @@ pub const ITEMS: &[ItemDef; 2] = &[
     },
     ItemDef {
         id: ItemId::WoddenDagger,
-        label: "Wodden Datter",
+        label: "Wodden Dagger",
         asset: "WoddenDagger.png",
         categories: &[Category::Resource, Category::Weapon],
         tier: Tier::F,
@@ -133,6 +152,20 @@ pub const ITEMS: &[ItemDef; 2] = &[
             damage: 10.0,
             range: 2.0,
             attack_speed: 1.0,
+            wtype: WeaponType::Sword,
+        }),
+    },
+    ItemDef {
+        id: ItemId::JucyWoddenDagger,
+        label: "Jucy Wodden Dagger",
+        asset: "JucyWoddenDagger.png",
+        categories: &[Category::Weapon],
+        tier: Tier::D,
+        max_stack: 1,
+        weapon: Some(WeaponDef {
+            damage: 12.0,
+            range: 2.0,
+            attack_speed: 1.5,
             wtype: WeaponType::Sword,
         }),
     },

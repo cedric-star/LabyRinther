@@ -11,12 +11,19 @@ use std::time::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::inventory_meta::*;
 use crate::ingame::player::*;
+use crate::ingame::ui::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
         .add_systems(
             OnEnter(GameState::InGame),
-            startup.run_if(not(any_with_component::<Player>)),
+            (startup.run_if(not(any_with_component::<Player>)),
+            spawn_ui)
+
+        )
+        .add_systems(
+            OnExit(GameState::InGame),
+            cleanup_ui,
         )
         .add_systems(OnEnter(GameState::Welcome), cleanup_game)
         .add_systems(
