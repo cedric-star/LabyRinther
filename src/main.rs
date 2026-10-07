@@ -20,6 +20,7 @@ use std::time::*;
 use welcome::welcome_screen::*;
 use ingame::ingame_screen::*;
 use settings::settings_screen::*;
+use ingame::player::*;
 
 fn setup_cam(
     mut commands: Commands,

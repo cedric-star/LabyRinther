@@ -6,6 +6,8 @@ use crate::constants::*;
 use crate::util::seed_service::*;
 use crate::world::region::*;
 use crate::settings::settings_screen::*;
+use crate::ingame::player::*;
+
 pub fn load_map(
     mut commands: Commands,
     players: Query<&Transform, With<Player>>,

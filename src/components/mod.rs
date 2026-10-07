@@ -18,19 +18,6 @@ pub struct LastState(pub Option<GameState>);
 #[derive(Component)]
 pub struct GameEntity;
 
-#[derive(Component, Default)]
-pub struct Velocity {
-    pub x: f32,
-    pub y: f32,
-}
-
-#[derive(Component)]
-#[require(Transform, Velocity)]
-pub struct Player {
-    pub id: u32,
-    pub x: f32,
-    pub y: f32,
-}
 
 #[derive(Component, Default)]
 struct Position {

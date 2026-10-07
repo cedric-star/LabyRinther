@@ -40,12 +40,8 @@ pub struct Item {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ItemId {
-    Wood,
-    Stone,
-    IronOre,
-    IronIngot,
-    IronSword,
-    HealthPotion,
+    Apple,
+    WoddenDagger,
     #[default]
     Thing,
 }
@@ -78,9 +74,27 @@ pub struct ItemDef {
     pub id: ItemId,
     pub label: &'static str,
     pub asset: &'static str,
-    pub category: Vec<Category>,
+    pub categories: &'static [Category],
     pub tier: Tier,
     pub max_stack: u32,
+    //optionale attribute:
+    pub weapon: Option<WeaponDef>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct WeaponDef {
+    pub damage: f32,
+    pub range: f32,
+    pub attack_speed: f32,
+    pub wtype: WeaponType,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum WeaponType {
+    Sword,
+    Staf,
+    Shooting,
+    Whip,    
 }
 
 impl Tier {
@@ -98,7 +112,31 @@ impl Tier {
 }
 
 
-//pub const ITEMS: &[ItemDef];
+pub const ITEMS: &[ItemDef; 2] = &[
+    ItemDef {
+        id: ItemId::Apple, 
+        label: "Apple", 
+        asset: "Apple.png", 
+        categories: &[Category::Food, Category::Resource],
+        tier: Tier::F,
+        max_stack: 999,
+        weapon: None
+    },
+    ItemDef {
+        id: ItemId::WoddenDagger,
+        label: "Wodden Datter",
+        asset: "WoddenDagger.png",
+        categories: &[Category::Resource, Category::Weapon],
+        tier: Tier::F,
+        max_stack: 1,
+        weapon: Some(WeaponDef {
+            damage: 10.0,
+            range: 2.0,
+            attack_speed: 1.0,
+            wtype: WeaponType::Sword,
+        }),
+    },
+];
 
 
 

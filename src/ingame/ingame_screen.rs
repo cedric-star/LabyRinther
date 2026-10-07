@@ -9,6 +9,8 @@ use crate::resources::*;
 use crate::constants::*;
 use std::time::*;
 use crate::settings::settings_screen::*;
+use crate::ingame::inventory_meta::*;
+use crate::ingame::player::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -36,7 +38,13 @@ fn startup(
 
     commands.spawn((
         GameEntity,
-        Player {id: 0, x: 0.0, y: 0.0},
+        Player {
+            inventory: Inventory::default(),
+            health: 100.0,
+            max_health: 100.0,
+            armor: 0.0,
+            speed: 1.0,
+        },
         Sprite {
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
             image: asset_server.load("character_simple.png"),

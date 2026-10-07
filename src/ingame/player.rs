@@ -1,0 +1,22 @@
+use bevy::prelude::*;
+use bevy::sprite::*;
+use crate::ingame::inventory::*;
+use crate::ingame::inventory_meta::*;
+
+
+#[derive(Component, Default)]
+pub struct Velocity {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[derive(Component)]
+#[require(Transform, Velocity)]
+pub struct Player {
+    pub inventory: Inventory,
+    pub health: f32,
+    pub max_health: f32,
+    pub armor: f32,
+    pub speed: f32,
+
+}
