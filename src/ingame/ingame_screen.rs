@@ -12,6 +12,7 @@ use crate::settings::settings_screen::*;
 use crate::ingame::inventory_meta::*;
 use crate::ingame::player::*;
 use crate::ingame::ui::*;
+use crate::ingame::inventory::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -28,11 +29,11 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Welcome), cleanup_game)
         .add_systems(
             FixedUpdate,
-            (controls, load_map).run_if(in_state(GameState::InGame)),
+            (controls, set_hotkeys, load_map).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
             Update,
-            (movement, mov_cam).run_if(in_state(GameState::InGame)),
+            (movement, update_ui, mov_cam).run_if(in_state(GameState::InGame)),
         );
 }
 fn startup(

@@ -20,7 +20,7 @@ pub fn spawn_ui(
     asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
 ) {
-    const SCALE: f32 = 3.0; // hier setting einbauen
+    const SCALE: f32 = 5.0; // hier setting einbauen
     let col = Color::srgba(1.0,1.0,1.0,0.1);
     commands.spawn((
         GameEntity,
@@ -57,8 +57,8 @@ pub fn spawn_ui(
             (
                 HotBar,
                 Node {
-                    width: px(180.0 * SCALE),   // 540
-                    height: px(18.0 * SCALE),   // 54
+                    width: px(180.0 * s.ui_scale),   // 540
+                    height: px(18.0 * s.ui_scale),   // 54
                     justify_self: JustifySelf::Center,
                     align_self: AlignSelf::End,
                     grid_column: GridPlacement::start(2),
@@ -84,13 +84,15 @@ pub fn spawn_ui(
 }
 
 pub fn update_ui(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    ui: Query<Entity, With<IngameUi>>,
-    player: Query<&Player, With<Player>>,
+    player: Query<&Player>,
+    mut hot_bar_slot: Query<&mut Node, With<HotBarSelector>>,
 ) {
-    for entity in &ui {
+    let Ok(player) = player.single() else {
+        return; // kein oder mehrere Spieler
+    };
 
+    for mut node in &mut hot_bar_slot {
+        node.left = percent(player.inventory.selected as f32 * 10.0);
     }
 }
 

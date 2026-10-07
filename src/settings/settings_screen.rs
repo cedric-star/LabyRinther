@@ -27,6 +27,7 @@ pub struct GameSettings {
     pub player_walk_border_width: f32,
     pub player_walk_border_height: f32,
     pub chunks_loading: i32,
+    pub ui_scale: f32,
 }
 
 impl Default for GameSettings {
@@ -48,6 +49,8 @@ impl Default for GameSettings {
             player_walk_border_height: camera_height / (1.5 * camera_mult),
 
             chunks_loading: 4,
+
+            ui_scale: 5.0,
         }
     }
 }
@@ -82,6 +85,8 @@ const SETTINGS: &[SettingBinding] = &[
         step: 0.1,
     },
     setting!("Chunks Loading", chunks_loading, 2.0, 16.0, 1.0),
+    setting!("UI Scale", ui_scale, 2.0, 8.0, 0.1),
+
     // neues Setting = eine neue Zeile
 ];
 
@@ -157,6 +162,7 @@ fn settings_setup(
     settings: Res<GameSettings>,
     asset_server: Res<AssetServer>,
     previous: Res<LastState>,
+    s: Res<GameSettings>,
 ) {
     let radio_images = ButtonImages::load_btn_radio(&asset_server);
     let prev_text = match previous.0 {
