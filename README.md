@@ -1,3 +1,8 @@
+# next
+
+- inventar skizzieren -> wo soll was sein
+- inventarslots nach todo vorgaben als ui umsetzen
+
 # todo
 
 - inventar -> items anzegigen, die man hat: 4 + hotbar = 5 bars am anfange, up
