@@ -15,13 +15,16 @@ pub struct HotBar;
 #[derive(Component)]
 pub struct HotBarSelector;
 
+#[derive(Component, Debug)]
+pub struct HotBarItem(pub usize);
+
 pub fn spawn_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
 ) {
-    const SCALE: f32 = 5.0; // hier setting einbauen
     let col = Color::srgba(1.0,1.0,1.0,0.1);
+    let scale = s.ui_scale;
     commands.spawn((
         GameEntity,
         IngameUi,
@@ -41,6 +44,7 @@ pub fn spawn_ui(
             ],
             ..default()
         },
+        Visibility::default(),
         children![
             (
                 Node {
@@ -57,22 +61,54 @@ pub fn spawn_ui(
             (
                 HotBar,
                 Node {
-                    width: px(180.0 * s.ui_scale),   // 540
-                    height: px(18.0 * s.ui_scale),   // 54
+                    width: px(180.0 * scale),
+                    height: px(18.0 * scale),
                     justify_self: JustifySelf::Center,
                     align_self: AlignSelf::End,
                     grid_column: GridPlacement::start(2),
                     grid_row: GridPlacement::start(3),
                     ..default()
                 },
+                Visibility::default(),
                 ImageNode::new(asset_server.load("ingame_ui/hotbar.png")),
-                children![(
+                children![
+                    (
+                        Visibility::default(),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(100.0),
+                            height: percent(100.0),
+                            ..default()
+                        },
+                        Children::spawn(SpawnIter((0..=9).map(move |i| (
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: percent(10.0),
+                                height: percent(100.0),
+                                left: percent(i as f32 * 10.0),
+                                padding: UiRect::all(px(1.0 * scale)),
+                                ..default()
+                            },
+                            Visibility::default(),
+                            children![(
+                                HotBarItem(i),
+                                Node {
+                                    width: percent(100.0),
+                                    height: percent(100.0),
+                                    ..default()
+                                },
+                                ImageNode::default(),
+                                Visibility::Hidden,
+                            )]
+                        ))))
+                    ),
+                (
                     HotBarSelector,
                     Node {
                         position_type: PositionType::Absolute,
                         left: percent(0.0),
                         top: percent(0.0),
-                        width: percent(10.0),    // 54 px = ein Slot
+                        width: percent(10.0),
                         height: percent(100.0),
                         ..default()
                     },

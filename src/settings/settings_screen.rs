@@ -48,7 +48,7 @@ impl Default for GameSettings {
             player_walk_border_width: camera_width / (1.5 * camera_mult),
             player_walk_border_height: camera_height / (1.5 * camera_mult),
 
-            chunks_loading: 4,
+            chunks_loading: 6,
 
             ui_scale: 5.0,
         }

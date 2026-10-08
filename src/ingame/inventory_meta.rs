@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use crate::constants::*;
 use std::collections::HashSet;
 
-
 #[derive(Default, Debug, Component)]
 pub struct Inventory {
     pub hotbar: [InventorySlot; 10],
@@ -45,6 +44,7 @@ pub enum ItemId {
     WoddenDagger,
     #[default]
     Thing,
+    Nothing,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -57,6 +57,7 @@ pub enum Category {
     MazeUtil,
     Food,
     Waste,
+    Nothing,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -93,9 +94,9 @@ pub struct WeaponDef {
 #[derive(Clone, Copy, Debug)]
 pub enum WeaponType {
     Sword,
-    Staf,
+    Staff,
     Shooting,
-    Whip,    
+    Whip,
 }
 
 impl Tier {
@@ -129,13 +130,20 @@ pub const RECIOES: &[Recipe; 1] = &[
     }
 ];
 
-
-
-pub const ITEMS: &[ItemDef; 3] = &[
+pub const ITEMS: &[ItemDef; 4] = &[
+        ItemDef {
+        id: ItemId::Nothing,
+        label: "Error",
+        asset: "items/Error.png",
+        categories: &[Category::Nothing],
+        tier: Tier::F,
+        max_stack: 1,
+        weapon: None,
+    },
     ItemDef {
-        id: ItemId::Apple, 
-        label: "Apple", 
-        asset: "Apple.png", 
+        id: ItemId::Apple,
+        label: "Apple",
+        asset: "items/Apple.png",
         categories: &[Category::Food, Category::Resource],
         tier: Tier::F,
         max_stack: 999,
@@ -144,7 +152,7 @@ pub const ITEMS: &[ItemDef; 3] = &[
     ItemDef {
         id: ItemId::WoddenDagger,
         label: "Wodden Dagger",
-        asset: "WoddenDagger.png",
+        asset: "items/WoddenDagger.png",
         categories: &[Category::Resource, Category::Weapon],
         tier: Tier::F,
         max_stack: 1,
@@ -158,7 +166,7 @@ pub const ITEMS: &[ItemDef; 3] = &[
     ItemDef {
         id: ItemId::JucyWoddenDagger,
         label: "Jucy Wodden Dagger",
-        asset: "JucyWoddenDagger.png",
+        asset: "items/JucyWoddenDagger.png",
         categories: &[Category::Weapon],
         tier: Tier::D,
         max_stack: 1,
@@ -171,6 +179,11 @@ pub const ITEMS: &[ItemDef; 3] = &[
     },
 ];
 
-
-
-
+pub fn get_item_by_id(id: ItemId) -> ItemDef {
+    for item in ITEMS {
+        if item.id == id {
+            return item.clone();
+        }
+    }
+    return ITEMS[0].clone();
+}

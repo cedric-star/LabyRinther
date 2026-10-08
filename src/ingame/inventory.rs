@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use crate::ingame::player::*;
+use crate::ingame::ui::*;
+use crate::ingame::inventory_meta::*;
 
 pub fn set_hotkeys(
     keys: Res<ButtonInput<KeyCode>>,
@@ -31,4 +33,30 @@ pub fn set_hotkeys(
         player.inventory.selected = 9;
     }
 
+}
+
+pub fn update_inventory_items(
+    player: Query<&Player>,
+    mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility)>,
+    asset_server: Res<AssetServer>,
+) {
+    let Ok(player) = player.single() else {
+        return; // kein oder mehrere Spieler
+    };
+
+    for (slot, mut image, mut visibility) in &mut hotbar {
+        let i = slot.0;
+        match &player.inventory.hotbar[i].stack {
+            Some(item) => {
+                *visibility = Visibility::Visible;
+                let handle = asset_server.load(get_item_by_id(item.id).asset);
+                if image.image != handle {
+                    image.image = handle;
+                }
+            },
+            None => {
+                *visibility = Visibility::Hidden;
+            },
+        }
+    }
 }
