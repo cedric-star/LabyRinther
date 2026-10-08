@@ -18,6 +18,9 @@ pub struct HotBarSelector;
 #[derive(Component, Debug)]
 pub struct HotBarItem(pub usize);
 
+#[derive(Component)]
+pub struct HotBarItemNum(pub usize);
+
 pub fn spawn_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -99,6 +102,22 @@ pub fn spawn_ui(
                                 },
                                 ImageNode::default(),
                                 Visibility::Hidden,
+                                children![(
+                                    HotBarItemNum(i),
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: percent(50.0),
+                                        top: percent(35.0),
+                                        width: percent(65.0),
+                                        height: percent(65.0),
+                                        padding: UiRect::all(px(1.0 * scale)),
+                                        ..default()
+                                    },
+                                    Visibility::Hidden,
+                                    Text::new(""),
+                                    TextFont { font_size: FontSize::Px(9.0 * scale), ..default()},
+                                    TextColor(TXT_COL),
+                                )]
                             )]
                         ))))
                     ),

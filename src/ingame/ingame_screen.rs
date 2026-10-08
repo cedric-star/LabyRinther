@@ -19,7 +19,9 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             OnEnter(GameState::InGame),
             (startup.run_if(not(any_with_component::<Player>)),
-            spawn_ui)
+            spawn_ui,
+            spawn_inventory,
+            )
 
         )
         .add_systems(
@@ -33,7 +35,13 @@ pub fn ingame_plugin(app: &mut App) {
         )
         .add_systems(
             Update,
-            (movement, update_ui, update_inventory_items, mov_cam).run_if(in_state(GameState::InGame)),
+            (
+                movement,
+                update_ui,
+                update_inventory_items,
+                update_inventory,
+                mov_cam,
+            ).run_if(in_state(GameState::InGame)),
         );
 }
 fn startup(
