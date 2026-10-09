@@ -9,7 +9,7 @@
   to 7
 - inventar -> rüstungsslots
 - inventar -> items draggable machen
-- inventar -> passive slots -> für passive effekte: 4, bis zu 10 (nimmt dann
+- invenk:tar -> passive slots -> für passive effekte: 4, bis zu 10 (nimmt dann
   eine bar ein)
 - crafting links im bild: alle craftbaren items mit möglicher anzahl anzeigen:
   - ein klick -> eins

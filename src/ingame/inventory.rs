@@ -52,12 +52,40 @@ pub fn set_hotkeys(
 #[derive(Component)]
 pub struct InventoryShow;
 
+#[derive(Component)]
+pub struct InventorySlotNormalCords(usize, usize);
+
+#[derive(Component)]
+pub struct InventorySlotUsablesCords(usize, usize);
+
+#[derive(Component)]
+pub struct InventorySlotHelm;
+
+#[derive(Component)]
+pub struct InventorySlotChest;
+
+#[derive(Component)]
+pub struct InventorySlotLegs;
+
+#[derive(Component)]
+pub struct InventorySlotBoots;
+
+#[derive(Component)]
+pub struct InventorySlotSecret(usize);
+
+#[derive(Component)]
+pub struct InventoryPlayerView;
+
 pub fn spawn_inventory(
     mut commands: Commands,
-    asset_Server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
 ) {
-    let scale = s.ui_scale;
+    let scale = s.ui_scale * 0.7;
+    let slot_pic: Handle<Image> = asset_server.load("ingame_ui/item_slot.png");
+    let pic_normal = slot_pic.clone();
+    let pic_usables = slot_pic.clone();
+
     commands.spawn((
         IngameUi,
         InventoryShow,
@@ -82,17 +110,167 @@ pub fn spawn_inventory(
             Node {
                 grid_column: GridPlacement::start(2),
                 grid_row: GridPlacement::start(2),
-                height: percent(35.0 * (scale/2.0)),
+                height: percent(35.0 * scale),
                 max_height: percent(105.0),
-                aspect_ratio: Some(1.2),
+                aspect_ratio: Some(1.0),
                 justify_self: JustifySelf::Center,
                 ..default()
             },
             BackgroundColor(BG_COL_A),
+            Children::spawn((
+
+                // normales Inventar + Hotbar
+                SpawnIter((0..=9).map(move |i_width| {
+                    let slot_pic = pic_normal.clone();
+                    (
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(10.0),
+                            height: percent(100.0),
+                            left: percent(i_width as f32 * 10.0),
+                            ..default()
+                        },
+                        Children::spawn(SpawnIter((0..=6).map(move |i_height| {
+                            let top = if i_height >= 6 {
+                                25.0 + 5.0 + 10.0 * i_height as f32
+                            } else {
+                                25.0 + 10.0 * i_height as f32
+                            };
+                            (
+                                InventorySlotNormalCords(i_width, i_height),
+                                Node {
+                                    position_type: PositionType::Absolute,
+                                    width: percent(100.0),
+                                    height: percent(10.0),
+                                    top: percent(top),
+                                    ..default()
+                                },
+                                ImageNode::new(slot_pic.clone()),
+                            )
+                        }))),
+                    )
+                })),
+
+                // Usables
+                SpawnIter((0..=3).map(move |i_width| {
+                    let slot_pic = pic_usables.clone();
+                    (
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(10.0),
+                            height: percent(100.0),
+                            left: percent(60.0 + 10.0 * i_width as f32),
+                            top: percent(0.0),
+                            ..default()
+                        },
+                        Children::spawn(SpawnIter((0..=1).map(move |i_height| (
+                            InventorySlotUsablesCords(i_width, i_height),
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: percent(100.0),
+                                height: percent(10.0),
+                                top: percent(10.0 * i_height as f32),
+                                ..default()
+                            },
+                            ImageNode::new(slot_pic.clone()),
+                        )))),
+                    )
+                })),
+
+                //sercret slots uiuiui kiki ein reh auf der straße uiuiui
+                Spawn((
+                    InventorySlotSecret(0),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(45.0),
+                        top: percent(0.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+                Spawn((
+                    InventorySlotSecret(1),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(45.0),
+                        top: percent(10.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+
+                //helm and chest and legs and boots
+                Spawn((
+                    InventorySlotHelm,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(0.0),
+                        top: percent(0.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+                Spawn((
+                    InventorySlotChest,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(0.0),
+                        top: percent(10.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+                Spawn((
+                    InventorySlotLegs,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(30.0),
+                        top: percent(0.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+                Spawn((
+                    InventorySlotBoots,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(10.0),
+                        height: percent(10.0),
+                        left: percent(30.0),
+                        top: percent(10.0),
+                        ..default()
+                    },
+                    ImageNode::new(slot_pic.clone()),
+                )),
+
+                //player preview
+                Spawn((
+                    InventoryPlayerView,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: percent(20.0),
+                        height: percent(20.0),
+                        left: percent(10.0),
+                        top: percent(0.0),
+                        ..default()
+                    },
+                    BackgroundColor(BG_COL),
+                )),
+
+            )),
         )],
     ));
 }
-
 pub fn update_inventory(
 
 ) {
