@@ -2,13 +2,47 @@ use bevy::prelude::*;
 use crate::constants::*;
 use std::collections::HashSet;
 
-#[derive(Default, Debug, Component)]
+#[derive(Debug, Component)]
 pub struct Inventory {
     pub hotbar: [InventorySlot; 10],
     pub selected: usize,
     pub inner_rows: Vec<[InventorySlot; 10]>,
     pub equipment: Equipment,
+}
 
+impl Default for Inventory {
+    fn default() -> Self {
+
+        let es = InventorySlot { stack: None, };
+        let empty_row = [es; 10];
+        let mut other_rows = Vec::new();
+        other_rows.push(empty_row);
+        other_rows.push(empty_row);
+
+        Self {
+            hotbar: [
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::WoddenDagger,
+                    count: 1,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::Apple,
+                    count: 4,
+                })},
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+            ],
+            selected: 0,
+            equipment: Equipment::default(),
+            inner_rows: other_rows,
+        }
+    }
 }
 
 #[derive(Component, Debug, Default)]
@@ -20,12 +54,12 @@ pub struct Equipment {
     pub offhand: Option<ItemStack>,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Copy)]
 pub struct InventorySlot {
     pub stack: Option<ItemStack>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct ItemStack {
     pub id: ItemId,
     pub count: u32,

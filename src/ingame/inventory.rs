@@ -56,6 +56,9 @@ pub struct InventoryShow;
 pub struct InventorySlotNormalCords(usize, usize);
 
 #[derive(Component)]
+pub struct InventorySlotItemNormalCords(usize, usize);
+
+#[derive(Component)]
 pub struct InventorySlotUsablesCords(usize, usize);
 
 #[derive(Component)]
@@ -137,7 +140,6 @@ pub fn spawn_inventory(
                                 25.0 + 10.0 * i_height as f32
                             };
                             (
-                                InventorySlotNormalCords(i_width, i_height),
                                 Node {
                                     position_type: PositionType::Absolute,
                                     width: percent(100.0),
@@ -145,7 +147,19 @@ pub fn spawn_inventory(
                                     top: percent(top),
                                     ..default()
                                 },
+                                InventorySlotNormalCords(i_width, i_height),
                                 ImageNode::new(slot_pic.clone()),
+                                children![(
+                                    InventorySlotItemNormalCords(i_width, i_height),
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        width: percent(100),
+                                        height: percent(100.0),
+                                        ..default()
+                                    },
+                                    ImageNode::default(),
+                                    Visibility::Hidden,
+                                )]
                             )
                         }))),
                     )
@@ -272,11 +286,23 @@ pub fn spawn_inventory(
     ));
 }
 pub fn update_inventory(
-
+    player: Query<&Player>,
+    mut slots: Query<(&InventorySlotNormalCords, &mut ImageNode), Without<InventorySlotItemNormalCords>>,
+    mut item_slots: Query<(&InventorySlotItemNormalCords, &mut ImageNode, &mut Visibility), Without<InventorySlotNormalCords>>,
 ) {
+    let Ok(player) = player.single() else { return; };
+    let inventory_size = player.inventory.inner_rows.len();
+    for (cords, mut image) in &mut slots {
+        if cords.1 <=  (inventory_size + 1) { //+1 wegen hotbar
+            image.color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+        }
+    }
 
+    for (cords, mut image, mut visiility) in &mut item_slots {
+        //hier item icons visible machen und eintragen, dafür player inventar durchsuchen
+        //hier fehlt code
+    }
 }
-
 pub fn update_inventory_items(
     player: Query<&Player>,
     mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility), Without<HotBarItemNum>>,

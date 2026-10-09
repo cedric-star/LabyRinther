@@ -51,31 +51,10 @@ fn startup(
     seed: Res<WorldSeed>,
 ) {
     let start_t = Instant::now();
-    let es = InventorySlot { stack: None, };
     commands.spawn((
         GameEntity,
         Player {
-            inventory: Inventory {
-                hotbar: [
-                    InventorySlot {stack: Some(ItemStack {
-                        id: ItemId::WoddenDagger,
-                        count: 1,
-                    })},
-                    InventorySlot {stack: Some(ItemStack {
-                        id: ItemId::Apple,
-                        count: 4,
-                    })},
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                    es.clone(),
-                ],
-                ..default()
-            },
+            inventory: Inventory::default(),
             health: 100.0,
             max_health: 100.0,
             armor: 0.0,
