@@ -10,41 +10,6 @@ pub struct Inventory {
     pub equipment: Equipment,
 }
 
-impl Default for Inventory {
-    fn default() -> Self {
-
-        let es = InventorySlot { stack: None, };
-        let empty_row = [es; 10];
-        let mut other_rows = Vec::new();
-        other_rows.push(empty_row);
-        other_rows.push(empty_row);
-
-        Self {
-            hotbar: [
-                InventorySlot {stack: Some(ItemStack {
-                    id: ItemId::WoddenDagger,
-                    count: 1,
-                })},
-                InventorySlot {stack: Some(ItemStack {
-                    id: ItemId::Apple,
-                    count: 4,
-                })},
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
-            ],
-            selected: 0,
-            equipment: Equipment::default(),
-            inner_rows: other_rows,
-        }
-    }
-}
-
 #[derive(Component, Debug, Default)]
 pub struct Equipment {
     pub helmet: Option<ItemStack>,
@@ -220,4 +185,67 @@ pub fn get_item_by_id(id: ItemId) -> ItemDef {
         }
     }
     return ITEMS[0].clone();
+}
+
+pub const MAX_INNER_ROWS: usize = 6;
+pub const HOTBAR_ROW: usize = MAX_INNER_ROWS;
+
+impl Inventory {
+    pub fn row_offset(&self) -> usize { //leere reihen, oben im ui
+        MAX_INNER_ROWS.saturating_sub(self.inner_rows.len()) //overflow verhindern, 0
+        //return
+    }
+
+    //get inv slot by cords
+    pub fn slot(&self, x: usize, y: usize) -> Option<&InventorySlot> {
+        if y == HOTBAR_ROW {
+            return self.hotbar.get(x);
+        }
+        let r = y.checked_sub(self.row_offset())?; //returnt none bei over/underflow
+        self.inner_rows.get(r)?.get(x)
+    }
+
+    pub fn slot_mut(&mut self, x: usize, y: usize) -> Option<&mut InventorySlot> {
+        if y == HOTBAR_ROW {
+            return self.hotbar.get_mut(x);
+        }
+        let r = y.checked_sub(self.row_offset())?;
+        self.inner_rows.get_mut(r)?.get_mut(x)
+    }
+
+}
+
+impl Default for Inventory {
+    fn default() -> Self {
+
+        let es = InventorySlot { stack: None, };
+        let empty_row = [es; 10];
+        let mut other_rows = Vec::new();
+        other_rows.push(empty_row);
+        other_rows.push(empty_row);
+
+        Self {
+            hotbar: [
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::WoddenDagger,
+                    count: 1,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::Apple,
+                    count: 4,
+                })},
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+                es.clone(),
+            ],
+            selected: 0,
+            equipment: Equipment::default(),
+            inner_rows: other_rows,
+        }
+    }
 }

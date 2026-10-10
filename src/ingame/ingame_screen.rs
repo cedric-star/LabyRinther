@@ -16,6 +16,7 @@ use crate::ingame::inventory::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
+        .init_resource::<CursorItem>()
         .add_systems(
             OnEnter(GameState::InGame),
             (startup.run_if(not(any_with_component::<Player>)),
@@ -39,7 +40,9 @@ pub fn ingame_plugin(app: &mut App) {
                 movement,
                 update_ui,
                 update_inventory_items,
+                inventory_click.before(update_inventory),
                 update_inventory,
+                update_cursor_visual,
                 mov_cam,
             ).run_if(in_state(GameState::InGame)),
         );

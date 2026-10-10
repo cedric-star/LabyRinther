@@ -4,6 +4,7 @@ use crate::ingame::ui::*;
 use crate::ingame::inventory_meta::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
+use bevy::window::PrimaryWindow;
 
 pub fn set_hotkeys(
     keys: Res<ButtonInput<KeyCode>>,
@@ -79,6 +80,18 @@ pub struct InventorySlotSecret(usize);
 #[derive(Component)]
 pub struct InventoryPlayerView;
 
+#[derive(Component)]
+pub struct InventorySlotCount(usize, usize);
+
+#[derive(Component)]
+pub struct CursorItemVisual;
+
+#[derive(Component)]
+pub struct CursorCountText;
+
+#[derive(Resource, Default)]
+pub struct CursorItem(pub Option<ItemStack>);
+
 pub fn spawn_inventory(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -148,6 +161,7 @@ pub fn spawn_inventory(
                                     ..default()
                                 },
                                 InventorySlotNormalCords(i_width, i_height),
+                                Interaction::default(),
                                 ImageNode::new(slot_pic.clone()),
                                 children![(
                                     InventorySlotItemNormalCords(i_width, i_height),
@@ -159,6 +173,17 @@ pub fn spawn_inventory(
                                     },
                                     ImageNode::default(),
                                     Visibility::Hidden,
+                                    children![(
+                                        InventorySlotCount(i_width, i_height),
+                                        Text::new(""),
+                                        TextFont { font_size: FontSize::Px(14.0), ..default() },
+                                        Node {
+                                            position_type: PositionType::Absolute,
+                                            right: px(2),
+                                            bottom: px(0),
+                                            ..default()
+                                        }
+                                    )]
                                 )]
                             )
                         }))),
@@ -284,23 +309,74 @@ pub fn spawn_inventory(
             )),
         )],
     ));
+
+    commands.spawn((
+        IngameUi,
+        CursorItemVisual,
+        Node {
+            position_type: PositionType::Absolute,
+            width: px(48),
+            height: px(48),
+            ..default()
+        },
+        ImageNode::default(),
+        GlobalZIndex(100),
+        Visibility::Hidden,
+        children![(
+            CursorCountText,
+            Text::new(""),
+            TextFont { font_size: FontSize::Px(14.0), ..default() },
+            Node {
+                position_type: PositionType::Absolute,
+                right: px(2),
+                bottom: px(0),
+                ..default()
+            },
+        )],
+    ));
 }
+
 pub fn update_inventory(
     player: Query<&Player>,
-    mut slots: Query<(&InventorySlotNormalCords, &mut ImageNode), Without<InventorySlotItemNormalCords>>,
-    mut item_slots: Query<(&InventorySlotItemNormalCords, &mut ImageNode, &mut Visibility), Without<InventorySlotNormalCords>>,
+    mut slots: Query<
+        (&InventorySlotNormalCords, &mut ImageNode, &mut Visibility),
+        Without<InventorySlotItemNormalCords>,
+    >,
+    mut item_slots: Query<
+        (&InventorySlotItemNormalCords, &mut ImageNode, &mut Visibility),
+        Without<InventorySlotNormalCords>,
+    >,
+    mut counts: Query<(&InventorySlotCount, &mut Text)>,
+    asset_server: Res<AssetServer>,
 ) {
     let Ok(player) = player.single() else { return; };
-    let inventory_size = player.inventory.inner_rows.len();
-    for (cords, mut image) in &mut slots {
-        if cords.1 <=  (inventory_size + 1) { //+1 wegen hotbar
-            image.color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+    let inv = &player.inventory;
+
+    // nur existierende Reihen anzeigen
+    for (cords, mut image, mut vis) in &mut slots {
+        let show = cords.1 == HOTBAR_ROW || cords.1 >= inv.row_offset();
+        vis.set_if_neq(if show { Visibility::Inherited } else { Visibility::Hidden });
+        //image.color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+    }
+
+    for (cords, mut image, mut vis) in &mut item_slots {
+        match inv.slot(cords.0, cords.1).and_then(|s| s.stack) {
+            Some(item) => {
+                vis.set_if_neq(Visibility::Inherited);
+                let handle = asset_server.load(get_item_by_id(item.id).asset);
+                if image.image != handle {
+                    image.image = handle;
+                }
+            }
+            None => {
+                vis.set_if_neq(Visibility::Hidden);
+            }
         }
     }
 
-    for (cords, mut image, mut visiility) in &mut item_slots {
-        //hier item icons visible machen und eintragen, dafür player inventar durchsuchen
-        //hier fehlt code
+    for (cords, mut text) in &mut counts {
+        let n = inv.slot(cords.0, cords.1).and_then(|s| s.stack).map_or(0, |s| s.count);
+        text.0 = if n > 1 { n.to_string() } else { String::new() };
     }
 }
 pub fn update_inventory_items(
@@ -340,6 +416,103 @@ pub fn update_inventory_items(
             None => {
                 *visibility = Visibility::Hidden;
             }
+        }
+    }
+}
+
+//inventar klicken:
+pub fn inventory_click(
+    mouse: Res<ButtonInput<MouseButton>>,
+    slots: Query<(&InventorySlotNormalCords, &Interaction)>,
+    root: Query<&Visibility, With<InventoryShow>>,
+    mut player: Query<&mut Player>,
+    mut cursor: ResMut<CursorItem>,
+) {
+    let left = mouse.just_pressed(MouseButton::Left);
+    let right = mouse.just_pressed(MouseButton::Right);
+    if !left && !right { return; }
+
+    let Ok(vis) = root.single() else { return; };
+    if *vis == Visibility::Hidden { return; }
+    let Ok(mut player) = player.single_mut() else { return; };
+
+    let Some((cords, _)) = slots.iter().find(|(_, i)| **i != Interaction::None) else { return; };
+    let Some(slot) = player.inventory.slot_mut(cords.0, cords.1) else { return; };
+
+    let held = cursor.0;
+    let stack = slot.stack;
+
+    if left {
+        match (held, stack) {
+            // nichts in der Hand: alles aufnehmen
+            (None, s) => {
+                cursor.0 = s;
+                slot.stack = None;
+            }
+            // leerer Slot: alles ablegen
+            (Some(h), None) => {
+                slot.stack = Some(h);
+                cursor.0 = None;
+            }
+            // gleiches Item: zusammenführen (bis max_stack)
+            (Some(h), Some(s)) if h.id == s.id => {
+                let max = get_item_by_id(s.id).max_stack;
+                let total = h.count + s.count;
+                let put = total.min(max);
+                slot.stack = Some(ItemStack { id: s.id, count: put });
+                cursor.0 = (total > put).then(|| ItemStack { id: h.id, count: total - put });
+            }
+            // anderes Item: tauschen
+            (Some(h), Some(s)) => {
+                slot.stack = Some(h);
+                cursor.0 = Some(s);
+            }
+        }
+    } else if right {
+        match (held, stack) {
+            // eins aus dem Stack nehmen
+            (None, Some(s)) => {
+                cursor.0 = Some(ItemStack { id: s.id, count: 1 });
+                slot.stack = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+            }
+            // noch eins vom gleichen Stack dazunehmen
+            (Some(h), Some(s)) if h.id == s.id => {
+                let max = get_item_by_id(h.id).max_stack;
+                if h.count < max {
+                    cursor.0 = Some(ItemStack { id: h.id, count: h.count + 1 });
+                    slot.stack = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn update_cursor_visual(
+    cursor: Res<CursorItem>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut visual: Query<(&mut Node, &mut ImageNode, &mut Visibility), With<CursorItemVisual>>,
+    mut text: Query<&mut Text, With<CursorCountText>>,
+    asset_server: Res<AssetServer>,
+) {
+    let Ok((mut node, mut image, mut vis)) = visual.single_mut() else { return; };
+    let pos = windows.single().ok().and_then(|w| w.cursor_position());
+
+    match (cursor.0, pos) {
+        (Some(item), Some(pos)) => {
+            vis.set_if_neq(Visibility::Visible);
+            node.left = px(pos.x - 24.0);
+            node.top = px(pos.y - 24.0);
+            let handle = asset_server.load(get_item_by_id(item.id).asset);
+            if image.image != handle {
+                image.image = handle;
+            }
+            if let Ok(mut t) = text.single_mut() {
+                t.0 = if item.count > 1 { item.count.to_string() } else { String::new() };
+            }
+        }
+        _ => {
+            vis.set_if_neq(Visibility::Hidden);
         }
     }
 }
