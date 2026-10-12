@@ -1,5 +1,6 @@
 # next
 
+- ALSNÄCHSTES: items und recipes als json schreiben und extern verwalten
 - crafting links im bild: alle craftbaren items mit möglicher anzahl anzeigen:
   - ein klick -> eins
   - rechtsklick -> alle
