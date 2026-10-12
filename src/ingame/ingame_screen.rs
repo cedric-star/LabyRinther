@@ -47,6 +47,7 @@ pub fn ingame_plugin(app: &mut App) {
                 inventory_click.before(update_inventory),
                 update_inventory,
                 update_cursor_visual,
+                update_equipment,
                 mov_cam,
             ).run_if(in_state(GameState::InGame)),
         );

@@ -1,24 +1,10 @@
 # next
 
-- chest hinzugefügt: test für nächsten stichpunkt armor nur in armorslots
-- alle itemstypen für inventar unterstützen: armor, usables, secret
-
-# todo
-
-- inventar -> items anzegigen, die man hat: 4 + hotbar = 5 bars am anfange, up
-  to 7
-- inventar -> rüstungsslots
-- inventar -> items draggable machen
-- invenk:tar -> passive slots -> für passive effekte: 4, bis zu 10 (nimmt dann
-  eine bar ein)
 - crafting links im bild: alle craftbaren items mit möglicher anzahl anzeigen:
   - ein klick -> eins
   - rechtsklick -> alle
 
-- hp, armor, mana bar
-  - mana und health sind normal n/100 -> aber durch items max size erhöbar
-  - armor sind 0-60 einheiten
-  - armor reduziert eingehenden schaden um 0 - 60%
+# todo
 
 - in welt können dinge platziert sein/werden (tilebasiert)
   - random fässer spawnen: linkcklick droppt kackitems
@@ -49,6 +35,9 @@
 
 # ideen
 
+- item mit dem man sich als labyrinth wand verkleidet und stillstehen muss ->
+  schutz vor gegner -> oder gegner die sich als wand verstecken, und erst
+  revealen, wenn sie nah sind
 - mana
   - items für dauerhafte managewinnung (2/s)
   - items die mana verbrauchen: 2% mehr damage, aber -2 mana die sekunde

@@ -12,11 +12,12 @@ pub struct Inventory {
 
 #[derive(Component, Debug, Default)]
 pub struct Equipment {
-    pub helmet: Option<ItemStack>,
+    pub helm: Option<ItemStack>,
     pub chest: Option<ItemStack>,
     pub legs: Option<ItemStack>,
     pub boots: Option<ItemStack>,
-    pub offhand: Option<ItemStack>,
+    pub usable: Option<ItemStack>,
+    pub secret: Option<ItemStack>,
 }
 
 #[derive(Clone, Debug, Default, Copy)]
@@ -51,12 +52,18 @@ pub enum ItemId {
 pub enum Category {
     Resource,
     Armor,
+    Helm,
+    Chest,
+    Legs,
+    Boots,
     Weapon,
     Tool,
     Consumable,
+    Usable,
     MazeUtil,
     Food,
     Waste,
+    Secret,
     Nothing,
 }
 
@@ -151,7 +158,7 @@ pub const ITEMS: &[ItemDef; 5] = &[
         id: ItemId::IronChest,
         label: "Iron Chest",
         asset: "items/IronChest.png",
-        categories: &[Category::Armor],
+        categories: &[Category::Armor, Category::Chest],
         tier: Tier::D,
         max_stack: 1,
         weapon: None,
@@ -236,6 +243,17 @@ impl Inventory {
         self.inner_rows.get_mut(r)?.get_mut(x)
     }
 
+    pub fn equip_mut(&mut self, s: EquipSlot) -> &mut Option<ItemStack> {
+        match s {
+            EquipSlot::Helm     => &mut self.equipment.helm,
+            EquipSlot::Chest    => &mut self.equipment.chest,
+            EquipSlot::Legs     => &mut self.equipment.legs,
+            EquipSlot::Boots    => &mut self.equipment.boots,
+            EquipSlot::Usable   => &mut self.equipment.usable,
+            EquipSlot::Secret   => &mut self.equipment.secret,
+        }
+    }
+
 }
 
 impl Default for Inventory {
@@ -257,8 +275,14 @@ impl Default for Inventory {
                     id: ItemId::Apple,
                     count: 4,
                 })},
-                es.clone(),
-                es.clone(),
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::IronChest,
+                    count: 1,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::WoddenDagger,
+                    count: 1,
+                })},
                 es.clone(),
                 es.clone(),
                 es.clone(),
@@ -271,4 +295,25 @@ impl Default for Inventory {
             inner_rows: other_rows,
         }
     }
+}
+
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)] //nur manche items in inventar-slots
+pub enum EquipSlot { Helm, Chest, Legs, Boots, Usable, Secret }
+
+impl EquipSlot {
+    pub fn accepts(self, id: ItemId) -> bool {
+        let cats = get_item_by_id(id).categories;
+        match self {
+            EquipSlot::Helm     => cats.contains(&Category::Helm),
+            EquipSlot::Chest    => cats.contains(&Category::Chest),
+            EquipSlot::Legs     => cats.contains(&Category::Legs),
+            EquipSlot::Boots    => cats.contains(&Category::Boots),
+            EquipSlot::Usable   => cats.contains(&Category::Usable),
+            EquipSlot::Secret   => cats.contains(&Category::Secret),
+        }
+    }
+}
+
+pub fn can_place(restriction: Option<EquipSlot>, id: ItemId) -> bool {
+    restriction.map_or(true, |s| s.accepts(id))
 }

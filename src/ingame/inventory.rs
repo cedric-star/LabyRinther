@@ -63,16 +63,7 @@ pub struct InventorySlotItemNormalCords(usize, usize);
 pub struct InventorySlotUsablesCords(usize, usize);
 
 #[derive(Component)]
-pub struct InventorySlotHelm;
-
-#[derive(Component)]
-pub struct InventorySlotChest;
-
-#[derive(Component)]
-pub struct InventorySlotLegs;
-
-#[derive(Component)]
-pub struct InventorySlotBoots;
+pub struct InventorySlotEquip(pub EquipSlot);
 
 #[derive(Component)]
 pub struct InventorySlotSecret(usize);
@@ -244,7 +235,8 @@ pub fn spawn_inventory(
 
                 //helm and chest and legs and boots
                 Spawn((
-                    InventorySlotHelm,
+                    Interaction::default(),
+                    InventorySlotEquip(EquipSlot::Helm),
                     Node {
                         position_type: PositionType::Absolute,
                         width: percent(10.0),
@@ -254,9 +246,20 @@ pub fn spawn_inventory(
                         ..default()
                     },
                     ImageNode::new(slot_pic.clone()),
+                    children![(
+                        InventoryEquipItem(EquipSlot::Helm),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(100),
+                            height: percent(100),
+                            ..default() },
+                        ImageNode::default(),
+                        Visibility::Hidden,
+                    )]
                 )),
                 Spawn((
-                    InventorySlotChest,
+                    InventorySlotEquip(EquipSlot::Chest),
+                    Interaction::default(),
                     Node {
                         position_type: PositionType::Absolute,
                         width: percent(10.0),
@@ -266,9 +269,20 @@ pub fn spawn_inventory(
                         ..default()
                     },
                     ImageNode::new(slot_pic.clone()),
+                    children![(
+                        InventoryEquipItem(EquipSlot::Chest),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(100),
+                            height: percent(100),
+                            ..default() },
+                        ImageNode::default(),
+                        Visibility::Hidden,
+                    )]
                 )),
                 Spawn((
-                    InventorySlotLegs,
+                    InventorySlotEquip(EquipSlot::Legs),
+                    Interaction::default(),
                     Node {
                         position_type: PositionType::Absolute,
                         width: percent(10.0),
@@ -278,9 +292,20 @@ pub fn spawn_inventory(
                         ..default()
                     },
                     ImageNode::new(slot_pic.clone()),
+                    children![(
+                        InventoryEquipItem(EquipSlot::Legs),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(100),
+                            height: percent(100),
+                            ..default() },
+                        ImageNode::default(),
+                        Visibility::Hidden,
+                    )]
                 )),
                 Spawn((
-                    InventorySlotBoots,
+                    InventorySlotEquip(EquipSlot::Boots),
+                    Interaction::default(),
                     Node {
                         position_type: PositionType::Absolute,
                         width: percent(10.0),
@@ -290,6 +315,16 @@ pub fn spawn_inventory(
                         ..default()
                     },
                     ImageNode::new(slot_pic.clone()),
+                    children![(
+                        InventoryEquipItem(EquipSlot::Boots),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            width: percent(100),
+                            height: percent(100),
+                            ..default() },
+                        ImageNode::default(),
+                        Visibility::Hidden,
+                    )]
                 )),
 
                 //player preview
@@ -423,7 +458,8 @@ pub fn update_inventory_items(
 //inventar klicken:
 pub fn inventory_click(
     mouse: Res<ButtonInput<MouseButton>>,
-    slots: Query<(&InventorySlotNormalCords, &Interaction)>,
+    grid_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
+    equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
     root: Query<&Visibility, With<InventoryShow>>,
     mut player: Query<&mut Player>,
     mut cursor: ResMut<CursorItem>,
@@ -435,59 +471,54 @@ pub fn inventory_click(
     let Ok(vis) = root.single() else { return; };
     if *vis == Visibility::Hidden { return; }
     let Ok(mut player) = player.single_mut() else { return; };
+    let inv = &mut player.inventory;
 
-    let Some((cords, _)) = slots.iter().find(|(_, i)| **i != Interaction::None) else { return; };
-    let Some(slot) = player.inventory.slot_mut(cords.0, cords.1) else { return; };
+    if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
+        let slot = inv.equip_mut(eq.0);
+        apply_click(&mut cursor.0, slot, left, Some(eq.0));
+    } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
+        let Some(slot) = inv.slot_mut(c.0, c.1) else { return; };
+        apply_click(&mut cursor.0, &mut slot.stack, left, None);
+    }
+}
 
-    let held = cursor.0;
-    let stack = slot.stack;
-
+fn apply_click(
+    held: &mut Option<ItemStack>,
+    slot: &mut Option<ItemStack>,
+    left: bool,
+    restriction: Option<EquipSlot>,
+) {
     if left {
-        match (held, stack) {
-            // nichts in der Hand: alles aufnehmen
-            (None, s) => {
-                cursor.0 = s;
-                slot.stack = None;
-            }
-            // leerer Slot: alles ablegen
-            (Some(h), None) => {
-                slot.stack = Some(h);
-                cursor.0 = None;
-            }
-            // gleiches Item: zusammenführen (bis max_stack)
+        match (*held, *slot) {
+            (None, s) => { *held = s; *slot = None; }
+            // Ablegen nur, wenn der Slot das Item akzeptiert
+            (Some(h), _) if !can_place(restriction, h.id) => {}
+            (Some(h), None) => { *slot = Some(h); *held = None; }
             (Some(h), Some(s)) if h.id == s.id => {
                 let max = get_item_by_id(s.id).max_stack;
                 let total = h.count + s.count;
                 let put = total.min(max);
-                slot.stack = Some(ItemStack { id: s.id, count: put });
-                cursor.0 = (total > put).then(|| ItemStack { id: h.id, count: total - put });
+                *slot = Some(ItemStack { id: s.id, count: put });
+                *held = (total > put).then(|| ItemStack { id: h.id, count: total - put });
             }
-            // anderes Item: tauschen
-            (Some(h), Some(s)) => {
-                slot.stack = Some(h);
-                cursor.0 = Some(s);
-            }
+            (Some(h), Some(s)) => { *slot = Some(h); *held = Some(s); } // tauschen
         }
-    } else if right {
-        match (held, stack) {
-            // eins aus dem Stack nehmen
+    } else {
+        match (*held, *slot) {
             (None, Some(s)) => {
-                cursor.0 = Some(ItemStack { id: s.id, count: 1 });
-                slot.stack = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+                *held = Some(ItemStack { id: s.id, count: 1 });
+                *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
             }
-            // noch eins vom gleichen Stack dazunehmen
             (Some(h), Some(s)) if h.id == s.id => {
-                let max = get_item_by_id(h.id).max_stack;
-                if h.count < max {
-                    cursor.0 = Some(ItemStack { id: h.id, count: h.count + 1 });
-                    slot.stack = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+                if h.count < get_item_by_id(h.id).max_stack {
+                    *held = Some(ItemStack { id: h.id, count: h.count + 1 });
+                    *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
                 }
             }
             _ => {}
         }
     }
 }
-
 pub fn update_cursor_visual(
     cursor: Res<CursorItem>,
     windows: Query<&Window, With<PrimaryWindow>>,
@@ -513,6 +544,36 @@ pub fn update_cursor_visual(
         }
         _ => {
             vis.set_if_neq(Visibility::Hidden);
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct InventoryEquipItem(pub EquipSlot);
+
+pub fn update_equipment(
+    player: Query<&Player>,
+    mut items: Query<(&InventoryEquipItem, &mut ImageNode, &mut Visibility)>,
+    asset_server: Res<AssetServer>,
+) {
+    let Ok(player) = player.single() else { return; };
+    let e = &player.inventory.equipment;
+    for (slot, mut image, mut vis) in &mut items {
+        let stack = match slot.0 {
+            EquipSlot::Helm => e.helm,
+            EquipSlot::Chest => e.chest,
+            EquipSlot::Legs => e.legs,
+            EquipSlot::Boots => e.boots,
+            EquipSlot::Usable => e.usable,
+            EquipSlot::Secret => e.secret,
+        };
+        match stack {
+            Some(it) => {
+                vis.set_if_neq(Visibility::Inherited);
+                let h = asset_server.load(get_item_by_id(it.id).asset);
+                if image.image != h { image.image = h; }
+            }
+            None => { vis.set_if_neq(Visibility::Hidden); }
         }
     }
 }
