@@ -3,7 +3,6 @@ use bevy::sprite::*;
 use crate::ingame::inventory::*;
 use crate::ingame::inventory_meta::*;
 
-
 #[derive(Component, Default)]
 pub struct Velocity {
     pub x: f32,
@@ -15,8 +14,10 @@ pub struct Velocity {
 pub struct Player {
     pub inventory: Inventory,
     pub health: f32,
-    pub max_health: f32,
-    pub armor: f32,
+    pub max_health: f32, //normal: 100
+    pub armor: f32, //0-60
+    pub mana: f32,
+    pub max_mana: f32,
     pub speed: f32,
 
 }

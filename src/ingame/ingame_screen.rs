@@ -13,16 +13,19 @@ use crate::ingame::inventory_meta::*;
 use crate::ingame::player::*;
 use crate::ingame::ui::*;
 use crate::ingame::inventory::*;
+use crate::ingame::status_bars::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
         .init_resource::<CursorItem>()
         .add_systems(
             OnEnter(GameState::InGame),
-            (startup.run_if(not(any_with_component::<Player>)),
-            spawn_ui,
-            spawn_inventory,
-            )
+            (
+                startup.run_if(not(any_with_component::<Player>)),
+                spawn_ui,
+                spawn_inventory,
+
+            ).chain(),
 
         )
         .add_systems(
@@ -37,6 +40,7 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
+                update_bars,
                 movement,
                 update_ui,
                 update_inventory_items,
@@ -60,6 +64,8 @@ fn startup(
             inventory: Inventory::default(),
             health: 100.0,
             max_health: 100.0,
+            mana: 0.0,
+            max_mana: 100.0,
             armor: 0.0,
             speed: 1.0,
         },

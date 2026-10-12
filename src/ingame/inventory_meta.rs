@@ -38,6 +38,7 @@ pub struct Item {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ItemId {
+    IronChest,
     Apple,
     JucyWoddenDagger,
     WoddenDagger,
@@ -80,6 +81,7 @@ pub struct ItemDef {
     pub max_stack: u32,
     //optionale attribute:
     pub weapon: Option<WeaponDef>,
+    pub armor: Option<ArmorDef>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -88,6 +90,11 @@ pub struct WeaponDef {
     pub range: f32,
     pub attack_speed: f32,
     pub wtype: WeaponType,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct ArmorDef {
+    pub points: f32, //max 15 bitti
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -119,18 +126,18 @@ pub struct Recipe {
 
 pub struct CraftStation;
 
-pub const RECIOES: &[Recipe; 1] = &[
+pub const RECIPES: &[Recipe; 1] = &[
     Recipe {
         items: &[
             (ItemId::WoddenDagger, 1),
             (ItemId::Apple, 2),
         ],
         station: None,
-    }
+    },
 ];
 
-pub const ITEMS: &[ItemDef; 4] = &[
-        ItemDef {
+pub const ITEMS: &[ItemDef; 5] = &[
+    ItemDef {
         id: ItemId::Nothing,
         label: "Error",
         asset: "items/Error.png",
@@ -138,6 +145,19 @@ pub const ITEMS: &[ItemDef; 4] = &[
         tier: Tier::F,
         max_stack: 1,
         weapon: None,
+        armor: None,
+    },
+    ItemDef {
+        id: ItemId::IronChest,
+        label: "Iron Chest",
+        asset: "items/IronChest.png",
+        categories: &[Category::Armor],
+        tier: Tier::D,
+        max_stack: 1,
+        weapon: None,
+        armor: Some(ArmorDef {
+            points: 5.0,
+        })
     },
     ItemDef {
         id: ItemId::Apple,
@@ -146,7 +166,8 @@ pub const ITEMS: &[ItemDef; 4] = &[
         categories: &[Category::Food, Category::Resource],
         tier: Tier::F,
         max_stack: 999,
-        weapon: None
+        weapon: None,
+        armor: None,
     },
     ItemDef {
         id: ItemId::WoddenDagger,
@@ -161,6 +182,7 @@ pub const ITEMS: &[ItemDef; 4] = &[
             attack_speed: 1.0,
             wtype: WeaponType::Sword,
         }),
+        armor: None,
     },
     ItemDef {
         id: ItemId::JucyWoddenDagger,
@@ -175,6 +197,7 @@ pub const ITEMS: &[ItemDef; 4] = &[
             attack_speed: 1.5,
             wtype: WeaponType::Sword,
         }),
+        armor: None,
     },
 ];
 

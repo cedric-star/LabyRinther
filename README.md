@@ -1,7 +1,7 @@
 # next
 
-- inventar skizzieren -> wo soll was sein
-- inventarslots nach todo vorgaben als ui umsetzen
+- chest hinzugefügt: test für nächsten stichpunkt armor nur in armorslots
+- alle itemstypen für inventar unterstützen: armor, usables, secret
 
 # todo
 

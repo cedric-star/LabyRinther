@@ -5,6 +5,7 @@ use crate::util::ui::buttons::*;
 use crate::util::ui::constants::*;
 use crate::ingame::player::*;
 use crate::settings::settings_screen::*;
+use crate::ingame::status_bars::*;
 
 #[derive(Component)]
 pub struct IngameUi;
@@ -25,9 +26,15 @@ pub fn spawn_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
+    player: Query<&Player>,
 ) {
     let col = Color::srgba(1.0,1.0,1.0,0.1);
     let scale = s.ui_scale;
+    let Ok(player) = player.single() else {
+        println!("no player found");
+        return; // kein oder mehrere Spieler
+    };
+
     commands.spawn((
         GameEntity,
         IngameUi,
@@ -36,31 +43,20 @@ pub fn spawn_ui(
             width: percent(100),
             height: percent(100),
             grid_template_columns: vec![
-                GridTrack::percent(10.0),
+                GridTrack::percent(25.0),
                 GridTrack::flex(1.0),
-                GridTrack::percent(10.0),
+                GridTrack::percent(25.0),
             ],
             grid_template_rows: vec![
-                GridTrack::percent(10.0),
+                GridTrack::percent(25.0),
                 GridTrack::flex(1.0),
-                GridTrack::percent(10.0),
+                GridTrack::percent(25.0),
             ],
             ..default()
         },
         Visibility::default(),
         children![
-            (
-                Node {
-                    height: percent(100.0),
-                    aspect_ratio: Some(10.0),
-                    justify_self: JustifySelf::Center,
-                    grid_column: GridPlacement::start(2),
-                    grid_row: GridPlacement::start(1),
-                    ..default()
-                },
-                Text::new("My Game"),
-                BackgroundColor(col),
-            ),
+            get_bars(&s, &player),
             (
                 HotBar,
                 Node {
