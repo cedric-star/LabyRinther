@@ -1,0 +1,19 @@
+[
+  {
+    "items": [
+      {
+        "id": "WoddenDagger",
+        "count": 1
+      },
+      {
+        "id": "Apple",
+        "count": 2
+      }
+    ],
+    "station": null,
+    "result": {
+      "id": "JucyWoddenDagger",
+      "count": 1
+    }
+  }
+]

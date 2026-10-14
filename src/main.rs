@@ -21,6 +21,11 @@ use welcome::welcome_screen::*;
 use ingame::ingame_screen::*;
 use settings::settings_screen::*;
 use ingame::player::*;
+use ingame::inventory_meta::*;
+use serde_json::{Result, Value};
+use std::fs;
+use ingame::items::*;
+use ingame::recipes::*;
 
 fn setup_cam(
     mut commands: Commands,
@@ -72,6 +77,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .init_state::<GameState>()
+        .init_resource::<Items>()
+        .init_resource::<Recipes>()
         .init_resource::<GameSettings>()
         .init_resource::<LastState>()
         .init_resource::<ChunkPool>()

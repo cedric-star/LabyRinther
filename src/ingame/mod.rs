@@ -4,3 +4,5 @@ pub mod inventory_meta;
 pub mod player;
 pub mod ui;
 pub mod status_bars;
+pub mod items;
+pub mod recipes;

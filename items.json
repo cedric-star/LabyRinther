@@ -1,0 +1,55 @@
+[
+  {
+    "id": "Nothing",
+    "label": "Error",
+    "asset": "items/Error.png",
+    "categories": ["Nothing"],
+    "tier": "F",
+    "max_stack": 1
+  },
+  {
+    "id": "IronChest",
+    "label": "Iron Chest",
+    "asset": "items/IronChest.png",
+    "categories": ["Armor", "Chest"],
+    "tier": "D",
+    "max_stack": 1,
+    "armor": { "points": 5.0 }
+  },
+  {
+    "id": "Apple",
+    "label": "Apple",
+    "asset": "items/Apple.png",
+    "categories": ["Food", "Resource"],
+    "tier": "F",
+    "max_stack": 999
+  },
+  {
+    "id": "WoddenDagger",
+    "label": "Wodden Dagger",
+    "asset": "items/WoddenDagger.png",
+    "categories": ["Resource", "Weapon"],
+    "tier": "F",
+    "max_stack": 1,
+    "weapon": {
+      "damage": 10.0,
+      "range": 2.0,
+      "attack_speed": 1.0,
+      "wtype": "Sword"
+    }
+  },
+  {
+    "id": "JucyWoddenDagger",
+    "label": "Jucy Wodden Dagger",
+    "asset": "items/JucyWoddenDagger.png",
+    "categories": ["Weapon"],
+    "tier": "D",
+    "max_stack": 1,
+    "weapon": {
+      "damage": 12.0,
+      "range": 2.0,
+      "attack_speed": 1.5,
+      "wtype": "Sword"
+    }
+  }
+]

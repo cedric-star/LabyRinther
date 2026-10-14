@@ -5,6 +5,7 @@ use crate::ingame::inventory_meta::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 use bevy::window::PrimaryWindow;
+use crate::ingame::items::*;
 
 pub fn set_hotkeys(
     keys: Res<ButtonInput<KeyCode>>,
@@ -383,6 +384,7 @@ pub fn update_inventory(
     >,
     mut counts: Query<(&InventorySlotCount, &mut Text)>,
     asset_server: Res<AssetServer>,
+    items: Res<Items>,
 ) {
     let Ok(player) = player.single() else { return; };
     let inv = &player.inventory;
@@ -398,7 +400,7 @@ pub fn update_inventory(
         match inv.slot(cords.0, cords.1).and_then(|s| s.stack) {
             Some(item) => {
                 vis.set_if_neq(Visibility::Inherited);
-                let handle = asset_server.load(get_item_by_id(item.id).asset);
+                let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
                 if image.image != handle {
                     image.image = handle;
                 }
@@ -419,6 +421,7 @@ pub fn update_inventory_items(
     mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility), Without<HotBarItemNum>>,
     mut hotbar_item: Query<(&HotBarItemNum, &mut Text, &mut Visibility), Without<HotBarItem>>,
     asset_server: Res<AssetServer>,
+    items: Res<Items>,
 ) {
     let Ok(player) = player.single() else {
         return; // kein oder mehrere Spieler
@@ -429,7 +432,7 @@ pub fn update_inventory_items(
         match &player.inventory.hotbar[i].stack {
             Some(item) => {
                 *visibility = Visibility::Visible;
-                let handle = asset_server.load(get_item_by_id(item.id).asset);
+                let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
                 if image.image != handle {
                     image.image = handle;
                 }
@@ -463,6 +466,7 @@ pub fn inventory_click(
     root: Query<&Visibility, With<InventoryShow>>,
     mut player: Query<&mut Player>,
     mut cursor: ResMut<CursorItem>,
+    items: Res<Items>,
 ) {
     let left = mouse.just_pressed(MouseButton::Left);
     let right = mouse.just_pressed(MouseButton::Right);
@@ -475,10 +479,10 @@ pub fn inventory_click(
 
     if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
         let slot = inv.equip_mut(eq.0);
-        apply_click(&mut cursor.0, slot, left, Some(eq.0));
+        apply_click(&mut cursor.0, slot, left, Some(eq.0), &items);
     } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
         let Some(slot) = inv.slot_mut(c.0, c.1) else { return; };
-        apply_click(&mut cursor.0, &mut slot.stack, left, None);
+        apply_click(&mut cursor.0, &mut slot.stack, left, None, &items);
     }
 }
 
@@ -487,15 +491,16 @@ fn apply_click(
     slot: &mut Option<ItemStack>,
     left: bool,
     restriction: Option<EquipSlot>,
+    items: &Items,
 ) {
     if left {
         match (*held, *slot) {
             (None, s) => { *held = s; *slot = None; }
             // Ablegen nur, wenn der Slot das Item akzeptiert
-            (Some(h), _) if !can_place(restriction, h.id) => {}
+            (Some(h), _) if !can_place(restriction, h.id, &items) => {}
             (Some(h), None) => { *slot = Some(h); *held = None; }
             (Some(h), Some(s)) if h.id == s.id => {
-                let max = get_item_by_id(s.id).max_stack;
+                let max = items.0.get(&s.id).unwrap().max_stack;
                 let total = h.count + s.count;
                 let put = total.min(max);
                 *slot = Some(ItemStack { id: s.id, count: put });
@@ -510,7 +515,7 @@ fn apply_click(
                 *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
             }
             (Some(h), Some(s)) if h.id == s.id => {
-                if h.count < get_item_by_id(h.id).max_stack {
+                if h.count < items.0.get(&h.id).unwrap().max_stack {
                     *held = Some(ItemStack { id: h.id, count: h.count + 1 });
                     *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
                 }
@@ -525,6 +530,7 @@ pub fn update_cursor_visual(
     mut visual: Query<(&mut Node, &mut ImageNode, &mut Visibility), With<CursorItemVisual>>,
     mut text: Query<&mut Text, With<CursorCountText>>,
     asset_server: Res<AssetServer>,
+    items: Res<Items>,
 ) {
     let Ok((mut node, mut image, mut vis)) = visual.single_mut() else { return; };
     let pos = windows.single().ok().and_then(|w| w.cursor_position());
@@ -534,7 +540,7 @@ pub fn update_cursor_visual(
             vis.set_if_neq(Visibility::Visible);
             node.left = px(pos.x - 24.0);
             node.top = px(pos.y - 24.0);
-            let handle = asset_server.load(get_item_by_id(item.id).asset);
+            let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
             if image.image != handle {
                 image.image = handle;
             }
@@ -555,6 +561,7 @@ pub fn update_equipment(
     player: Query<&Player>,
     mut items: Query<(&InventoryEquipItem, &mut ImageNode, &mut Visibility)>,
     asset_server: Res<AssetServer>,
+    items_res: Res<Items>,
 ) {
     let Ok(player) = player.single() else { return; };
     let e = &player.inventory.equipment;
@@ -570,7 +577,7 @@ pub fn update_equipment(
         match stack {
             Some(it) => {
                 vis.set_if_neq(Visibility::Inherited);
-                let h = asset_server.load(get_item_by_id(it.id).asset);
+                let h = asset_server.load(items_res.0.get(&it.id).unwrap().asset.clone());
                 if image.image != h { image.image = h; }
             }
             None => { vis.set_if_neq(Visibility::Hidden); }
