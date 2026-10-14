@@ -5,6 +5,7 @@ use crate::ingame::inventory_meta::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 use crate::components::*;
+use crate::ingame::recipes::*;
 
 #[derive(Component)]
 pub struct HealthBar;

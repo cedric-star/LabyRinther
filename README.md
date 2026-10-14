@@ -1,9 +1,10 @@
 # next
 
-- ALSNÄCHSTES: items und recipes als json schreiben und extern verwalten
 - crafting links im bild: alle craftbaren items mit möglicher anzahl anzeigen:
   - ein klick -> eins
   - rechtsklick -> alle
+  - impl für Tier -> color -> jede rarität eine farbe -> dann beim craften die
+    ergebnisse items mit farbe hinterlegen
 
 # todo
 

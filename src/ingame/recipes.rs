@@ -1,10 +1,17 @@
 use bevy::prelude::*;
 use crate::constants::*;
+use crate::ingame::inventory::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use crate::ingame::inventory_meta::*;
 use crate::ingame::items::*;
 use std::fs;
+use crate::components::*;
+use crate::settings::settings_screen::*;
+use crate::ingame::player::*;
+use crate::ingame::ui::*;
+use crate::util::ui::constants::*;
+use crate::ingame::inventory::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Recipe {
@@ -37,4 +44,27 @@ impl Default for Recipes {
             Err(e) => {panic!("json recipes ungültig )):::")}
         }
     }
+}
+
+pub fn get_craftable_item_field(
+    s: &GameSettings,
+    player: &Player
+) -> impl Bundle {
+    let scale = s.ui_scale;
+
+    (
+        IngameUi,
+        GameEntity,
+        InventoryShow,
+        Node {
+            position_type: PositionType::Absolute,
+            width: percent(100.0),
+            height: percent(100.0),
+            grid_column: GridPlacement::start(1),
+            grid_row: GridPlacement::start(2),
+            ..default()
+        },
+        Visibility::Hidden,
+        BackgroundColor(BG_COL_A),
+    )
 }

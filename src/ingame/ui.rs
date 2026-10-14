@@ -6,6 +6,7 @@ use crate::util::ui::constants::*;
 use crate::ingame::player::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::status_bars::*;
+use crate::ingame::recipes::*;
 
 #[derive(Component)]
 pub struct IngameUi;
@@ -57,6 +58,7 @@ pub fn spawn_ui(
         Visibility::default(),
         children![
             get_bars(&s, &player),
+            get_craftable_item_field(&s, &player),
             (
                 HotBar,
                 Node {
