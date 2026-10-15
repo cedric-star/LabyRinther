@@ -14,6 +14,8 @@ use crate::ingame::player::*;
 use crate::ingame::ui::*;
 use crate::ingame::inventory::*;
 use crate::ingame::status_bars::*;
+use bevy::time::common_conditions::on_timer;
+use std::time::Duration;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -50,6 +52,8 @@ pub fn ingame_plugin(app: &mut App) {
                 update_cursor_visual,
                 update_equipment,
                 mov_cam,
+                mana_regen.run_if(on_timer(Duration::from_secs(1))),
+                health_regen.run_if(on_timer(Duration::from_secs(1))),
             ).run_if(in_state(GameState::InGame)),
         );
 }

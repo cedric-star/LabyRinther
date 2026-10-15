@@ -21,3 +21,39 @@ pub struct Player {
     pub speed: f32,
 
 }
+
+pub fn mana_regen(mut player: Query<&mut Player>) {
+    let Ok(mut player) = player.single_mut() else {
+        return;
+    };
+
+    if player.mana == player.max_mana {
+        println!("max mana reched");
+        return;
+    }
+    let mana_regen_num = 2.0;
+    if (player.mana + mana_regen_num) >= player.max_mana {
+        player.mana = player.max_mana;
+        return;
+    }
+
+    player.mana += mana_regen_num;
+}
+
+pub fn health_regen(mut player: Query<&mut Player>) {
+    let Ok(mut player) = player.single_mut() else {
+        return;
+    };
+
+    if player.health == player.max_health {
+        println!("max health reched");
+        return;
+    }
+    let health_regen_num = 2.0;
+    if (player.health + health_regen_num) >= player.max_health {
+        player.health = player.max_health;
+        return;
+    }
+
+    player.health += health_regen_num;
+}
