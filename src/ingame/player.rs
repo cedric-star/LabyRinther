@@ -28,7 +28,6 @@ pub fn mana_regen(mut player: Query<&mut Player>) {
     };
 
     if player.mana == player.max_mana {
-        println!("max mana reched");
         return;
     }
     let mana_regen_num = 2.0;
@@ -46,7 +45,6 @@ pub fn health_regen(mut player: Query<&mut Player>) {
     };
 
     if player.health == player.max_health {
-        println!("max health reched");
         return;
     }
     let health_regen_num = 2.0;

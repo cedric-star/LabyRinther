@@ -16,10 +16,12 @@ use crate::ingame::inventory::*;
 use crate::ingame::status_bars::*;
 use bevy::time::common_conditions::on_timer;
 use std::time::Duration;
+use crate::ingame::recipes::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
         .init_resource::<CursorItem>()
+        .init_resource::<CraftableItems>()
         .add_systems(
             OnEnter(GameState::InGame),
             (
@@ -54,6 +56,7 @@ pub fn ingame_plugin(app: &mut App) {
                 mov_cam,
                 mana_regen.run_if(on_timer(Duration::from_secs(1))),
                 health_regen.run_if(on_timer(Duration::from_secs(1))),
+                set_craftable_items.run_if(on_timer(Duration::from_secs(1))),
             ).run_if(in_state(GameState::InGame)),
         );
 }

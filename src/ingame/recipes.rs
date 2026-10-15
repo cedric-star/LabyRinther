@@ -46,6 +46,51 @@ impl Default for Recipes {
     }
 }
 
+#[derive(Resource)]
+pub struct CraftableItems(Vec<ItemStack>);
+
+impl Default for CraftableItems {
+    fn default() -> Self {
+        Self(Vec::new())
+    }
+}
+
+//liste enthält alle craftable items, und wie viele jeweils
+pub fn set_craftable_items(
+    player: Query<&Player>,
+    mut craftable_items: ResMut<CraftableItems>,
+    recipes: Res<Recipes>,
+) {
+    let Ok(player) = player.single() else {
+        panic!("didnt found player coreclty");
+    };
+
+    let mut player_items: Vec<ItemStack> = Vec::new();
+    for inv_rows in player.inventory.inner_rows.clone() {
+        for slot in inv_rows {
+            if let Some(slot_unwrapped) = slot.stack {
+                player_items.push(slot_unwrapped);
+            }
+        }
+    }
+    for slot in player.inventory.hotbar {
+        if let Some(slot_unwrapped) = slot.stack {
+            player_items.push(slot_unwrapped);
+        }
+    }
+
+    let player_items = merge_stack(player_items);
+
+    //alle craftbaren recipes:
+    let craftable_recipes: Vec<Recipe> = Vec::new();
+
+    for recipe in recipes.0.clone() {
+        println!("recip: {:?}", recipe);
+    }
+
+    return;
+}
+
 pub fn get_craftable_item_field(
     s: &GameSettings,
     player: &Player
@@ -67,4 +112,18 @@ pub fn get_craftable_item_field(
         Visibility::Hidden,
         BackgroundColor(BG_COL_A),
     )
+}
+
+//helper
+//
+fn merge_stack(items: Vec<ItemStack>) -> Vec<ItemStack> {
+    let mut map: HashMap<ItemId, u32> = HashMap::new();
+
+    for item in items {
+        *map.entry(item.id).or_insert(0) += item.count;
+    }
+
+    map.into_iter()
+        .map(|(id, count)| ItemStack { id, count })
+        .collect()
 }
