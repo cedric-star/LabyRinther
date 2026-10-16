@@ -7,6 +7,7 @@ use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::ui::*;
 use crate::ingame::structs::*;
+use crate::ingame::inventory::ui::*;
 
 
 
@@ -32,26 +33,28 @@ pub fn spawn_ui(
             width: percent(100),
             height: percent(100),
             grid_template_columns: vec![
-                GridTrack::percent(25.0),
-                GridTrack::flex(1.0),
-                GridTrack::percent(25.0),
+                GridTrack::percent(20.0),
+                GridTrack::percent(60.0),
+                GridTrack::percent(20.0),
             ],
             grid_template_rows: vec![
-                GridTrack::percent(25.0),
+                GridTrack::percent(20.0),
                 GridTrack::flex(1.0),
-                GridTrack::percent(25.0),
+                GridTrack::percent(20.0),
             ],
             ..default()
         },
         Visibility::default(),
         children![
             get_bars(&s, &player),
+            get_inventory(&asset_server, &s),
             get_craftable_item_field(&s, &player, &craftable_items),
+            get_cursor(&asset_server, &s),
             (
                 HotBar,
                 Node {
-                    width: px(180.0 * scale),
-                    height: px(18.0 * scale),
+                    width: percent(30.0 * scale * 0.3),
+                    height: percent(30.0 * scale * 0.3),
                     justify_self: JustifySelf::Center,
                     align_self: AlignSelf::End,
                     grid_column: GridPlacement::start(2),
@@ -101,7 +104,7 @@ pub fn spawn_ui(
                                     },
                                     Visibility::Hidden,
                                     Text::new(""),
-                                    TextFont { font_size: FontSize::Px(9.0 * scale), ..default()},
+                                    TextFont { font_size: FontSize::Px(14.0), ..default()},
                                     TextColor(TXT_COL),
                                 )]
                             )]

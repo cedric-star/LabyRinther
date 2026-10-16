@@ -4,26 +4,28 @@ use crate::ingame::inventory::structs::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 
-
-
-pub fn spawn_inventory(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    s: Res<GameSettings>,
-) {
-    let scale = s.ui_scale * 0.7;
+pub fn get_inventory(
+    asset_server: &AssetServer,
+    s: &GameSettings,
+) -> impl Bundle {
+    let scale = s.ui_scale * 0.27;
     let slot_pic: Handle<Image> = asset_server.load("ingame_ui/item_slot.png");
     let pic_normal = slot_pic.clone();
     let pic_usables = slot_pic.clone();
 
-    commands.spawn((
+    (
         IngameUi,
         InventoryShow,
         InventoryRoot,
         Node {
+            top: percent( - (scale * 40.0)),
+            position_type: PositionType::Absolute,
+            grid_column: GridPlacement::start(2),
+            grid_row: GridPlacement::start(2),
             display: Display::Grid,
-            width: percent(100.0),
-            height: percent(100.0),
+            width: percent(140.0 * scale),
+            height: percent(140.0 * scale),
+            justify_self: JustifySelf::Center,
             grid_template_columns: vec![
                 GridTrack::percent(20.0),
                 GridTrack::flex(1.0),
@@ -267,9 +269,15 @@ pub fn spawn_inventory(
 
             )),
         )],
-    ));
+    )
 
-    commands.spawn((
+}
+
+pub fn get_cursor(
+    asset_server: &AssetServer,
+    s: &GameSettings,
+) -> impl Bundle {
+    (
         IngameUi,
         CursorItemVisual,
         Node {
@@ -292,5 +300,5 @@ pub fn spawn_inventory(
                 ..default()
             },
         )],
-    ));
+    )
 }

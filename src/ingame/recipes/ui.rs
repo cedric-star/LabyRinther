@@ -12,6 +12,7 @@ pub fn get_craftable_item_field(
     player: &Player,
     craftable_items: &CraftableItems
 ) -> impl Bundle {
+    let scale = s.ui_scale * 0.27;
     (
         IngameUi,
         GameEntity,
@@ -19,8 +20,11 @@ pub fn get_craftable_item_field(
         CraftableList,          // <-- neu
         Node {
             position_type: PositionType::Absolute,
-            width: percent(100.0),
-            height: percent(100.0),
+            width: percent(160.0 * scale),
+            height: percent(160.0 * scale),
+            max_height: percent(120.0),
+            max_width: percent(130.0),
+            aspect_ratio: Some(1.4),
             grid_column: GridPlacement::start(1),
             grid_row: GridPlacement::start(2),
             flex_wrap: FlexWrap::Wrap,          // slots umbrechen lassen

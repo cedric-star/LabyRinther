@@ -23,8 +23,6 @@ pub fn ingame_plugin(app: &mut App) {
             (
                 startup.run_if(not(any_with_component::<Player>)),
                 spawn_ui,
-                spawn_inventory,
-
             ).chain(),
 
         )
