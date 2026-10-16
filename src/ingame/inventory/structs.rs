@@ -1,0 +1,83 @@
+use bevy::prelude::*;
+use crate::ingame::player::ui::*;
+use crate::ingame::player::util::*;
+use crate::ingame::player::systems::*;
+use crate::ingame::player::structs::*;
+use crate::ingame::ui::*;
+use crate::ingame::inventory::systems::*;
+use crate::ingame::inventory::ui::*;
+use crate::settings::settings_screen::*;
+use crate::util::ui::constants::*;
+use bevy::window::PrimaryWindow;
+use crate::ingame::items::*;
+
+
+#[derive(Component)]
+pub struct InventoryRoot;
+
+#[derive(Component)]
+pub struct InventoryShow;
+
+#[derive(Component)]
+pub struct InventorySlotNormalCords(pub usize, pub usize);
+
+#[derive(Component)]
+pub struct InventorySlotItemNormalCords(pub usize, pub usize);
+
+#[derive(Component)]
+pub struct InventorySlotUsablesCords(pub usize, pub usize);
+
+#[derive(Component)]
+pub struct InventorySlotEquip(pub EquipSlot);
+
+#[derive(Component)]
+pub struct InventorySlotSecret(pub usize);
+
+#[derive(Component)]
+pub struct InventoryPlayerView;
+
+#[derive(Component)]
+pub struct InventorySlotCount(pub usize, pub usize);
+
+#[derive(Component)]
+pub struct CursorItemVisual;
+
+#[derive(Component)]
+pub struct CursorCountText;
+
+#[derive(Resource, Default)]
+pub struct CursorItem(pub Option<ItemStack>);
+
+#[derive(Component)]
+pub struct InventoryEquipItem(pub EquipSlot);
+
+
+#[derive(Debug, Component)]
+pub struct Inventory {
+    pub hotbar: [InventorySlot; 10],
+    pub selected: usize,
+    pub inner_rows: Vec<[InventorySlot; 10]>,
+    pub equipment: Equipment,
+}
+
+#[derive(Component, Debug, Default)]
+pub struct Equipment {
+    pub helm: Option<ItemStack>,
+    pub chest: Option<ItemStack>,
+    pub legs: Option<ItemStack>,
+    pub boots: Option<ItemStack>,
+    pub usable: Option<ItemStack>,
+    pub secret: Option<ItemStack>,
+}
+
+#[derive(Clone, Debug, Default, Copy)]
+pub struct InventorySlot {
+    pub stack: Option<ItemStack>,
+}
+
+pub const MAX_INNER_ROWS: usize = 6;
+pub const HOTBAR_ROW: usize = MAX_INNER_ROWS;
+
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)] //nur manche items in inventar-slots
+pub enum EquipSlot { Helm, Chest, Legs, Boots, Usable, Secret }
+

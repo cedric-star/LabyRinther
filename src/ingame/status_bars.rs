@@ -1,11 +1,20 @@
 use bevy::prelude::*;
-use crate::ingame::player::*;
+use crate::ingame::player::ui::*;
+use crate::ingame::player::util::*;
+use crate::ingame::player::systems::*;
+use crate::ingame::player::structs::*;
 use crate::ingame::ui::*;
-use crate::ingame::inventory_meta::*;
+use crate::ingame::inventory::structs::*;
+use crate::ingame::inventory::systems::*;
+use crate::ingame::inventory::ui::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 use crate::components::*;
-use crate::ingame::recipes::*;
+use crate::ingame::recipes::ui::*;
+use crate::ingame::recipes::util::*;
+use crate::ingame::recipes::structs::*;
+use crate::ingame::recipes::systems::*;
+use crate::ingame::structs::*;
 
 #[derive(Component)]
 pub struct HealthBar;

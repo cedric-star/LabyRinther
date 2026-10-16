@@ -3,77 +3,26 @@ use crate::constants::*;
 use crate::ingame::inventory::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use crate::ingame::inventory_meta::*;
 use crate::ingame::items::*;
 use std::fs;
 use crate::components::*;
 use crate::settings::settings_screen::*;
-use crate::ingame::player::*;
+use crate::ingame::player::ui::*;
+use crate::ingame::player::util::*;
+use crate::ingame::player::systems::*;
+use crate::ingame::player::structs::*;
 use crate::ingame::ui::*;
 use crate::util::ui::constants::*;
-use crate::ingame::inventory::*;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Recipe {
-    pub items: Vec<ItemStack>, //item + anzahl des items
-    pub station: Option<CraftStation>,
-    pub result: ItemStack,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum CraftStation {
-    Workbench,
-}
-
-#[derive(Resource)]
-pub struct Recipes(Vec<Recipe>);
-
-impl Default for Recipes {
-    fn default() -> Self {
-        let path = "./recipes.json";
-        let file = match fs::read_to_string(path) {
-            Ok(file) => {
-                if file.trim().is_empty() { panic!("recipesjson emtpy):"); }
-                file
-            }
-            Err(e) => { panic!("recipes json nicht ladbar :()"); }
-        };
-
-        match serde_json::from_str::<Vec<Recipe>>(&file) {
-            Ok(list) => Self(list),
-            Err(e) => {panic!("json recipes ungültig )):::")}
-        }
-    }
-}
-
-impl Recipe {
-
-    //none, wenn nicht craftable, ansonsten anzahl, wie oft craftable
-    pub fn is_craftable(&self, player_items: HashMap<ItemId, u32>) -> Option<u32> {
-        let mut counts: Vec<u32> = Vec::new();
-
-        for recipe_item in self.items.clone() {
-            match player_items.get(&recipe_item.id) {
-                Some(count) => {
-                    if *count < recipe_item.count { return None; }
-                    let num_2_craft = *count / recipe_item.count;
-                    counts.push(num_2_craft);
-                }
-                None => { return None; }
-            }
-        }
-        counts.into_iter().map(|c| c * self.result.count).min() //diese funktion is so rust core
-    }
-}
-
-#[derive(Resource)]
-pub struct CraftableItems(Vec<ItemStack>);
-
-impl Default for CraftableItems {
-    fn default() -> Self {
-        Self(Vec::new())
-    }
-}
+use crate::ingame::inventory::structs::*;
+use crate::ingame::inventory::systems::*;
+use crate::ingame::inventory::ui::*;
+use crate::ingame::recipes::structs::*;
+use crate::ingame::recipes::ui::*;
+use crate::ingame::recipes::util::*;
+use crate::ingame::util::*;
+use crate::ingame::util::*;
+use crate::ingame::systems::*;
+use crate::ingame::ui::*;
 
 //liste enthält alle craftable items, und wie viele jeweils
 pub fn set_craftable_items(
@@ -118,58 +67,6 @@ pub fn set_craftable_items(
 
     return;
 }
-
-#[derive(Component)]
-pub struct CraftableList;          // eindeutiger Marker für den Container
-
-#[derive(Component)]
-pub struct CraftableSlot(pub usize); // index in CraftableItems.0
-
-#[derive(Component)]
-pub struct CraftableCountText;
-
-#[derive(Component)]
-pub struct CraftableTooltip;
-
-pub fn get_craftable_item_field(
-    s: &GameSettings,
-    player: &Player,
-    craftable_items: &CraftableItems
-) -> impl Bundle {
-    (
-        IngameUi,
-        GameEntity,
-        InventoryShow,
-        CraftableList,          // <-- neu
-        Node {
-            position_type: PositionType::Absolute,
-            width: percent(100.0),
-            height: percent(100.0),
-            grid_column: GridPlacement::start(1),
-            grid_row: GridPlacement::start(2),
-            flex_wrap: FlexWrap::Wrap,          // slots umbrechen lassen
-            align_content: AlignContent::FlexStart,
-            padding: UiRect::all(px(8.0)),
-            ..default()
-        },
-        Visibility::Hidden,
-        BackgroundColor(BG_COL_A),
-    )
-}
-//helper
-//
-fn merge_stack(items: Vec<ItemStack>) -> HashMap<ItemId, u32> {
-    let mut map: HashMap<ItemId, u32> = HashMap::new();
-
-    for item in items {
-        *map.entry(item.id).or_insert(0) += item.count;
-    }
-    return map
-}
-
-//
-//
-//
 
 pub fn sync_craftable_ui(
     mut commands: Commands,
@@ -331,23 +228,4 @@ pub fn craftable_click(
         id: recipe.result.id,
         count: rounds * recipe.result.count,
     });
-}
-
-// zieht `amount` items des typs aus hotbar + inneren reihen
-fn remove_items(inv: &mut Inventory, id: ItemId, mut amount: u32) {
-    let mut take_from = |slot: &mut InventorySlot| {
-        if amount == 0 { return; }
-        if let Some(s) = &mut slot.stack {
-            if s.id == id {
-                let take = s.count.min(amount);
-                s.count -= take;
-                amount -= take;
-                if s.count == 0 { slot.stack = None; }
-            }
-        }
-    };
-    for slot in inv.hotbar.iter_mut() { take_from(slot); }
-    for row in inv.inner_rows.iter_mut() {
-        for slot in row.iter_mut() { take_from(slot); }
-    }
 }

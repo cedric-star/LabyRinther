@@ -1,0 +1,235 @@
+use bevy::prelude::*;
+use crate::components::*;
+use crate::constants::*;
+use crate::ingame::player::ui::*;
+use crate::ingame::player::util::*;
+use crate::ingame::player::systems::*;
+use crate::ingame::player::structs::*;
+use crate::ingame::ui::*;
+use crate::settings::settings_screen::*;
+use crate::util::ui::constants::*;
+use bevy::window::PrimaryWindow;
+use crate::ingame::items::*;
+use crate::ingame::inventory::structs::*;
+use crate::ingame::inventory::ui::*;
+use crate::ingame::inventory::util::*;
+use crate::ingame::structs::*;
+
+
+pub fn set_hotkeys(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut player: Query<&mut Player>,
+    mut inventory_show: Query<(&InventoryShow, &mut Visibility)>,
+) {
+    let Ok(mut player) = player.single_mut() else {
+        return;
+    };
+
+    if keys.pressed(KeyCode::Digit1) {
+        player.inventory.selected = 0;
+    } else if keys.pressed(KeyCode::Digit2) {
+        player.inventory.selected = 1;
+    } else if keys.pressed(KeyCode::Digit3) {
+        player.inventory.selected = 2;
+    } else if keys.pressed(KeyCode::Digit4) {
+        player.inventory.selected = 3;
+    } else if keys.pressed(KeyCode::Digit5) {
+        player.inventory.selected = 4;
+    } else if keys.pressed(KeyCode::Digit6) {
+        player.inventory.selected = 5;
+    } else if keys.pressed(KeyCode::Digit7) {
+        player.inventory.selected = 6;
+    } else if keys.pressed(KeyCode::Digit8) {
+        player.inventory.selected = 7;
+    } else if keys.pressed(KeyCode::Digit9) {
+        player.inventory.selected = 8;
+    } else if keys.pressed(KeyCode::Digit0) {
+        player.inventory.selected = 9;
+    }
+
+    // go to inventory
+    if keys.just_pressed(KeyCode::KeyE) {
+        for (inv, mut visibility) in &mut inventory_show {
+            if *visibility == Visibility::Hidden {
+                *visibility = Visibility::Visible;
+            } else {
+                *visibility = Visibility::Hidden;
+            }
+        }
+    }
+
+}
+
+pub fn update_inventory(
+    player: Query<&Player>,
+    mut slots: Query<
+        (&InventorySlotNormalCords, &mut ImageNode, &mut Visibility),
+        Without<InventorySlotItemNormalCords>,
+    >,
+    mut item_slots: Query<
+        (&InventorySlotItemNormalCords, &mut ImageNode, &mut Visibility),
+        Without<InventorySlotNormalCords>,
+    >,
+    mut counts: Query<(&InventorySlotCount, &mut Text)>,
+    asset_server: Res<AssetServer>,
+    items: Res<Items>,
+) {
+    let Ok(player) = player.single() else { return; };
+    let inv = &player.inventory;
+
+    // nur existierende Reihen anzeigen
+    for (cords, mut image, mut vis) in &mut slots {
+        let show = cords.1 == HOTBAR_ROW || cords.1 >= inv.row_offset();
+        vis.set_if_neq(if show { Visibility::Inherited } else { Visibility::Hidden });
+        //image.color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+    }
+
+    for (cords, mut image, mut vis) in &mut item_slots {
+        match inv.slot(cords.0, cords.1).and_then(|s| s.stack) {
+            Some(item) => {
+                vis.set_if_neq(Visibility::Inherited);
+                let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
+                if image.image != handle {
+                    image.image = handle;
+                }
+            }
+            None => {
+                vis.set_if_neq(Visibility::Hidden);
+            }
+        }
+    }
+
+    for (cords, mut text) in &mut counts {
+        let n = inv.slot(cords.0, cords.1).and_then(|s| s.stack).map_or(0, |s| s.count);
+        text.0 = if n > 1 { n.to_string() } else { String::new() };
+    }
+}
+pub fn update_inventory_items(
+    player: Query<&Player>,
+    mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility), Without<HotBarItemNum>>,
+    mut hotbar_item: Query<(&HotBarItemNum, &mut Text, &mut Visibility), Without<HotBarItem>>,
+    asset_server: Res<AssetServer>,
+    items: Res<Items>,
+) {
+    let Ok(player) = player.single() else {
+        return; // kein oder mehrere Spieler
+    };
+
+    for (slot, mut image, mut visibility) in &mut hotbar {
+        let i = slot.0;
+        match &player.inventory.hotbar[i].stack {
+            Some(item) => {
+                *visibility = Visibility::Visible;
+                let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
+                if image.image != handle {
+                    image.image = handle;
+                }
+            },
+            None => {
+                *visibility = Visibility::Hidden;
+            },
+        }
+    }
+
+    for (num_item, mut text, mut visibility) in &mut hotbar_item {
+        let slot = num_item.0;
+        match &player.inventory.hotbar[slot].stack {
+            Some(item) => {
+                *visibility = Visibility::Visible;
+                text.clear();
+                text.push_str(item.count.to_string().as_str());
+            }
+            None => {
+                *visibility = Visibility::Hidden;
+            }
+        }
+    }
+}
+
+//inventar klicken:
+pub fn inventory_click(
+    mouse: Res<ButtonInput<MouseButton>>,
+    grid_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
+    equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
+    root: Query<&Visibility, With<InventoryRoot>>,
+    mut player: Query<&mut Player>,
+    mut cursor: ResMut<CursorItem>,
+    items: Res<Items>,
+) {
+    let left = mouse.just_pressed(MouseButton::Left);
+    let right = mouse.just_pressed(MouseButton::Right);
+    if !left && !right { return; }
+
+    let Ok(vis) = root.single() else { return; };
+    if *vis == Visibility::Hidden { return; }
+    let Ok(mut player) = player.single_mut() else { return; };
+    let inv = &mut player.inventory;
+
+    if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
+        let slot = inv.equip_mut(eq.0);
+        apply_click(&mut cursor.0, slot, left, Some(eq.0), &items);
+    } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
+        let Some(slot) = inv.slot_mut(c.0, c.1) else { return; };
+        apply_click(&mut cursor.0, &mut slot.stack, left, None, &items);
+    }
+}
+
+
+pub fn update_cursor_visual(
+    cursor: Res<CursorItem>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut visual: Query<(&mut Node, &mut ImageNode, &mut Visibility), With<CursorItemVisual>>,
+    mut text: Query<&mut Text, With<CursorCountText>>,
+    asset_server: Res<AssetServer>,
+    items: Res<Items>,
+) {
+    let Ok((mut node, mut image, mut vis)) = visual.single_mut() else { return; };
+    let pos = windows.single().ok().and_then(|w| w.cursor_position());
+
+    match (cursor.0, pos) {
+        (Some(item), Some(pos)) => {
+            vis.set_if_neq(Visibility::Visible);
+            node.left = px(pos.x - 24.0);
+            node.top = px(pos.y - 24.0);
+            let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
+            if image.image != handle {
+                image.image = handle;
+            }
+            if let Ok(mut t) = text.single_mut() {
+                t.0 = if item.count > 1 { item.count.to_string() } else { String::new() };
+            }
+        }
+        _ => {
+            vis.set_if_neq(Visibility::Hidden);
+        }
+    }
+}
+
+pub fn update_equipment(
+    player: Query<&Player>,
+    mut items: Query<(&InventoryEquipItem, &mut ImageNode, &mut Visibility)>,
+    asset_server: Res<AssetServer>,
+    items_res: Res<Items>,
+) {
+    let Ok(player) = player.single() else { return; };
+    let e = &player.inventory.equipment;
+    for (slot, mut image, mut vis) in &mut items {
+        let stack = match slot.0 {
+            EquipSlot::Helm => e.helm,
+            EquipSlot::Chest => e.chest,
+            EquipSlot::Legs => e.legs,
+            EquipSlot::Boots => e.boots,
+            EquipSlot::Usable => e.usable,
+            EquipSlot::Secret => e.secret,
+        };
+        match stack {
+            Some(it) => {
+                vis.set_if_neq(Visibility::Inherited);
+                let h = asset_server.load(items_res.0.get(&it.id).unwrap().asset.clone());
+                if image.image != h { image.image = h; }
+            }
+            None => { vis.set_if_neq(Visibility::Hidden); }
+        }
+    }
+}
+

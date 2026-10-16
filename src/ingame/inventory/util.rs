@@ -1,36 +1,67 @@
 use bevy::prelude::*;
+use crate::components::*;
 use crate::constants::*;
-use std::collections::HashSet;
+use crate::ingame::player::ui::*;
+use crate::ingame::player::util::*;
+use crate::ingame::player::systems::*;
+use crate::ingame::player::structs::*;
+use crate::ingame::util::*;
+use crate::ingame::util::*;
+use crate::ingame::systems::*;
+use crate::ingame::ui::*;
+use crate::ingame::inventory::structs::*;
+use crate::ingame::inventory::systems::*;
+use crate::settings::settings_screen::*;
+use crate::util::ui::constants::*;
+use bevy::window::PrimaryWindow;
+use crate::ingame::items::*;
+use crate::constants::*;
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::collections::HashMap;
-use crate::ingame::items::*;
 
-#[derive(Debug, Component)]
-pub struct Inventory {
-    pub hotbar: [InventorySlot; 10],
-    pub selected: usize,
-    pub inner_rows: Vec<[InventorySlot; 10]>,
-    pub equipment: Equipment,
+pub fn apply_click(
+    held: &mut Option<ItemStack>,
+    slot: &mut Option<ItemStack>,
+    left: bool,
+    restriction: Option<EquipSlot>,
+    items: &Items,
+) {
+    if left {
+        match (*held, *slot) {
+            (None, s) => { *held = s; *slot = None; }
+            // Ablegen nur, wenn der Slot das Item akzeptiert
+            (Some(h), _) if !can_place(restriction, h.id, &items) => {}
+            (Some(h), None) => { *slot = Some(h); *held = None; }
+            (Some(h), Some(s)) if h.id == s.id => {
+                let max = items.0.get(&s.id).unwrap().max_stack;
+                let total = h.count + s.count;
+                let put = total.min(max);
+                *slot = Some(ItemStack { id: s.id, count: put });
+                *held = (total > put).then(|| ItemStack { id: h.id, count: total - put });
+            }
+            (Some(h), Some(s)) => { *slot = Some(h); *held = Some(s); } // tauschen
+        }
+    } else {
+        match (*held, *slot) {
+            (None, Some(s)) => {
+                *held = Some(ItemStack { id: s.id, count: 1 });
+                *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+            }
+            (Some(h), Some(s)) if h.id == s.id => {
+                if h.count < items.0.get(&h.id).unwrap().max_stack {
+                    *held = Some(ItemStack { id: h.id, count: h.count + 1 });
+                    *slot = (s.count > 1).then(|| ItemStack { id: s.id, count: s.count - 1 });
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
-#[derive(Component, Debug, Default)]
-pub struct Equipment {
-    pub helm: Option<ItemStack>,
-    pub chest: Option<ItemStack>,
-    pub legs: Option<ItemStack>,
-    pub boots: Option<ItemStack>,
-    pub usable: Option<ItemStack>,
-    pub secret: Option<ItemStack>,
+pub fn can_place(restriction: Option<EquipSlot>, id: ItemId, items: &Items) -> bool {
+    restriction.map_or(true, |s| s.accepts(id, items))
 }
-
-#[derive(Clone, Debug, Default, Copy)]
-pub struct InventorySlot {
-    pub stack: Option<ItemStack>,
-}
-
-pub const MAX_INNER_ROWS: usize = 6;
-pub const HOTBAR_ROW: usize = MAX_INNER_ROWS;
 
 impl Inventory {
     pub fn row_offset(&self) -> usize { //leere reihen, oben im ui
@@ -109,8 +140,6 @@ impl Default for Inventory {
     }
 }
 
-#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)] //nur manche items in inventar-slots
-pub enum EquipSlot { Helm, Chest, Legs, Boots, Usable, Secret }
 
 impl EquipSlot {
     pub fn accepts(self, id: ItemId, items: &Items) -> bool {
@@ -124,8 +153,4 @@ impl EquipSlot {
             EquipSlot::Secret   => cats.contains(&Category::Secret),
         }
     }
-}
-
-pub fn can_place(restriction: Option<EquipSlot>, id: ItemId, items: &Items) -> bool {
-    restriction.map_or(true, |s| s.accepts(id, items))
 }
