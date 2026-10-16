@@ -1,11 +1,7 @@
 use bevy::prelude::*;
-use crate::constants::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::fs;
-use crate::ingame::inventory::structs::*;
-use crate::ingame::inventory::systems::*;
-use crate::ingame::inventory::ui::*;
 
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]

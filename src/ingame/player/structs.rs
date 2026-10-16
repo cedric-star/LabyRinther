@@ -1,16 +1,5 @@
 use bevy::prelude::*;
-use bevy::sprite::*;
-use crate::ingame::inventory::util::*;
-use crate::ingame::inventory::systems::*;
-use crate::ingame::inventory::ui::*;
 use crate::ingame::inventory::structs::*;
-use crate::ingame::player::ui::*;
-use crate::ingame::player::util::*;
-use crate::ingame::player::systems::*;
-use crate::ingame::util::*;
-use crate::ingame::util::*;
-use crate::ingame::systems::*;
-use crate::ingame::ui::*;
 
 #[derive(Component, Default)]
 pub struct Velocity {

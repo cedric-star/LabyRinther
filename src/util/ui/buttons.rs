@@ -1,20 +1,10 @@
 use bevy::prelude::*;
-use bevy::sprite::*;
-use bevy::camera::*;
-use bevy::window::*;
-use bevy::input_focus::tab_navigation::{TabIndex, TabNavigationPlugin};
-use bevy::input_focus::InputDispatchPlugin;
+use bevy::input_focus::tab_navigation::{TabIndex};
 use bevy::picking::hover::Hovered;
 use bevy::ui_widgets::{
-    Slider, SliderPlugin, SliderRange, SliderThumb, SliderValue, TrackClick, UiWidgetsPlugins,
-    ValueChange, SliderDragState
+    Slider, SliderRange, SliderThumb, SliderValue, TrackClick,
+    SliderDragState
 };
-use crate::world::world_generator::*;
-use crate::world::region::*;
-use crate::components::*;
-use crate::resources::*;
-use crate::constants::*;
-use std::time::*;
 use crate::util::ui::constants::*;
 
 #[derive(Component, Clone)]

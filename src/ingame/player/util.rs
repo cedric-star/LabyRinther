@@ -1,21 +1,7 @@
 use bevy::prelude::*;
-use bevy::sprite::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
-use crate::ingame::inventory::structs::*;
-use crate::ingame::inventory::util::*;
-use crate::ingame::inventory::ui::*;
-use crate::ingame::inventory::systems::*;
-use crate::ingame::player::ui::*;
-use crate::ingame::player::structs::*;
-use crate::ingame::player::systems::*;
-use crate::ingame::structs::*;
-use crate::ingame::util::*;
-use crate::ingame::util::*;
-use crate::ingame::systems::*;
-use crate::ingame::ui::*;
-
 
 pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
     let cs = CHUNK_SIZE as i32;

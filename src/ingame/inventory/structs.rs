@@ -1,14 +1,4 @@
 use bevy::prelude::*;
-use crate::ingame::player::ui::*;
-use crate::ingame::player::util::*;
-use crate::ingame::player::systems::*;
-use crate::ingame::player::structs::*;
-use crate::ingame::ui::*;
-use crate::ingame::inventory::systems::*;
-use crate::ingame::inventory::ui::*;
-use crate::settings::settings_screen::*;
-use crate::util::ui::constants::*;
-use bevy::window::PrimaryWindow;
 use crate::ingame::items::*;
 
 

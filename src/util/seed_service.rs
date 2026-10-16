@@ -1,5 +1,4 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
-use crate::components::*;
 
 pub fn calc_chunk_seed(seed: u64, x: i32, y: i32) -> u64 {
     let mut s = DefaultHasher::new();

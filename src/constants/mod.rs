@@ -1,5 +1,3 @@
-use bevy::prelude::*;
-
 pub const PLAYER_WIDTH: f32 = 32.0;
 pub const PLAYER_HEIGHT: f32 = 32.0;
 

@@ -1,20 +1,10 @@
 use bevy::prelude::*;
-use bevy::sprite::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::settings::settings_screen::*;
-use crate::ingame::inventory::structs::*;
-use crate::ingame::inventory::util::*;
-use crate::ingame::inventory::ui::*;
-use crate::ingame::inventory::systems::*;
-use crate::ingame::player::ui::*;
 use crate::ingame::player::util::*;
 use crate::ingame::player::structs::*;
-use crate::ingame::util::*;
-use crate::ingame::util::*;
-use crate::ingame::systems::*;
-use crate::ingame::ui::*;
 
 pub fn mana_regen(mut player: Query<&mut Player>) {
     let Ok(mut player) = player.single_mut() else {
