@@ -44,6 +44,9 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
+                sync_craftable_ui,
+                craftable_hover,
+                craftable_click,
                 set_hotkeys,
                 update_bars,
                 movement,

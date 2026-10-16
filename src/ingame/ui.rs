@@ -28,6 +28,7 @@ pub fn spawn_ui(
     asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
     player: Query<&Player>,
+    craftable_items: Res<CraftableItems>,
 ) {
     let col = Color::srgba(1.0,1.0,1.0,0.1);
     let scale = s.ui_scale;
@@ -58,7 +59,7 @@ pub fn spawn_ui(
         Visibility::default(),
         children![
             get_bars(&s, &player),
-            get_craftable_item_field(&s, &player),
+            get_craftable_item_field(&s, &player, &craftable_items),
             (
                 HotBar,
                 Node {

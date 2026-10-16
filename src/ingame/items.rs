@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs;
 use crate::ingame::inventory_meta::*;
 
-#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
 pub struct ItemStack {
     pub id: ItemId,
     pub count: u32,

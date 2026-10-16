@@ -52,6 +52,9 @@ pub fn set_hotkeys(
 }
 
 #[derive(Component)]
+pub struct InventoryRoot;
+
+#[derive(Component)]
 pub struct InventoryShow;
 
 #[derive(Component)]
@@ -97,6 +100,7 @@ pub fn spawn_inventory(
     commands.spawn((
         IngameUi,
         InventoryShow,
+        InventoryRoot,
         Node {
             display: Display::Grid,
             width: percent(100.0),
@@ -463,7 +467,7 @@ pub fn inventory_click(
     mouse: Res<ButtonInput<MouseButton>>,
     grid_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
     equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
-    root: Query<&Visibility, With<InventoryShow>>,
+    root: Query<&Visibility, With<InventoryRoot>>,
     mut player: Query<&mut Player>,
     mut cursor: ResMut<CursorItem>,
     items: Res<Items>,
