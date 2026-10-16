@@ -46,6 +46,26 @@ impl Default for Recipes {
     }
 }
 
+impl Recipe {
+
+    //none, wenn nicht craftable, ansonsten anzahl, wie oft craftable
+    pub fn is_craftable(&self, player_items: HashMap<ItemId, u32>) -> Option<u32> {
+        let mut counts: Vec<u32> = Vec::new();
+
+        for recipe_item in self.items.clone() {
+            match player_items.get(&recipe_item.id) {
+                Some(count) => {
+                    if *count < recipe_item.count { return None; }
+                    let num_2_craft = *count / recipe_item.count;
+                    counts.push(num_2_craft);
+                }
+                None => { return None; }
+            }
+        }
+        counts.into_iter().map(|c| c * self.result.count).min() //diese funktion is so rust core
+    }
+}
+
 #[derive(Resource)]
 pub struct CraftableItems(Vec<ItemStack>);
 
@@ -82,11 +102,19 @@ pub fn set_craftable_items(
     let player_items = merge_stack(player_items);
 
     //alle craftbaren recipes:
-    let craftable_recipes: Vec<Recipe> = Vec::new();
+    let mut craftable_recipes: Vec<ItemStack> = Vec::new();
 
     for recipe in recipes.0.clone() {
-        println!("recip: {:?}", recipe);
+        match recipe.is_craftable(player_items.clone()) {
+            Some(count) => { craftable_recipes.push(ItemStack { id: recipe.result.id, count: count}); }
+            None => { continue; }
+        }
     }
+
+    println!("recipe craftable: \n{:?}", craftable_recipes);
+
+    craftable_items.0.clear();
+    craftable_items.0 = craftable_recipes;
 
     return;
 }
@@ -116,14 +144,11 @@ pub fn get_craftable_item_field(
 
 //helper
 //
-fn merge_stack(items: Vec<ItemStack>) -> Vec<ItemStack> {
+fn merge_stack(items: Vec<ItemStack>) -> HashMap<ItemId, u32> {
     let mut map: HashMap<ItemId, u32> = HashMap::new();
 
     for item in items {
         *map.entry(item.id).or_insert(0) += item.count;
     }
-
-    map.into_iter()
-        .map(|(id, count)| ItemStack { id, count })
-        .collect()
+    return map
 }
