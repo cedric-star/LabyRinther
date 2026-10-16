@@ -21,6 +21,7 @@ pub struct Item {
 pub enum ItemId {
     IronChest,
     Apple,
+    AppleSlice,
     JucyWoddenDagger,
     WoddenDagger,
     #[default]

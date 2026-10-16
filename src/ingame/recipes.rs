@@ -183,7 +183,7 @@ pub fn sync_craftable_ui(
     mut last: Local<Vec<ItemStack>>,
 ) {
     // nur arbeiten, wenn sich die Liste wirklich geändert hat
-    if *last == craftable.0 { return; }
+    //if *last == craftable.0 { return; }
     *last = craftable.0.clone();
 
     let Ok(list_entity) = list.single() else { return; };
@@ -287,7 +287,7 @@ pub fn craftable_hover(
             for ing in &recipe.items {
                 label.push_str(&format!("{}x {}\n", ing.count, items.0.get(&ing.id).unwrap().label));
             }
-            label.push_str(&format!("-> {}", items.0.get(&stack.id).unwrap().label));
+            label.push_str(&format!("-> {}x {}", recipe.result.count, items.0.get(&stack.id).unwrap().label));
 
             if text.0 != label { text.0 = label; }
             *vis = Visibility::Visible;

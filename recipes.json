@@ -15,5 +15,18 @@
       "id": "JucyWoddenDagger",
       "count": 1
     }
+  },
+  {
+    "items": [
+      {
+        "id": "Apple",
+        "count": 1
+      }
+    ],
+    "station": null,
+    "result": {
+      "id": "AppleSlice",
+      "count": 6
+    }
   }
 ]

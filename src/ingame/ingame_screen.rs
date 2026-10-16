@@ -59,7 +59,7 @@ pub fn ingame_plugin(app: &mut App) {
                 mov_cam,
                 mana_regen.run_if(on_timer(Duration::from_secs(1))),
                 health_regen.run_if(on_timer(Duration::from_secs(1))),
-                set_craftable_items.run_if(on_timer(Duration::from_secs(1))),
+                set_craftable_items.run_if(on_timer(Duration::from_millis(200))),
             ).run_if(in_state(GameState::InGame)),
         );
 }
