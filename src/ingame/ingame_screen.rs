@@ -49,6 +49,7 @@ pub fn ingame_plugin(app: &mut App) {
                 inventory_click.before(update_inventory),
                 update_inventory,
                 update_cursor_visual,
+                update_inventory_info_text,
                 update_equipment,
                 mov_cam,
                 mana_regen.run_if(on_timer(Duration::from_secs(1))),

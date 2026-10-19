@@ -41,6 +41,9 @@ pub struct CursorItem(pub Option<ItemStack>);
 #[derive(Component)]
 pub struct InventoryEquipItem(pub EquipSlot);
 
+#[derive(Component)]
+pub struct CursorItemInfoText; //wenn im inventar über ein item gehovered wird, soll ein test erscheinen, der inofs anzeigt
+
 
 #[derive(Debug, Component)]
 pub struct Inventory {
