@@ -17,7 +17,7 @@ pub fn get_craftable_item_field(
         IngameUi,
         GameEntity,
         InventoryShow,
-        CraftableList,          // <-- neu
+        CraftableList,
         Node {
             position_type: PositionType::Absolute,
             width: percent(160.0 * scale),

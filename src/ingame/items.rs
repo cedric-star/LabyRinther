@@ -106,6 +106,17 @@ impl Tier {
             Tier::F => { 60.0 }
         }
     }
+
+    pub fn col(self, alpha: f32) -> Color {
+        match self {
+            Tier::S => Color::srgba(100.0, 0.0, 42.0, alpha), //rot
+            Tier::A => Color::srgba(100.0, 50.0, 0.0, alpha), //orange
+            Tier::B => Color::srgba(61.0, 0.0, 100.0, alpha), //lila
+            Tier::C => Color::srgba(0.0, 5.0, 100.0, alpha),  //blau
+            Tier::D => Color::srgba(0.0, 100.0, 20.0, alpha), //grün
+            Tier::F => Color::srgba(75.0, 75.0, 75.0, alpha), //grau
+        }
+    }
 }
 
 #[derive(Resource)]

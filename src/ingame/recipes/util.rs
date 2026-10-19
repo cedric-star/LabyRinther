@@ -78,3 +78,13 @@ pub fn remove_items(inv: &mut Inventory, id: ItemId, mut amount: u32) {
         for slot in row.iter_mut() { take_from(slot); }
     }
 }
+
+pub fn count_items(inv: &Inventory, id: ItemId) -> u32 {
+    inv.hotbar
+        .iter()
+        .chain(inv.inner_rows.iter().flatten())
+        .filter_map(|slot| slot.stack)
+        .filter(|s| s.id == id)
+        .map(|s| s.count)
+        .sum()
+}

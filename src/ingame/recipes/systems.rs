@@ -8,7 +8,8 @@ use crate::ingame::inventory::structs::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::util::*;
 
-//liste enthält alle craftable items, und wie viele jeweils
+/// Berechnet aus dem Inventar des Spielers, welche Rezepte aktuell craftbar sind,
+/// und speichert sie samt maximal craftbarer Menge in `CraftableItems`.
 pub fn set_craftable_items(
     player: Query<&Player>,
     mut craftable_items: ResMut<CraftableItems>,
@@ -52,6 +53,8 @@ pub fn set_craftable_items(
     return;
 }
 
+/// Hält die Craft-Slots in der UI synchron zur `CraftableItems`-Liste:
+/// aktualisiert Bild, Hintergrundfarbe und Zahl, spawnt fehlende und entfernt überzählige Slots.
 pub fn sync_craftable_ui(
     mut commands: Commands,
     craftable: Res<CraftableItems>,
@@ -59,24 +62,23 @@ pub fn sync_craftable_ui(
     asset_server: Res<AssetServer>,
     s: Res<GameSettings>,
     list: Query<Entity, With<CraftableList>>,
-    mut slots: Query<(Entity, &CraftableSlot, &mut ImageNode, &Children)>,
+    mut slots: Query<(Entity, &CraftableSlot, &mut ImageNode, &mut BackgroundColor, &Children)>,
     mut counts: Query<(&mut Text, &mut Visibility), With<CraftableCountText>>,
     mut last: Local<Vec<ItemStack>>,
 ) {
-    // nur arbeiten, wenn sich die Liste wirklich geändert hat
-    //if *last == craftable.0 { return; }
-    *last = craftable.0.clone();
-
     let Ok(list_entity) = list.single() else { return; };
 
     // vorhandene slots: bild + zahl aktualisieren
     let mut existing: HashMap<usize, Entity> = HashMap::new();
-    for (entity, slot, mut image, children) in &mut slots {
+    for (entity, slot, mut image, mut bg, children) in &mut slots {
         existing.insert(slot.0, entity);
         let Some(stack) = craftable.0.get(slot.0) else { continue; };
 
         let handle = asset_server.load(items.0.get(&stack.id).unwrap().asset.clone());
         if image.image != handle { image.image = handle; }
+
+        let new_bg = items.0.get(&stack.id).unwrap().tier.col(0.5);
+        if bg.0 != new_bg { *bg = BackgroundColor(new_bg) }
 
         for child in children.iter() {
             if let Ok((mut text, mut vis)) = counts.get_mut(child) {
@@ -182,6 +184,7 @@ pub fn craftable_click(
     list_vis: Query<&Visibility, With<CraftableList>>,
     craftable: Res<CraftableItems>,
     recipes: Res<Recipes>,
+    items: Res<Items>,
     mut cursor: ResMut<CursorItem>,
     mut player: Query<&mut Player>,
 ) {
@@ -191,25 +194,42 @@ pub fn craftable_click(
 
     let Ok(vis) = list_vis.single() else { return; };
     if *vis == Visibility::Hidden { return; }
-    if cursor.0.is_some() { return; } // schwebendes Item blockiert craften
 
     let Some((slot, _)) = slots.iter().find(|(_, i)| **i != Interaction::None) else { return; };
     let Some(stack) = craftable.0.get(slot.0) else { return; };
     let Some(recipe) = recipes.0.iter().find(|r| r.result.id == stack.id) else { return; };
-    let Ok(mut player) = player.single_mut() else { return; };
 
-    // stack.count = GESAMTE craftbare Menge (runden * result.count)
-    let max_rounds = stack.count / recipe.result.count;
-    let rounds = if left { 1 } else { max_rounds };
-    if rounds == 0 { return; }
-
-    let inv = &mut player.inventory;
-    for ing in &recipe.items {
-        remove_items(inv, ing.id, ing.count * rounds);
+    // Cursor darf nur dasselbe Item halten
+    if let Some(held) = &cursor.0 {
+        if held.id != recipe.result.id { return; }
     }
 
-    cursor.0 = Some(ItemStack {
-        id: recipe.result.id,
-        count: rounds * recipe.result.count,
-    });
+    let Ok(mut player) = player.single_mut() else { return; };
+
+    // 1) Limit durch vorhandene Zutaten
+    let by_ingredients = recipe.items.iter()
+        .filter(|ing| ing.count > 0)
+        .map(|ing| count_items(&player.inventory, ing.id) / ing.count)
+        .min()
+        .unwrap_or(0);
+
+    // 2) Limit durch freien Platz im Cursor-Stack
+    let Some(def) = items.0.get(&recipe.result.id) else { return; };
+    let held_count = cursor.0.as_ref().map_or(0, |h| h.count);
+    let free = def.max_stack.saturating_sub(held_count);
+    let by_stack = free / recipe.result.count.max(1);
+
+    let wanted = if left { 1 } else { u32::MAX };
+    let rounds = wanted.min(by_ingredients).min(by_stack);
+    if rounds == 0 { return; }
+
+    for ing in &recipe.items {
+        remove_items(&mut player.inventory, ing.id, ing.count * rounds);
+    }
+
+    let gained = rounds * recipe.result.count;
+    match &mut cursor.0 {
+        Some(held) => held.count += gained,
+        None => cursor.0 = Some(ItemStack { id: recipe.result.id, count: gained }),
+    }
 }
