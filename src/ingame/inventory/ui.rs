@@ -4,6 +4,7 @@ use crate::ingame::inventory::structs::*;
 use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 
+
 //gibt bundle zurück, das inventar darstellt
 pub fn get_inventory(
     asset_server: &AssetServer,
@@ -274,32 +275,11 @@ pub fn get_inventory(
 
 }
 
-pub fn get_info_tooltip() -> impl Bundle {
-    (
-        IngameUi,
-        CursorItemInfoText,
-        Node {
-            position_type: PositionType::Absolute,
-            padding: UiRect::all(px(4.0)),
-            min_width: px(100.0),    // nie schmaler als das
-            max_width: px(400.0),   // nie breiter, dann wird umgebrochen
-            ..default()
-        },
-        BackgroundColor(BG_COL),
-        Text::new(""),
-        TextFont { font_size: FontSize::Px(14.0), ..default() },
-        TextColor(TXT_COL),
-        GlobalZIndex(101),            // über dem Cursor-Item
-        Visibility::Hidden,
-    )
-}
-
 pub fn get_cursor(
     asset_server: &AssetServer,
     s: &GameSettings,
 ) -> impl Bundle {
     (
-        IngameUi,
         CursorItemVisual,
         Node {
             position_type: PositionType::Absolute,
@@ -320,9 +300,7 @@ pub fn get_cursor(
                 bottom: px(0),
                 ..default()
             },
-        ),
-        get_info_tooltip(),
-        ],
+        ),],
     )
 }
 

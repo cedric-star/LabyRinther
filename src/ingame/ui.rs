@@ -8,7 +8,7 @@ use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::ui::*;
 use crate::ingame::structs::*;
 use crate::ingame::inventory::ui::*;
-
+use crate::ingame::inventory::structs::*;
 
 
 pub fn spawn_ui(
@@ -24,7 +24,8 @@ pub fn spawn_ui(
         println!("no player found");
         return; // kein oder mehrere Spieler
     };
-
+    commands.spawn(get_info_tooltip(CursorItemInfoText));
+    commands.spawn(get_info_tooltip(CursorCraftInfoText));
     commands.spawn((
         GameEntity,
         IngameUi,
@@ -127,6 +128,27 @@ pub fn spawn_ui(
     ));
 }
 
+//spawnt kästchen global, für tooltip am cursor
+pub fn get_info_tooltip(comp: impl Component) -> impl Bundle {
+    (
+        comp,
+        IngameUi,
+        Node {
+            position_type: PositionType::Absolute,
+            padding: UiRect::all(px(4.0)),
+            min_width: px(100.0),    // nie schmaler als das
+            max_width: px(400.0),   // nie breiter, dann wird umgebrochen
+            ..default()
+        },
+        BackgroundColor(BG_COL),
+        Text::new(""),
+        TextFont { font_size: FontSize::Px(14.0), ..default() },
+        TextColor(TXT_COL),
+        GlobalZIndex(101),            // über dem Cursor-Item
+        Visibility::Hidden,
+    )
+}
+
 pub fn update_ui(
     player: Query<&Player>,
     mut hot_bar_slot: Query<&mut Node, With<HotBarSelector>>,
@@ -142,8 +164,9 @@ pub fn update_ui(
 
 pub fn cleanup_ui(
     mut commands: Commands,
-    ui: Query<Entity, With<IngameUi>>,
+    ui: Query<Entity, (With<IngameUi>, Without<ChildOf>)>,
 ) {
+    println!("cleanup ingame ui...");
     for entity in &ui {
         commands.entity(entity).despawn();
     }

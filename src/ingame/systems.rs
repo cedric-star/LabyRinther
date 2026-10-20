@@ -52,6 +52,7 @@ pub fn cleanup_game(
     mut chunk_pool: ResMut<ChunkPool>,
     mut cams: Query<(&mut Transform, &mut Velocity), With<Camera2d>>,
 ) {
+    println!("cleanup game...");
     for e in &entities {
         commands.entity(e).despawn();
     }

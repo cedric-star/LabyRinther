@@ -9,7 +9,6 @@ use crate::ingame::ui::*;
 use crate::ingame::systems::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::inventory::systems::*;
-use crate::ingame::inventory::ui::*;
 use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::systems::*;

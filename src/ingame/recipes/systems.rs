@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
 use crate::ingame::items::*;
 use crate::settings::settings_screen::*;
@@ -148,34 +149,41 @@ pub fn sync_craftable_ui(
     }
 }
 
+/// Zeigt beim Hovern über einen Craft-Slot den globalen Tooltip mit Zutaten und Ergebnis an.
 pub fn craftable_hover(
     craftable: Res<CraftableItems>,
     recipes: Res<Recipes>,
     items: Res<Items>,
-    slots: Query<(&CraftableSlot, &Interaction, &Children)>,
-    mut tooltips: Query<(&mut Text, &mut Visibility), With<CraftableTooltip>>,
+    slots: Query<(&CraftableSlot, &Interaction)>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorCraftInfoText>>,
 ) {
-    for (slot, interaction, children) in &slots {
-        let hovered = *interaction == Interaction::Hovered;
-        for child in children.iter() {
-            let Ok((mut text, mut vis)) = tooltips.get_mut(child) else { continue; };
-            if !hovered {
-                *vis = Visibility::Hidden;
-                continue;
-            }
-            let Some(stack) = craftable.0.get(slot.0) else { continue; };
-            let Some(recipe) = recipes.0.iter().find(|r| r.result.id == stack.id) else { continue; };
+    //tooltip daten
+    let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
 
-            let mut label = String::new();
-            for ing in &recipe.items {
-                label.push_str(&format!("{}x {}\n", ing.count, items.0.get(&ing.id).unwrap().label));
-            }
-            label.push_str(&format!("-> {}x {}", recipe.result.count, items.0.get(&stack.id).unwrap().label));
+    // genau den gehoverten slot suchen
+    let hovered = slots.iter().find(|(_, i)| **i != Interaction::None);
+    let pos = windows.single().ok().and_then(|w| w.cursor_position());
 
-            if text.0 != label { text.0 = label; }
-            *vis = Visibility::Visible;
-        }
+    let (Some((slot, _)), Some(pos)) = (hovered, pos) else {
+        vis.set_if_neq(Visibility::Hidden);
+        return;
+    };
+    let Some(stack) = craftable.0.get(slot.0) else { return; };
+    let Some(recipe) = recipes.0.iter().find(|r| r.result.id == stack.id) else { return; };
+
+    let mut label = String::new();
+    for ing in &recipe.items {
+        let name = items.0.get(&ing.id).map_or("?", |d| d.label.as_str());
+        label.push_str(&format!("{}x {}\n", ing.count, name));
     }
+    let result_name = items.0.get(&stack.id).map_or("?", |d| d.label.as_str());
+    label.push_str(&format!("-> {}x {}", recipe.result.count, result_name));
+
+    if text.0 != label { text.0 = label; }
+    node.left = px(pos.x + 16.0);
+    node.top = px(pos.y + 16.0);
+    vis.set_if_neq(Visibility::Visible);
 }
 
 pub fn craftable_click(

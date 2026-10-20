@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use crate::ingame::items::*;
-use crate::ingame::util::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Recipe {
@@ -21,6 +20,10 @@ pub struct Recipes(pub Vec<Recipe>);
 
 #[derive(Resource)]
 pub struct CraftableItems(pub Vec<ItemStack>);
+
+//tooltip im craftui
+#[derive(Component)]
+pub struct CursorCraftInfoText;
 
 #[derive(Component)]
 pub struct CraftableList;          // eindeutiger Marker für den Container
