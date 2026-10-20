@@ -1,11 +1,14 @@
 # next
+- auf bevy 0.20 upgraden ): (aber wild eigentlich geile software uiuiui kiki)
 
-- crafting links im bild: alle craftbaren items mit möglicher anzahl anzeigen:
-  - ein klick -> eins
-  - rechtsklick -> alle
-  - impl für Tier -> color -> jede rarität eine farbe -> dann beim craften die
-    ergebnisse items mit farbe hinterlegen
+- inventar/crafting obere inv sachen einbeziehen:
+  - mind. ein secret, usable, ... um alles auszutesten.
 
+- big picture: -> gegner spawnen uiuiui oder
+- multiplayer mode:
+  - welt als server oder singleplayer starten
+  - dann welt welt beitreten oder singleplayer spielen.
+  - ich will das man jede welt als singleplayer und mutliplayer spielen kann
 # todo
 
 - in welt können dinge platziert sein/werden (tilebasiert)
