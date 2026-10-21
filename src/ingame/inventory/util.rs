@@ -121,7 +121,7 @@ impl Default for Inventory {
                     count: 9,
                 })},
                 InventorySlot {stack: Some(ItemStack {
-                    id: ItemId::Max3InventoryRowsSecret,
+                    id: ItemId::IncrementInventoryRowsSecret,
                     count: 2,
                 })},
                 es.clone(),

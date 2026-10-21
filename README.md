@@ -1,8 +1,10 @@
 # next
-- auf bevy 0.20 upgraden ): (aber wild eigentlich geile software uiuiui kiki)
+- items aus secret, usbles und armor logik hinzufügen -> in itemdef ein doing felde als option
+  - wenn none normales kack item
+  - wenn some() -> dann kann es ein doing struct besitzen
+  - doing hat optional ein weapon def, secret def, armordef, ...
 
-- inventar/crafting obere inv sachen einbeziehen:
-  - mind. ein secret, usable, ... um alles auszutesten.
+- auf bevy 0.20 upgraden ): (aber wild eigentlich geile software uiuiui kiki)
 
 - big picture: -> gegner spawnen uiuiui oder
 - multiplayer mode:

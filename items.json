@@ -116,9 +116,9 @@
     }
   },
   {
-    "id": "Max3InventoryRowsSecret",
-    "label": "Max 3 Inventory Rows",
-    "asset": "items/Max3InventoryRowsSecret.png",
+    "id": "IncrementInventoryRowsSecret",
+    "label": "One More Inventory Row",
+    "asset": "items/IncrementInventoryRowsSecret.png",
     "categories": [
       "Secret"
     ],

@@ -28,7 +28,7 @@ pub enum ItemId {
     MediumDamagePotion,
     MediumHealthPotion,
     MediumMaxHealthOrb,
-    Max3InventoryRowsSecret,
+    IncrementInventoryRowsSecret,
     Nothing,
 }
 
