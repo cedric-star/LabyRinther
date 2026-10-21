@@ -1,3 +1,13 @@
+# Dev Blog 
+-> https://gameblog.micedric.dpdns.org/
+
+## Lizenz
+Dieses Projekt steht unter einer modifizierten MIT-Lizenz (siehe LICENSE).
+Private Nutzung und Weitergabe sind erlaubt, Namensnennung ist immer Pflicht.
+Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
+
+
+
 # next
 - items aus secret, usbles und armor logik hinzufügen -> in itemdef ein doing felde als option
   - wenn none normales kack item
@@ -48,3 +58,5 @@
 - mana
   - items für dauerhafte managewinnung (2/s)
   - items die mana verbrauchen: 2% mehr damage, aber -2 mana die sekunde
+
+
