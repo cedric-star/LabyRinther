@@ -157,8 +157,8 @@ pub fn update_equipment(
             EquipSlot::Chest => e.chest,
             EquipSlot::Legs => e.legs,
             EquipSlot::Boots => e.boots,
-            EquipSlot::Usable => e.usable,
-            EquipSlot::Secret => e.secret,
+            EquipSlot::Usable(i) => e.usable[i],
+            EquipSlot::Secret(i) => e.secret[i],
         };
         match stack {
             Some(it) => {
@@ -233,7 +233,47 @@ pub fn update_cursor_visual(
     }
 }
 
+pub fn update_euqipped_info_text(
+    windows: Query<&Window, With<PrimaryWindow>>,
+    player: Query<&Player>,
+    items: Res<Items>,
+    equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
+    mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorItemInfoText>>,   
+) {
+    let Ok(player) = player.single() else { return; };
+    let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
+    let equips = &player.inventory.equipment;
+    let Some(pos) = windows.single().ok().and_then(|w| w.cursor_position()) else {return;};
+    
+    let Some((hovered_slot, _)) = equip_slots //hovered slot finden
+        .iter()
+        .find(|(_, interaction)| **interaction == Interaction::Hovered)
+    else {
+        return;
+    };
 
+    let Some(equip_stack) = (match hovered_slot {//player inventar in slots finden
+        InventorySlotEquip(EquipSlot::Helm) => equips.helm,
+        InventorySlotEquip(EquipSlot::Chest) => equips.chest,
+        InventorySlotEquip(EquipSlot::Legs) => equips.legs,
+        InventorySlotEquip(EquipSlot::Boots) => equips.boots,
+        InventorySlotEquip(EquipSlot::Usable(i)) => equips.usable[*i],
+        InventorySlotEquip(EquipSlot::Secret(i)) => equips.secret[*i],
+    }) else {
+        return;
+    };
+    println!("st => {:?}", equip_stack);
+    
+    let Some(def) = items.0.get(&equip_stack.id) else { return; };
+    let label = format!("{}\n{:?}", def.label, def.categories);
+    if text.0 != label { text.0 = label; }
+    node.left = px(pos.x + 16.0);
+    node.top = px(pos.y + 16.0);
+    vis.set_if_neq(Visibility::Visible);
+        
+}
+
+//zeigt tooltip über hover an, bei normalen inventaritems
 pub fn update_inventory_info_text(
     windows: Query<&Window, With<PrimaryWindow>>,
     player: Query<&Player>,
@@ -257,7 +297,7 @@ pub fn update_inventory_info_text(
     };
 
     let Some(def) = items.0.get(&stack.id) else { return; };
-    let label = format!("{} ({}/{})", def.label, stack.count, def.max_stack);
+    let label = format!("{}\n{:?}\n({}/{})", def.label, def.categories, stack.count, def.max_stack);
     if text.0 != label { text.0 = label; }
     node.left = px(pos.x + 16.0);
     node.top = px(pos.y + 16.0);

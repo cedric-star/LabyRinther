@@ -47,6 +47,7 @@ pub fn ingame_plugin(app: &mut App) {
                 update_inventory_items,
                 inventory_click.before(update_inventory),
                 update_inventory,
+                update_euqipped_info_text,
                 update_cursor_visual,
                 update_inventory_info_text,
                 update_equipment,

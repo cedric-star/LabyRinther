@@ -54,7 +54,6 @@ pub fn get_inventory(
             BackgroundColor(BG_COL_A),
             Children::spawn((
 
-                // normales Inventar + Hotbar
                 SpawnIter((0..=9).map(move |i_width| {
                     let slot_pic = pic_normal.clone();
                     (
@@ -109,152 +108,26 @@ pub fn get_inventory(
                     )
                 })),
 
-                // Usables
-                SpawnIter((0..=3).map(move |i_width| {
-                    let slot_pic = pic_usables.clone();
-                    (
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(10.0),
-                            height: percent(100.0),
-                            left: percent(60.0 + 10.0 * i_width as f32),
-                            top: percent(0.0),
-                            ..default()
-                        },
-                        Children::spawn(SpawnIter((0..=1).map(move |i_height| (
-                            InventorySlotUsablesCords(i_width, i_height),
-                            Node {
-                                position_type: PositionType::Absolute,
-                                width: percent(100.0),
-                                height: percent(10.0),
-                                top: percent(10.0 * i_height as f32),
-                                ..default()
-                            },
-                            ImageNode::new(slot_pic.clone()),
-                        )))),
-                    )
-                })),
+                // Usables: 8 Slots, Spalten ab x=60 %, 2 Reihen
+                SpawnIter({
+                    let pic = slot_pic.clone();
+                    (0..=7).map(move |i| {
+                        let (col, row) = (i / 2, i % 2);
+                        equip_slot(pic.clone(), EquipSlot::Usable(i), 60.0 + 10.0 * col as f32, 10.0 * row as f32)
+                    })
+                }),
 
-                //sercret slots uiuiui kiki ein reh auf der straße uiuiui
-                Spawn((
-                    InventorySlotSecret(0),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(45.0),
-                        top: percent(0.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                )),
-                Spawn((
-                    InventorySlotSecret(1),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(45.0),
-                        top: percent(10.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                )),
+                // Secret-Slots
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Secret(0), 45.0, 0.0)),
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Secret(1), 45.0, 10.0)),
 
-                //helm and chest and legs and boots
-                Spawn((
-                    Interaction::default(),
-                    InventorySlotEquip(EquipSlot::Helm),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(0.0),
-                        top: percent(0.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                    children![(
-                        InventoryEquipItem(EquipSlot::Helm),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(100),
-                            height: percent(100),
-                            ..default() },
-                        ImageNode::default(),
-                        Visibility::Hidden,
-                    )]
-                )),
-                Spawn((
-                    InventorySlotEquip(EquipSlot::Chest),
-                    Interaction::default(),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(0.0),
-                        top: percent(10.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                    children![(
-                        InventoryEquipItem(EquipSlot::Chest),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(100),
-                            height: percent(100),
-                            ..default() },
-                        ImageNode::default(),
-                        Visibility::Hidden,
-                    )]
-                )),
-                Spawn((
-                    InventorySlotEquip(EquipSlot::Legs),
-                    Interaction::default(),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(30.0),
-                        top: percent(0.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                    children![(
-                        InventoryEquipItem(EquipSlot::Legs),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(100),
-                            height: percent(100),
-                            ..default() },
-                        ImageNode::default(),
-                        Visibility::Hidden,
-                    )]
-                )),
-                Spawn((
-                    InventorySlotEquip(EquipSlot::Boots),
-                    Interaction::default(),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        width: percent(10.0),
-                        height: percent(10.0),
-                        left: percent(30.0),
-                        top: percent(10.0),
-                        ..default()
-                    },
-                    ImageNode::new(slot_pic.clone()),
-                    children![(
-                        InventoryEquipItem(EquipSlot::Boots),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: percent(100),
-                            height: percent(100),
-                            ..default() },
-                        ImageNode::default(),
-                        Visibility::Hidden,
-                    )]
-                )),
+                // Rüstung
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Helm,  0.0,  0.0)),
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Chest, 0.0, 10.0)),
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Legs, 30.0,  0.0)),
+                Spawn(equip_slot(slot_pic.clone(), EquipSlot::Boots,30.0, 10.0)),                
 
+                
                 //player preview
                 Spawn((
                     InventoryPlayerView,
@@ -274,6 +147,37 @@ pub fn get_inventory(
     )
 
 }
+
+/// Ein klickbarer Equip-Slot: Hintergrund-Node mit Interaction + Kind-Node für das Item-Bild.
+/// `left`/`top` sind Prozent relativ zum Inventar-Container (der 10x10 Einheiten groß ist).
+fn equip_slot(pic: Handle<Image>, slot: EquipSlot, left: f32, top: f32) -> impl Bundle {
+    (
+        InventorySlotEquip(slot),   // damit inventory_click den Slot findet
+        Interaction::default(),     // damit Bevy Hover/Klick meldet
+        Node {
+            position_type: PositionType::Absolute,
+            width: percent(10.0),
+            height: percent(10.0),
+            left: percent(left),
+            top: percent(top),
+            ..default()
+        },
+        ImageNode::new(pic),
+        children![(
+            InventoryEquipItem(slot), // damit update_equipment das Bild setzen kann
+            Node {
+                position_type: PositionType::Absolute,
+                width: percent(100.0),
+                height: percent(100.0),
+                ..default()
+            },
+            ImageNode::default(),
+            Visibility::Hidden,       // leer, bis ein Item drin liegt
+        )],
+    )
+}
+
+
 
 pub fn get_cursor(
     asset_server: &AssetServer,

@@ -74,8 +74,8 @@ impl Inventory {
             EquipSlot::Chest    => &mut self.equipment.chest,
             EquipSlot::Legs     => &mut self.equipment.legs,
             EquipSlot::Boots    => &mut self.equipment.boots,
-            EquipSlot::Usable   => &mut self.equipment.usable,
-            EquipSlot::Secret   => &mut self.equipment.secret,
+            EquipSlot::Usable(i)   => &mut self.equipment.usable[i],
+            EquipSlot::Secret(i)   => &mut self.equipment.secret[i],
         }
     }
 
@@ -108,10 +108,22 @@ impl Default for Inventory {
                     id: ItemId::WoddenDagger,
                     count: 1,
                 })},
-                es.clone(),
-                es.clone(),
-                es.clone(),
-                es.clone(),
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::MediumDamagePotion,
+                    count: 5,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::MediumHealthPotion,
+                    count: 4,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::MediumMaxHealthOrb,
+                    count: 9,
+                })},
+                InventorySlot {stack: Some(ItemStack {
+                    id: ItemId::Max3InventoryRowsSecret,
+                    count: 2,
+                })},
                 es.clone(),
                 es.clone(),
             ],
@@ -125,14 +137,15 @@ impl Default for Inventory {
 
 impl EquipSlot {
     pub fn accepts(self, id: ItemId, items: &Items) -> bool {
-        let cats = items.0.get(&id).unwrap().categories.clone();
+        let Some(def) = items.0.get(&id) else { return false; };
+        let cats = &def.categories;
         match self {
-            EquipSlot::Helm     => cats.contains(&Category::Helm),
-            EquipSlot::Chest    => cats.contains(&Category::Chest),
-            EquipSlot::Legs     => cats.contains(&Category::Legs),
-            EquipSlot::Boots    => cats.contains(&Category::Boots),
-            EquipSlot::Usable   => cats.contains(&Category::Usable),
-            EquipSlot::Secret   => cats.contains(&Category::Secret),
+            EquipSlot::Helm         => cats.contains(&Category::Helm),
+            EquipSlot::Chest        => cats.contains(&Category::Chest),
+            EquipSlot::Legs         => cats.contains(&Category::Legs),
+            EquipSlot::Boots        => cats.contains(&Category::Boots),
+            EquipSlot::Usable(_)    => cats.contains(&Category::Usable),
+            EquipSlot::Secret(_)    => cats.contains(&Category::Secret),
         }
     }
 }

@@ -25,6 +25,10 @@ pub enum ItemId {
     WoddenDagger,
     #[default]
     Thing,
+    MediumDamagePotion,
+    MediumHealthPotion,
+    MediumMaxHealthOrb,
+    Max3InventoryRowsSecret,
     Nothing,
 }
 

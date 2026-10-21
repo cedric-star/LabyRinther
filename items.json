@@ -76,5 +76,55 @@
       "attack_speed": 1.5,
       "wtype": "Sword"
     }
+  },
+  {
+    "id": "MediumDamagePotion",
+    "label": "Medium Damage Potion",
+    "asset": "items/MediumDamagePotion.png",
+    "categories": [
+      "Consumable"
+    ],
+    "tier": "D",
+    "max_stack": 20,
+    "weapon": null
+  },
+  {
+    "id": "MediumHealthPotion",
+    "label": "Medium Health Potion",
+    "asset": "items/MediumHealthPotion.png",
+    "categories": [
+      "Consumable"
+    ],
+    "tier": "D",
+    "max_stack": 1,
+    "weapon": null
+  },
+  {
+    "id": "MediumMaxHealthOrb",
+    "label": "Medium Max Health Orb",
+    "asset": "items/MediumMaxHealthOrb.png",
+    "categories": [
+      "Usable"
+    ],
+    "tier": "D",
+    "max_stack": 1,
+    "weapon": {
+      "damage": 12.0,
+      "range": 2.0,
+      "attack_speed": 1.5,
+      "wtype": "Sword"
+    }
+  },
+  {
+    "id": "Max3InventoryRowsSecret",
+    "label": "Max 3 Inventory Rows",
+    "asset": "items/Max3InventoryRowsSecret.png",
+    "categories": [
+      "Secret"
+    ],
+    "tier": "A",
+    "max_stack": 1,
+    "weapon": null
   }
 ]
+

@@ -17,7 +17,7 @@ pub struct InventorySlotItemNormalCords(pub usize, pub usize);
 #[derive(Component)]
 pub struct InventorySlotUsablesCords(pub usize, pub usize);
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct InventorySlotEquip(pub EquipSlot);
 
 #[derive(Component)]
@@ -59,8 +59,8 @@ pub struct Equipment {
     pub chest: Option<ItemStack>,
     pub legs: Option<ItemStack>,
     pub boots: Option<ItemStack>,
-    pub usable: Option<ItemStack>,
-    pub secret: Option<ItemStack>,
+    pub usable: [Option<ItemStack>; 8],
+    pub secret: [Option<ItemStack>; 2],
 }
 
 #[derive(Clone, Debug, Default, Copy)]
@@ -72,5 +72,12 @@ pub const MAX_INNER_ROWS: usize = 6;
 pub const HOTBAR_ROW: usize = MAX_INNER_ROWS;
 
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)] //nur manche items in inventar-slots
-pub enum EquipSlot { Helm, Chest, Legs, Boots, Usable, Secret }
+pub enum EquipSlot { 
+    Helm,
+    Chest, 
+    Legs, 
+    Boots, 
+    Usable(usize), 
+    Secret(usize) 
+}
 
