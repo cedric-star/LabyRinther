@@ -9,18 +9,8 @@ Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 
 # next
-- items aus secret, usbles und armor logik hinzufügen -> in itemdef ein doing felde als option
-  - wenn none normales kack item
-  - wenn some() -> dann kann es ein doing struct besitzen
-  - doing hat optional ein weapon def, secret def, armordef, ...
-
-- auf bevy 0.20 upgraden ): (aber wild eigentlich geile software uiuiui kiki)
-
-- big picture: -> gegner spawnen uiuiui oder
-- multiplayer mode:
-  - welt als server oder singleplayer starten
-  - dann welt welt beitreten oder singleplayer spielen.
-  - ich will das man jede welt als singleplayer und mutliplayer spielen kann
+- effects für items al vec eintragen und in json schreiben
+- effect dinge logik machen
 # todo
 
 - in welt können dinge platziert sein/werden (tilebasiert)
