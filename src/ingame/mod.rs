@@ -8,3 +8,4 @@ pub mod util;
 pub mod status_bars;
 pub mod items;
 pub mod recipes;
+pub mod entity;

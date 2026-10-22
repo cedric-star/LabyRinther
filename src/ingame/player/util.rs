@@ -1,11 +1,13 @@
 use bevy::prelude::*;
+use std::collections::HashMap;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::ingame::player::structs::*;
-use crate::ingame::items::*;
+use crate::ingame::items::structs::*;
 use crate::ingame::inventory::structs::*;
-use std::collections::HashMap;
+use crate::ingame::entity::structs::*;
+
 
 pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
     let cs = CHUNK_SIZE as i32;
@@ -50,12 +52,8 @@ impl Default for Player {
     fn default() -> Self {
         Self {
             inventory: Inventory::default(),
-            health: 100.0,
-            max_health: 100.0,
-            health_regen: 1.0,
-            mana: 0.0,
-            max_mana: 100.0,
-            mana_regen: 1.0,
+            health: Health::default(),
+            mana: Mana::default(),
             armor: 0.0,
             speed: 1.0,
         }

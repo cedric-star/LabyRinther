@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::ingame::player::structs::*;
 use bevy::window::PrimaryWindow;
-use crate::ingame::items::*;
+use crate::ingame::items::structs::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::inventory::util::*;
 use crate::ingame::structs::*;

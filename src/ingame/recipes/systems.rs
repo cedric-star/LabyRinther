@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
-use crate::ingame::items::*;
+use crate::ingame::items::structs::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::player::structs::*;
 use crate::util::ui::constants::*;

@@ -5,10 +5,7 @@ use crate::resources::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::player::util::*;
 use crate::ingame::player::structs::*;
-use crate::ingame::items::*;
-use std::collections::HashMap;
-
-
+use crate::ingame::items::structs::*;
 
 //ließt inventar aus und setzt usables und armor stauts/effekte auf player
 pub fn update_equipment_player(
@@ -32,16 +29,16 @@ pub fn mana_regen(mut player: Query<&mut Player>) {
         return;
     };
 
-    if player.mana == player.max_mana {
+    if player.mana.mana_points == player.mana.max_mana {
         return;
     }
-    let mana_regen_num = player.mana_regen;
-    if (player.mana + mana_regen_num) >= player.max_mana {
-        player.mana = player.max_mana;
+    let mana_regen_num = player.mana.mana_regen;
+    if (player.mana.mana_points + mana_regen_num) >= player.mana.max_mana {
+        player.mana.mana_points = player.mana.max_mana;
         return;
     }
 
-    player.mana += mana_regen_num;
+    player.mana.mana_points += mana_regen_num;
 }
 
 pub fn health_regen(mut player: Query<&mut Player>) {
@@ -49,16 +46,16 @@ pub fn health_regen(mut player: Query<&mut Player>) {
         return;
     };
 
-    if player.health == player.max_health {
+    if player.health.health_points == player.health.max_health {
         return;
     }
-    let health_regen_num = player.health_regen;
-    if (player.health + health_regen_num) >= player.max_health {
-        player.health = player.max_health;
+    let health_regen_num = player.health.health_regen;
+    if (player.health.health_points + health_regen_num) >= player.health.max_health {
+        player.health.health_points = player.health.max_health;
         return;
     }
 
-    player.health += health_regen_num;
+    player.health.health_points += health_regen_num;
 }
 
 pub fn controls(

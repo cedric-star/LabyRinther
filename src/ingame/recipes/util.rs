@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::ingame::items::*;
+use crate::ingame::items::structs::*;
 use std::fs;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::recipes::structs::*;

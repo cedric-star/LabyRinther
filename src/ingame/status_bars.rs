@@ -92,7 +92,7 @@ pub fn update_bars(
     };
 
     for (_, mut text) in &mut health_bar {
-        let str = format!("Health: {}/{}", player.health, player.max_health);
+        let str = format!("Health: {}/{}", player.health.health_points, player.health.max_health);
         text.clear();
         text.push_str(str.as_str());
     }
@@ -104,7 +104,7 @@ pub fn update_bars(
     }
 
     for(_, mut text) in &mut mana_bar {
-        let str = format!("Mana: {}/{}", player.mana, player.max_mana);
+        let str = format!("Mana: {}/{}", player.mana.mana_points, player.mana.max_mana);
         text.clear();
         text.push_str(str.as_str());
     }

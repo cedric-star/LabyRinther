@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
-use crate::ingame::items::*;
+use crate::ingame::items::structs::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Recipe {
