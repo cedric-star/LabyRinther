@@ -2,6 +2,10 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
+use crate::ingame::player::structs::*;
+use crate::ingame::items::*;
+use crate::ingame::inventory::structs::*;
+use std::collections::HashMap;
 
 pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
     let cs = CHUNK_SIZE as i32;
@@ -28,4 +32,32 @@ pub fn collides(x: f32, y: f32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> boo
         }
     }
     false
+}
+
+//returns armor points from chest, helm, ... 0 if none
+pub fn extract_armor_points_from_armor_def(
+    def: Option<ItemStack>, 
+    items: &HashMap<ItemId, ItemDef>,
+) -> f32 {
+    if let Some(armor) = def {
+        let Some(item_def) = items.get(&armor.id) else { return 0.0; };
+        let Some(armor_def) = item_def.armor else { return 0.0; };
+        return armor_def.points;
+    } else { return 0.0; }
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            inventory: Inventory::default(),
+            health: 100.0,
+            max_health: 100.0,
+            health_regen: 1.0,
+            mana: 0.0,
+            max_mana: 100.0,
+            mana_regen: 1.0,
+            armor: 0.0,
+            speed: 1.0,
+        }
+    }
 }

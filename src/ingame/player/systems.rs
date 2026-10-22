@@ -5,6 +5,27 @@ use crate::resources::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::player::util::*;
 use crate::ingame::player::structs::*;
+use crate::ingame::items::*;
+use std::collections::HashMap;
+
+
+
+//ließt inventar aus und setzt usables und armor stauts/effekte auf player
+pub fn update_equipment_player(
+    mut player: Query<&mut Player>,
+    items: Res<Items>,
+) {
+    let Ok(mut player) = player.single_mut() else { return; };
+    let equip = &player.inventory.equipment;
+
+    let mut armor_sum = 0.0;
+    armor_sum += extract_armor_points_from_armor_def(equip.helm, &items.0);
+    armor_sum += extract_armor_points_from_armor_def(equip.chest, &items.0);
+    armor_sum += extract_armor_points_from_armor_def(equip.legs, &items.0);
+    armor_sum += extract_armor_points_from_armor_def(equip.boots, &items.0);
+    
+    player.armor = armor_sum;
+}
 
 pub fn mana_regen(mut player: Query<&mut Player>) {
     let Ok(mut player) = player.single_mut() else {
@@ -14,7 +35,7 @@ pub fn mana_regen(mut player: Query<&mut Player>) {
     if player.mana == player.max_mana {
         return;
     }
-    let mana_regen_num = 2.0;
+    let mana_regen_num = player.mana_regen;
     if (player.mana + mana_regen_num) >= player.max_mana {
         player.mana = player.max_mana;
         return;
@@ -31,7 +52,7 @@ pub fn health_regen(mut player: Query<&mut Player>) {
     if player.health == player.max_health {
         return;
     }
-    let health_regen_num = 2.0;
+    let health_regen_num = player.health_regen;
     if (player.health + health_regen_num) >= player.max_health {
         player.health = player.max_health;
         return;

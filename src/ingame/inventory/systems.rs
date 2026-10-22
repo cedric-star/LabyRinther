@@ -143,7 +143,7 @@ pub fn update_inventory_items(
 }
 
 // zeigt passenden stack aus equipment an (rüstung,  usables, secrets)
-pub fn update_equipment(
+pub fn update_equipment_ui(
     player: Query<&Player>,
     mut items: Query<(&InventoryEquipItem, &mut ImageNode, &mut Visibility)>,
     asset_server: Res<AssetServer>,
@@ -262,7 +262,6 @@ pub fn update_euqipped_info_text(
     }) else {
         return;
     };
-    println!("st => {:?}", equip_stack);
     
     let Some(def) = items.0.get(&equip_stack.id) else { return; };
     let label = format!("{}\n{:?}", def.label, def.categories);

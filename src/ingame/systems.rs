@@ -18,15 +18,7 @@ pub fn startup(
     let start_t = Instant::now();
     commands.spawn((
         GameEntity,
-        Player {
-            inventory: Inventory::default(),
-            health: 100.0,
-            max_health: 100.0,
-            mana: 0.0,
-            max_mana: 100.0,
-            armor: 0.0,
-            speed: 1.0,
-        },
+        Player::default(),
         Sprite {
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
             image: asset_server.load("character_simple.png"),
