@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::ingame::items::structs::*;
+use crate::ingame::items::modifier::*;
 
 #[derive(Component)]
 pub struct Health {
@@ -14,4 +16,14 @@ pub struct Mana {
     pub mana_regen: f32, //normal: 1/s
 }
 
+#[derive(Component, Default)]
+pub struct Velocity {
+    pub x: f32,
+    pub y: f32,
+}
 
+#[derive(Component)]
+#[require(Transform, Velocity, Stats, Health, Mana, Equipment)]
+pub struct Enemy {
+    pub weapon: WeaponDef,
+}

@@ -123,3 +123,26 @@ pub fn movement(
         transform.translation = pos;
     }
 }
+
+pub fn weapon_use(
+    mouse: Res<ButtonInput<MouseButton>>,
+    items: Res<Items>,
+    player_data: Single<(&Inventory, &Transform), With<Player>>,
+    show_inventory: Single<&InventoryShow, With<InventoryRoot>>,
+) {
+    let (inventory, transform) = player_data.into_inner();
+    let pos = transform.translation;
+    
+    if !mouse.just_pressed(MouseButton::Left) { return; }
+    if show_inventory.0 == true { return; }
+    let Some(item) = inventory.hotbar[inventory.selected].stack else { return; };
+    let item = items.0
+        .get(&item.id)
+        .unwrap();
+    if !item.categories.contains(&Category::Weapon) { return; } 
+
+    info!("{:?}", item);
+    info!("{:?}", pos);
+
+
+}

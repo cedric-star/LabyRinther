@@ -7,13 +7,6 @@ use crate::components::*;
 use crate::constants::*;
 use crate::ingame::player::animation::*;
 
-
-#[derive(Component, Default)]
-pub struct Velocity {
-    pub x: f32,
-    pub y: f32,
-}
-
 #[derive(Component)]
 #[require(Transform, Velocity, Stats, Health, Mana, Inventory, Equipment)]
 pub struct Player;

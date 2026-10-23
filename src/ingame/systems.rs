@@ -6,6 +6,7 @@ use crate::world::region::*;
 use crate::ingame::player::structs::*;
 use crate::resources::*;
 use std::time::Instant;
+use crate::ingame::entity::structs::*;
 
 pub fn startup(
     mut commands: Commands,

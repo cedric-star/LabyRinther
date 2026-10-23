@@ -65,6 +65,7 @@ pub fn ingame_plugin(app: &mut App) {
             (
                 //trigger_animation_system,
                 execute_animations,
+                weapon_use,
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
