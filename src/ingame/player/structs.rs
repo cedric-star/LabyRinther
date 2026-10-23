@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
-use crate::ingame::items::structs::*;
 
 #[derive(Component, Default)]
 pub struct Velocity {
@@ -13,14 +12,5 @@ pub struct Velocity {
 #[derive(Component)]
 #[require(Transform, Velocity, Stats, Health, Mana, Inventory, Equipment)]
 pub struct Player;
-
-
-/*{
-    pub inventory: Inventory,
-    pub health: Health,
-    pub armor: f32, //0-60
-    pub mana: Mana,
-    pub speed: f32,
-}*/
 
 

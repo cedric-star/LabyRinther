@@ -1,10 +1,8 @@
 use crate::ingame::items::structs::*;
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
 use std::fs;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::modifier::*;
-use crate::ingame::items::structs::*;
 
 impl Tier {
     //in prozent

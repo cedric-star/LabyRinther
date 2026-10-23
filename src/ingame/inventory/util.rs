@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::structs::*;
-use crate::ingame::items::modifier::*;
 
 pub fn apply_click(
     held: &mut Option<ItemStack>,

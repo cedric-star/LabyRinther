@@ -3,7 +3,6 @@ use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::entity::structs::*;
-use crate::ingame::player::structs::*;
 
 // 1) Equipped-Effekte neu aufbauen
 pub fn rebuild_equipped_stats(

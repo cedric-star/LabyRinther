@@ -1,13 +1,10 @@
 use bevy::prelude::*;
-use std::collections::HashMap;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::inventory::structs::*;
-use crate::ingame::entity::structs::*;
-
 
 pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
     let cs = CHUNK_SIZE as i32;
