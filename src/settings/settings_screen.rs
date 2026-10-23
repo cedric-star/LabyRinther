@@ -41,7 +41,7 @@ impl Default for GameSettings {
 
             chunks_loading: 6,
 
-            ui_scale: 5.0,
+            ui_scale: 6.0,
         }
     }
 }

@@ -28,12 +28,16 @@ pub fn health_regen(mut q: Query<(&mut Health, &Stats), With<Player>>) {
     }
 }
 
+//wenn inventar unsichtbar und item das man benutzen kann ausgerüstet ist, dann benutzen
 pub fn use_item_system(
     mouse: Res<ButtonInput<MouseButton>>,
+    show_inventory: Single<&InventoryShow, With<InventoryRoot>>,
     items: Res<Items>,
     mut q: Query<(&mut Inventory, &mut Stats), With<Player>>,
 ) {
     if !mouse.just_pressed(MouseButton::Right) { return; }
+    if show_inventory.0 == true { return; }
+
     let Ok((mut inv, mut stats)) = q.single_mut() else { return };
     use_selected_item(&items, &mut inv, &mut stats);
 }

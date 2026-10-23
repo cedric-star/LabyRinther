@@ -52,7 +52,12 @@ impl Default for Items {
     }
 }
 
-pub fn use_selected_item(items: &Items, inv: &mut Inventory, stats: &mut Stats) {
+//wenn item in hotbar verwendet wird
+pub fn use_selected_item(
+    items: &Items, 
+    inv: &mut Inventory, 
+    stats: &mut Stats
+) {
     let slot = &mut inv.hotbar[inv.selected];
     let Some(stack) = slot.stack.as_mut() else { return };
     let Some(def) = items.0.get(&stack.id) else { return };

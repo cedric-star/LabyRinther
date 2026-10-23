@@ -17,7 +17,7 @@ pub fn get_inventory(
 
     (
         IngameUi,
-        InventoryShow,
+        InventoryShow(false),
         InventoryRoot,
         Node {
             top: percent( - (scale * 40.0)),

@@ -16,7 +16,7 @@ pub fn get_craftable_item_field(
     (
         IngameUi,
         GameEntity,
-        InventoryShow,
+        InventoryShow(false),
         CraftableList,
         Node {
             position_type: PositionType::Absolute,

@@ -12,7 +12,7 @@ use crate::ingame::items::modifier::*;
 pub fn set_hotkeys(
     keys: Res<ButtonInput<KeyCode>>,
     mut inventory: Single<&mut Inventory, With<Player>>,
-    mut inventory_show: Query<(&InventoryShow, &mut Visibility)>,
+    mut inventory_show: Query<(&mut InventoryShow, &mut Visibility)>,
 ) {
 
     if keys.pressed(KeyCode::Digit1) {
@@ -39,11 +39,13 @@ pub fn set_hotkeys(
 
     // go to inventory
     if keys.just_pressed(KeyCode::KeyE) {
-        for (inv, mut visibility) in &mut inventory_show {
+        for (mut inv, mut visibility) in &mut inventory_show {
             if *visibility == Visibility::Hidden {
                 *visibility = Visibility::Visible;
+                inv.0 = true;
             } else {
                 *visibility = Visibility::Hidden;
+                inv.0 = false;
             }
         }
     }

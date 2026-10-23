@@ -6,7 +6,7 @@ use crate::ingame::items::structs::*;
 pub struct InventoryRoot;
 
 #[derive(Component)]
-pub struct InventoryShow;
+pub struct InventoryShow(pub bool);
 
 #[derive(Component)]
 pub struct InventorySlotNormalCords(pub usize, pub usize);
