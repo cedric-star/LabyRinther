@@ -185,7 +185,12 @@ pub fn inventory_click(
 
     if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
         let slot = equipment.equip_mut(eq.0);
+        match eq.0 {
+            EquipSlot::Secret(_) => { if slot.is_some() { return; }},
+            _ => {  },
+        }
         apply_click(&mut cursor.0, slot, left, Some(eq.0), &items);
+        
     } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
         let Some(slot) = inventory.slot_mut(c.0, c.1) else { return; };
         apply_click(&mut cursor.0, &mut slot.stack, left, None, &items);

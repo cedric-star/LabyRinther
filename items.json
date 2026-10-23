@@ -124,7 +124,9 @@
     ],
     "tier": "A",
     "max_stack": 1,
-    "weapon": null
+    "effects": [
+      {"stat": "InventoryRows", "modifier": { "Add": 2.0 }, "trigger": "Equipped" }
+    ]
   }
 ]
 
