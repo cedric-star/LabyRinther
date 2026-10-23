@@ -12,20 +12,10 @@ pub fn startup(
     asset_server: Res<AssetServer>,
     mut regions: ResMut<RegionPool>,
     seed: Res<WorldSeed>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let start_t = Instant::now();
-    commands.spawn((
-        GameEntity,
-        Player,
-        Sprite {
-            custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
-            image: asset_server.load("character_simple.png"),
-            ..default()
-        },
-        Transform::from_xyz(16.0, 16.0, 1.0),
-        Velocity { x: 0.0, y: 0.0 },
-        Anchor::BOTTOM_LEFT,
-    ));
+    commands.spawn(Player::new_entity(&asset_server, &mut texture_atlas_layouts));
 
     let region_entity = commands.spawn(generate_region(seed.seed, Cords::new(0, 0))).id();
 
