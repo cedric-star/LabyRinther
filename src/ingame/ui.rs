@@ -150,15 +150,11 @@ pub fn get_info_tooltip(comp: impl Component) -> impl Bundle {
 }
 
 pub fn update_ui(
-    player: Query<&Player>,
+    inventory: Single<&Inventory, With<Player>>,
     mut hot_bar_slot: Query<&mut Node, With<HotBarSelector>>,
 ) {
-    let Ok(player) = player.single() else {
-        return; // kein oder mehrere Spieler
-    };
-
     for mut node in &mut hot_bar_slot {
-        node.left = percent(player.inventory.selected as f32 * 10.0);
+        node.left = percent(inventory.selected as f32 * 10.0);
     }
 }
 

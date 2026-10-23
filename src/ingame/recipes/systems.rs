@@ -12,23 +12,20 @@ use crate::ingame::recipes::util::*;
 /// Berechnet aus dem Inventar des Spielers, welche Rezepte aktuell craftbar sind,
 /// und speichert sie samt maximal craftbarer Menge in `CraftableItems`.
 pub fn set_craftable_items(
-    player: Query<&Player>,
+    inventory: Single<&Inventory, With<Player>>,
     mut craftable_items: ResMut<CraftableItems>,
     recipes: Res<Recipes>,
 ) {
-    let Ok(player) = player.single() else {
-        panic!("didnt found player coreclty");
-    };
 
     let mut player_items: Vec<ItemStack> = Vec::new();
-    for inv_rows in player.inventory.inner_rows.clone() {
+    for inv_rows in inventory.inner_rows.clone() {
         for slot in inv_rows {
             if let Some(slot_unwrapped) = slot.stack {
                 player_items.push(slot_unwrapped);
             }
         }
     }
-    for slot in player.inventory.hotbar {
+    for slot in inventory.hotbar {
         if let Some(slot_unwrapped) = slot.stack {
             player_items.push(slot_unwrapped);
         }
@@ -194,7 +191,7 @@ pub fn craftable_click(
     recipes: Res<Recipes>,
     items: Res<Items>,
     mut cursor: ResMut<CursorItem>,
-    mut player: Query<&mut Player>,
+    mut inventory: Single<&mut Inventory, With<Player>>,
 ) {
     let left = mouse.just_pressed(MouseButton::Left);
     let right = mouse.just_pressed(MouseButton::Right);
@@ -212,12 +209,10 @@ pub fn craftable_click(
         if held.id != recipe.result.id { return; }
     }
 
-    let Ok(mut player) = player.single_mut() else { return; };
-
     // 1) Limit durch vorhandene Zutaten
     let by_ingredients = recipe.items.iter()
         .filter(|ing| ing.count > 0)
-        .map(|ing| count_items(&player.inventory, ing.id) / ing.count)
+        .map(|ing| count_items(&inventory, ing.id) / ing.count)
         .min()
         .unwrap_or(0);
 
@@ -232,7 +227,7 @@ pub fn craftable_click(
     if rounds == 0 { return; }
 
     for ing in &recipe.items {
-        remove_items(&mut player.inventory, ing.id, ing.count * rounds);
+        remove_items(&mut inventory, ing.id, ing.count * rounds);
     }
 
     let gained = rounds * recipe.result.count;

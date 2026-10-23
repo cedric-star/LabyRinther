@@ -2,6 +2,9 @@ use crate::ingame::items::structs::*;
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::fs;
+use crate::ingame::inventory::structs::*;
+use crate::ingame::items::modifier::*;
+use crate::ingame::items::structs::*;
 
 impl Tier {
     //in prozent
@@ -47,4 +50,21 @@ impl Default for Items {
         }
 
     }
+}
+
+pub fn use_selected_item(items: &Items, inv: &mut Inventory, stats: &mut Stats) {
+    let slot = &mut inv.hotbar[inv.selected];
+    let Some(stack) = slot.stack.as_mut() else { return };
+    let Some(def) = items.0.get(&stack.id) else { return };
+
+    let on_use: Vec<_> = def.effects.iter()
+        .filter(|e| e.trigger == EffectTrigger::OnUse)
+        .collect();
+    if on_use.is_empty() { return; }
+
+    for e in on_use {
+        stats.permanent.push((e.stat, e.modifier));
+    }
+    stack.count -= 1;
+    if stack.count == 0 { slot.stack = None; }
 }

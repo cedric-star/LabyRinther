@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::structs::*;
+use crate::ingame::items::modifier::*;
 
 pub fn apply_click(
     held: &mut Option<ItemStack>,
@@ -67,18 +68,6 @@ impl Inventory {
         let r = y.checked_sub(self.row_offset())?;
         self.inner_rows.get_mut(r)?.get_mut(x)
     }
-
-    pub fn equip_mut(&mut self, s: EquipSlot) -> &mut Option<ItemStack> {
-        match s {
-            EquipSlot::Helm     => &mut self.equipment.helm,
-            EquipSlot::Chest    => &mut self.equipment.chest,
-            EquipSlot::Legs     => &mut self.equipment.legs,
-            EquipSlot::Boots    => &mut self.equipment.boots,
-            EquipSlot::Usable(i)   => &mut self.equipment.usable[i],
-            EquipSlot::Secret(i)   => &mut self.equipment.secret[i],
-        }
-    }
-
 }
 
 impl Default for Inventory {
@@ -128,7 +117,6 @@ impl Default for Inventory {
                 es.clone(),
             ],
             selected: 0,
-            equipment: Equipment::default(),
             inner_rows: other_rows,
         }
     }

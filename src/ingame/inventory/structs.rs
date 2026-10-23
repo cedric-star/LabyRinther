@@ -50,18 +50,9 @@ pub struct Inventory {
     pub hotbar: [InventorySlot; 10],
     pub selected: usize,
     pub inner_rows: Vec<[InventorySlot; 10]>,
-    pub equipment: Equipment,
 }
 
-#[derive(Component, Debug, Default)]
-pub struct Equipment {
-    pub helm: Option<ItemStack>,
-    pub chest: Option<ItemStack>,
-    pub legs: Option<ItemStack>,
-    pub boots: Option<ItemStack>,
-    pub usable: [Option<ItemStack>; 8],
-    pub secret: [Option<ItemStack>; 2],
-}
+
 
 #[derive(Clone, Debug, Default, Copy)]
 pub struct InventorySlot {

@@ -35,27 +35,3 @@ pub fn collides(x: f32, y: f32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> boo
     }
     false
 }
-
-//returns armor points from chest, helm, ... 0 if none
-pub fn extract_armor_points_from_armor_def(
-    def: Option<ItemStack>, 
-    items: &HashMap<ItemId, ItemDef>,
-) -> f32 {
-    if let Some(armor) = def {
-        let Some(item_def) = items.get(&armor.id) else { return 0.0; };
-        let Some(armor_def) = item_def.armor else { return 0.0; };
-        return armor_def.points;
-    } else { return 0.0; }
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Self {
-            inventory: Inventory::default(),
-            health: Health::default(),
-            mana: Mana::default(),
-            armor: 0.0,
-            speed: 1.0,
-        }
-    }
-}

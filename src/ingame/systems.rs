@@ -16,7 +16,7 @@ pub fn startup(
     let start_t = Instant::now();
     commands.spawn((
         GameEntity,
-        Player::default(),
+        Player,
         Sprite {
             custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
             image: asset_server.load("character_simple.png"),

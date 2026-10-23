@@ -32,7 +32,10 @@
       "Resource"
     ],
     "tier": "F",
-    "max_stack": 999
+    "max_stack": 999,
+    "effects": [
+      {"stat": "ManaRegen", "modifier": { "Add": 5.0 }, "trigger": "OnUse" }
+    ]
   },
   {
     "id": "AppleSlice",

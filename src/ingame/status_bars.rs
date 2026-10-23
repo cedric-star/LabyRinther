@@ -4,6 +4,8 @@ use crate::settings::settings_screen::*;
 use crate::util::ui::constants::*;
 use crate::components::*;
 use crate::ingame::structs::*;
+use crate::ingame::entity::structs::*;
+use crate::ingame::items::modifier::*;
 
 #[derive(Component)]
 pub struct HealthBar;
@@ -82,31 +84,21 @@ pub fn get_bars(
 }
 
 pub fn update_bars(
-    player: Query<&Player>,
-    mut health_bar: Query<(&HealthBar, &mut Text), (Without<SchieldBar>, Without<ManaBar>)>,
-    mut armor_bar: Query<(&SchieldBar, &mut Text), (Without<HealthBar>, Without<ManaBar>)>,
-    mut mana_bar: Query<(&ManaBar, &mut Text), (Without<HealthBar>, Without<SchieldBar>)>,
-){
-    let Ok(player) = player.single() else {
-        return;
-    };
+    player: Single<(&Health, &Mana, &Stats), With<Player>>,
+    mut health_bar: Query<&mut Text, (With<HealthBar>, Without<SchieldBar>, Without<ManaBar>)>,
+    mut armor_bar: Query<&mut Text, (With<SchieldBar>, Without<HealthBar>, Without<ManaBar>)>,
+    mut mana_bar: Query<&mut Text, (With<ManaBar>, Without<HealthBar>, Without<SchieldBar>)>,
+) {
+    let (health, mana, stats) = player.into_inner();
+    let armor = stats.get(Stat::Armor);
 
-    for (_, mut text) in &mut health_bar {
-        let str = format!("Health: {}/{}", player.health.health_points, player.health.max_health);
-        text.clear();
-        text.push_str(str.as_str());
+    for mut text in &mut health_bar {
+        text.0 = format!("Health: {:.0}/{:.0}", health.health_points, health.max_health);
     }
-
-    for (_, mut text) in &mut armor_bar {
-        let str = format!("Armor: {}/{}", player.armor, 60);
-        text.clear();
-        text.push_str(str.as_str());
+    for mut text in &mut armor_bar {
+        text.0 = format!("Armor: {:.0}/60", armor);
     }
-
-    for(_, mut text) in &mut mana_bar {
-        let str = format!("Mana: {}/{}", player.mana.mana_points, player.mana.max_mana);
-        text.clear();
-        text.push_str(str.as_str());
+    for mut text in &mut mana_bar {
+        text.0 = format!("Mana: {:.0}/{:.0}", mana.mana_points, mana.max_mana);
     }
-
 }

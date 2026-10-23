@@ -5,38 +5,36 @@ use crate::ingame::items::structs::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::inventory::util::*;
 use crate::ingame::structs::*;
+use crate::ingame::items::modifier::*;
 
 //setzt kästchen in hotbar um ausgeählten slot und setzt es im inventory struct
 // aktiviert auc mit e inventar
 pub fn set_hotkeys(
     keys: Res<ButtonInput<KeyCode>>,
-    mut player: Query<&mut Player>,
+    mut inventory: Single<&mut Inventory, With<Player>>,
     mut inventory_show: Query<(&InventoryShow, &mut Visibility)>,
 ) {
-    let Ok(mut player) = player.single_mut() else {
-        return;
-    };
 
     if keys.pressed(KeyCode::Digit1) {
-        player.inventory.selected = 0;
+        inventory.selected = 0;
     } else if keys.pressed(KeyCode::Digit2) {
-        player.inventory.selected = 1;
+        inventory.selected = 1;
     } else if keys.pressed(KeyCode::Digit3) {
-        player.inventory.selected = 2;
+        inventory.selected = 2;
     } else if keys.pressed(KeyCode::Digit4) {
-        player.inventory.selected = 3;
+        inventory.selected = 3;
     } else if keys.pressed(KeyCode::Digit5) {
-        player.inventory.selected = 4;
+        inventory.selected = 4;
     } else if keys.pressed(KeyCode::Digit6) {
-        player.inventory.selected = 5;
+        inventory.selected = 5;
     } else if keys.pressed(KeyCode::Digit7) {
-        player.inventory.selected = 6;
+        inventory.selected = 6;
     } else if keys.pressed(KeyCode::Digit8) {
-        player.inventory.selected = 7;
+        inventory.selected = 7;
     } else if keys.pressed(KeyCode::Digit9) {
-        player.inventory.selected = 8;
+        inventory.selected = 8;
     } else if keys.pressed(KeyCode::Digit0) {
-        player.inventory.selected = 9;
+        inventory.selected = 9;
     }
 
     // go to inventory
@@ -55,7 +53,7 @@ pub fn set_hotkeys(
 //aktualisiert anzeige des inventars (aktualisiert items im inventar)
 //aktualisiert auch anzahl an inventar/slot reihen
 pub fn update_inventory(
-    player: Query<&Player>,
+    inventory: Single<&Inventory, With<Player>>,
     mut slots: Query<
         (&InventorySlotNormalCords, &mut ImageNode, &mut Visibility),
         Without<InventorySlotItemNormalCords>,
@@ -68,18 +66,15 @@ pub fn update_inventory(
     asset_server: Res<AssetServer>,
     items: Res<Items>,
 ) {
-    let Ok(player) = player.single() else { return; };
-    let inv = &player.inventory;
-
     // nur existierende Reihen anzeigen
     for (cords, mut image, mut vis) in &mut slots {
-        let show = cords.1 == HOTBAR_ROW || cords.1 >= inv.row_offset();
+        let show = cords.1 == HOTBAR_ROW || cords.1 >= inventory.row_offset();
         vis.set_if_neq(if show { Visibility::Inherited } else { Visibility::Hidden });
         //image.color = Color::srgba(1.0, 1.0, 1.0, 0.5);
     }
 
     for (cords, mut image, mut vis) in &mut item_slots {
-        match inv.slot(cords.0, cords.1).and_then(|s| s.stack) {
+        match inventory.slot(cords.0, cords.1).and_then(|s| s.stack) {
             Some(item) => {
                 vis.set_if_neq(Visibility::Inherited);
                 let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
@@ -94,26 +89,22 @@ pub fn update_inventory(
     }
 
     for (cords, mut text) in &mut counts {
-        let n = inv.slot(cords.0, cords.1).and_then(|s| s.stack).map_or(0, |s| s.count);
+        let n = inventory.slot(cords.0, cords.1).and_then(|s| s.stack).map_or(0, |s| s.count);
         text.0 = if n > 1 { n.to_string() } else { String::new() };
     }
 }
 
 //setzt items in hotbar + stückzahl setzen
 pub fn update_inventory_items(
-    player: Query<&Player>,
+    inventory: Single<&Inventory, With<Player>>,
     mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility), Without<HotBarItemNum>>,
     mut hotbar_item: Query<(&HotBarItemNum, &mut Text, &mut Visibility), Without<HotBarItem>>,
     asset_server: Res<AssetServer>,
     items: Res<Items>,
 ) {
-    let Ok(player) = player.single() else {
-        return; // kein oder mehrere Spieler
-    };
-
     for (slot, mut image, mut visibility) in &mut hotbar {
         let i = slot.0;
-        match &player.inventory.hotbar[i].stack {
+        match inventory.hotbar[i].stack {
             Some(item) => {
                 *visibility = Visibility::Visible;
                 let handle = asset_server.load(items.0.get(&item.id).unwrap().asset.clone());
@@ -129,7 +120,7 @@ pub fn update_inventory_items(
 
     for (num_item, mut text, mut visibility) in &mut hotbar_item {
         let slot = num_item.0;
-        match &player.inventory.hotbar[slot].stack {
+        match inventory.hotbar[slot].stack {
             Some(item) => {
                 *visibility = Visibility::Visible;
                 text.clear();
@@ -144,13 +135,11 @@ pub fn update_inventory_items(
 
 // zeigt passenden stack aus equipment an (rüstung,  usables, secrets)
 pub fn update_equipment_ui(
-    player: Query<&Player>,
+    e: Single<&Equipment, With<Player>>,
     mut items: Query<(&InventoryEquipItem, &mut ImageNode, &mut Visibility)>,
     asset_server: Res<AssetServer>,
     items_res: Res<Items>,
 ) {
-    let Ok(player) = player.single() else { return; };
-    let e = &player.inventory.equipment;
     for (slot, mut image, mut vis) in &mut items {
         let stack = match slot.0 {
             EquipSlot::Helm => e.helm,
@@ -179,7 +168,7 @@ pub fn inventory_click(
     grid_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
     equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
     root: Query<&Visibility, With<InventoryRoot>>,
-    mut player: Query<&mut Player>,
+    player: Single<(&mut Inventory, &mut Equipment), With<Player>>,
     mut cursor: ResMut<CursorItem>,
     items: Res<Items>,
 ) {
@@ -189,14 +178,14 @@ pub fn inventory_click(
 
     let Ok(vis) = root.single() else { return; };
     if *vis == Visibility::Hidden { return; }
-    let Ok(mut player) = player.single_mut() else { return; };
-    let inv = &mut player.inventory;
+
+    let (mut inventory, mut equipment) = player.into_inner();
 
     if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
-        let slot = inv.equip_mut(eq.0);
+        let slot = equipment.equip_mut(eq.0);
         apply_click(&mut cursor.0, slot, left, Some(eq.0), &items);
     } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
-        let Some(slot) = inv.slot_mut(c.0, c.1) else { return; };
+        let Some(slot) = inventory.slot_mut(c.0, c.1) else { return; };
         apply_click(&mut cursor.0, &mut slot.stack, left, None, &items);
     }
 }
@@ -235,14 +224,12 @@ pub fn update_cursor_visual(
 
 pub fn update_euqipped_info_text(
     windows: Query<&Window, With<PrimaryWindow>>,
-    player: Query<&Player>,
+    equips: Single<&Equipment, With<Player>>,
     items: Res<Items>,
     equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
     mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorItemInfoText>>,   
 ) {
-    let Ok(player) = player.single() else { return; };
     let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
-    let equips = &player.inventory.equipment;
     let Some(pos) = windows.single().ok().and_then(|w| w.cursor_position()) else {return;};
     
     let Some((hovered_slot, _)) = equip_slots //hovered slot finden
@@ -275,19 +262,18 @@ pub fn update_euqipped_info_text(
 //zeigt tooltip über hover an, bei normalen inventaritems
 pub fn update_inventory_info_text(
     windows: Query<&Window, With<PrimaryWindow>>,
-    player: Query<&Player>,
+    inventory: Single<&Inventory, With<Player>>,
     items: Res<Items>,
     inv_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
     mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorItemInfoText>>,
 ) {
-    let Ok(player) = player.single() else { return; };
     let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
 
     let pos = windows.single().ok().and_then(|w| w.cursor_position());
     let hovered_stack = inv_slots
         .iter()
         .find(|(_, i)| **i != Interaction::None)
-        .and_then(|(c, _)| player.inventory.slot(c.0, c.1))
+        .and_then(|(c, _)| inventory.slot(c.0, c.1))
         .and_then(|slot| slot.stack);
 
     let (Some(stack), Some(pos)) = (hovered_stack, pos) else {

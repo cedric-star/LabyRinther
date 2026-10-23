@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
+use crate::ingame::items::modifier::*;
 
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
@@ -44,6 +45,8 @@ pub struct ItemDef {
     pub weapon: Option<WeaponDef>,
     #[serde(default)]
     pub armor: Option<ArmorDef>,
+    #[serde(default)]
+    pub effects: Vec<StatEffect>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]

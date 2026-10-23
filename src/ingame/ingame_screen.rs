@@ -12,6 +12,8 @@ use crate::ingame::inventory::systems::*;
 use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::systems::*;
+use crate::ingame::items::systems::*;
+use crate::ingame::items::modifier::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -51,11 +53,21 @@ pub fn ingame_plugin(app: &mut App) {
                 update_cursor_visual,
                 update_inventory_info_text,
                 update_equipment_ui,
-                update_equipment_player,
                 mov_cam,
+                use_item_system,
                 mana_regen.run_if(on_timer(Duration::from_secs(1))),
                 health_regen.run_if(on_timer(Duration::from_secs(1))),
                 set_craftable_items.run_if(on_timer(Duration::from_millis(200))),
             ).run_if(in_state(GameState::InGame)),
+        )
+        .add_systems(
+            Update,
+            (
+                rebuild_equipped_stats,
+                sync_vitals,
+                sync_inventory_rows,
+            )
+                .chain()
+                .run_if(in_state(GameState::InGame)),
         );
 }

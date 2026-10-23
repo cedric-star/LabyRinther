@@ -6,74 +6,55 @@ use crate::settings::settings_screen::*;
 use crate::ingame::player::util::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::structs::*;
+use crate::ingame::entity::structs::*;
+use crate::ingame::items::modifier::*;
+use crate::ingame::inventory::structs::*;
+use crate::ingame::items::util::*;
 
-//ließt inventar aus und setzt usables und armor stauts/effekte auf player
-pub fn update_equipment_player(
-    mut player: Query<&mut Player>,
+
+pub fn mana_regen(mut q: Query<(&mut Mana, &Stats), With<Player>>) {
+    for (mut mana, stats) in &mut q {
+        if mana.mana_points < mana.max_mana {
+            mana.mana_points = (mana.mana_points + stats.get(Stat::ManaRegen)).min(mana.max_mana);
+        }
+    }
+}
+
+pub fn health_regen(mut q: Query<(&mut Health, &Stats), With<Player>>) {
+    for (mut hp, stats) in &mut q {
+        if hp.health_points < hp.max_health {
+            hp.health_points = (hp.health_points + stats.get(Stat::HealthRegen)).min(hp.max_health);
+        }
+    }
+}
+
+pub fn use_item_system(
+    mouse: Res<ButtonInput<MouseButton>>,
     items: Res<Items>,
+    mut q: Query<(&mut Inventory, &mut Stats), With<Player>>,
 ) {
-    let Ok(mut player) = player.single_mut() else { return; };
-    let equip = &player.inventory.equipment;
-
-    let mut armor_sum = 0.0;
-    armor_sum += extract_armor_points_from_armor_def(equip.helm, &items.0);
-    armor_sum += extract_armor_points_from_armor_def(equip.chest, &items.0);
-    armor_sum += extract_armor_points_from_armor_def(equip.legs, &items.0);
-    armor_sum += extract_armor_points_from_armor_def(equip.boots, &items.0);
-    
-    player.armor = armor_sum;
-}
-
-pub fn mana_regen(mut player: Query<&mut Player>) {
-    let Ok(mut player) = player.single_mut() else {
-        return;
-    };
-
-    if player.mana.mana_points == player.mana.max_mana {
-        return;
-    }
-    let mana_regen_num = player.mana.mana_regen;
-    if (player.mana.mana_points + mana_regen_num) >= player.mana.max_mana {
-        player.mana.mana_points = player.mana.max_mana;
-        return;
-    }
-
-    player.mana.mana_points += mana_regen_num;
-}
-
-pub fn health_regen(mut player: Query<&mut Player>) {
-    let Ok(mut player) = player.single_mut() else {
-        return;
-    };
-
-    if player.health.health_points == player.health.max_health {
-        return;
-    }
-    let health_regen_num = player.health.health_regen;
-    if (player.health.health_points + health_regen_num) >= player.health.max_health {
-        player.health.health_points = player.health.max_health;
-        return;
-    }
-
-    player.health.health_points += health_regen_num;
+    if !mouse.just_pressed(MouseButton::Right) { return; }
+    let Ok((mut inv, mut stats)) = q.single_mut() else { return };
+    use_selected_item(&items, &mut inv, &mut stats);
 }
 
 pub fn controls(
     keys: Res<ButtonInput<KeyCode>>,
-    mut velocity: Single<&mut Velocity, (With<Player>, Without<Camera2d>)>,
     transform: Single<&Transform, (With<Player>, Without<Camera2d>)>,
     mut cam_vel: Single<&mut Velocity, (With<Camera2d>, Without<Player>)>,
     cam_transform: Single<&Transform, (With<Camera2d>, Without<Player>)>,
     s: Res<GameSettings>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut player: Single<(&mut Velocity, &Stats), (With<Player>, Without<Camera2d>)>,
 ) {
+    let (velocity, stats) = &mut *player;
+    let mov_speed = s.mov_speed as f32 * stats.get(Stat::MoveSpeed);
         velocity.x = 0.0;
         velocity.y = 0.0;
         cam_vel.x = 0.0;
         cam_vel.y = 0.0;
 
         let cam_pos = cam_transform.translation;
-        let mov_speed = s.mov_speed as f32;
         if keys.pressed(KeyCode::KeyW) {
             velocity.y = mov_speed;
             if transform.translation.y + PLAYER_HEIGHT >= cam_pos.y + s.player_walk_border_height {
