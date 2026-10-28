@@ -14,6 +14,8 @@ use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::systems::*;
 use crate::ingame::items::systems::*;
 use crate::ingame::player::animation::*;
+use crate::ingame::items::attack::*;
+use crate::ingame::animation::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -60,12 +62,16 @@ pub fn ingame_plugin(app: &mut App) {
                 set_craftable_items.run_if(on_timer(Duration::from_millis(200))),
             ).run_if(in_state(GameState::InGame)),
         )
+        .add_message::<AttackHit>()
         .add_systems(
             Update,
             (
                 //trigger_animation_system,
-                execute_animations,
+                animate_entity,
+                switch_clip,
                 weapon_use,
+                send_hit_msg,
+                resolve_hits,
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(

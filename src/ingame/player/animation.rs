@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+/*use bevy::prelude::*;
 use std::time::Duration;
 use crate::ingame::player::structs::*;
 
@@ -26,25 +26,23 @@ impl AnimationConfig {
 }
 
 pub fn execute_animations(
-    time: Res<Time>,
+    time: Res<Time>, 
     mut query: Query<(&mut AnimationConfig, &mut Sprite)>,
 ) {
+    info!("gine");
     for (mut config, mut sprite) in &mut query {
         config.frame_timer.tick(time.delta());
-
-        if config.frame_timer.just_finished()
-            && let Some(atlas) = &mut sprite.texture_atlas
-        {
-            if atlas.index == config.last_sprite_index {
+        if config.frame_timer.just_finished() && let Some(atlas) = &mut sprite.texture_atlas {
+            if atlas.index == config.first_sprite_index {
                 atlas.index = config.first_sprite_index;
             } else {
                 atlas.index += 1;
+                config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
             }
-            // ✅ In beiden Fällen zurücksetzen, um Schleifenanimation zu ermöglichen
-            config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
         }
     }
 }
+
 pub fn trigger_animation_system(mut animation: Single<&mut AnimationConfig, With<Player>>) {
     animation.frame_timer = AnimationConfig::timer_from_fps(animation.fps);
-}
+}*/

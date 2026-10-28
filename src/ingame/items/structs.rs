@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use crate::ingame::items::modifier::*;
+use crate::ingame::items::attack::*;
 
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
@@ -49,26 +50,13 @@ pub struct ItemDef {
     pub effects: Vec<StatEffect>,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct WeaponDef {
-    pub damage: f32,
-    pub range: f32,
-    pub attack_speed: f32,
-    pub wtype: WeaponType,
-}
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct ArmorDef {
     pub points: f32, //max 15 bitti
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub enum WeaponType {
-    Sword,
-    Staff,
-    Shooting,
-    Whip,
-}
+
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Category {

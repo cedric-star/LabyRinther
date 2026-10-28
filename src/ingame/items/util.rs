@@ -44,7 +44,7 @@ impl Default for Items {
 
         match serde_json::from_str::<Vec<ItemDef>>(&file) {
             Ok(list) => Self(list.into_iter().map(|item| (item.id, item)).collect()),
-            Err(e) => { panic!("json items ungültig ):"); }
+            Err(e) => { panic!("json items ungültig ):\n, {e}"); }
         }
 
     }

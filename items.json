@@ -49,19 +49,27 @@
   },
   {
     "id": "WoddenDagger",
-    "label": "Wodden Dagger",
+    "label": "Holzschwert",
     "asset": "items/WoddenDagger.png",
-    "categories": [
-      "Resource",
-      "Weapon"
-    ],
+    "categories": ["Weapon"],
     "tier": "F",
     "max_stack": 1,
     "weapon": {
-      "damage": 10.0,
-      "range": 2.0,
-      "attack_speed": 1.0,
-      "wtype": "Sword"
+      "damage": 6.0,
+      "timing": { "duration": 0.35, "hit_at": 0.18, "cooldown": 0.15, "frames": 3 },
+      "kind": { "Melee": { "range": 48.0, "arc_deg": 90.0 } },
+      "fx": {
+        "type": "swing",
+        "sheet": "weapons/wooden_sword_swing.png",
+        "arc_deg": 100.0,
+        "windup": 0.3,
+        "swish": {
+          "sheet": "weapons/swish.png",
+          "frames": 4,
+          "offset_along": 22.0,
+          "range": 48.0
+        }
+      }
     }
   },
   {
@@ -72,13 +80,7 @@
       "Weapon"
     ],
     "tier": "D",
-    "max_stack": 1,
-    "weapon": {
-      "damage": 12.0,
-      "range": 2.0,
-      "attack_speed": 1.5,
-      "wtype": "Sword"
-    }
+    "max_stack": 1
   },
   {
     "id": "MediumDamagePotion",
@@ -88,8 +90,7 @@
       "Consumable"
     ],
     "tier": "D",
-    "max_stack": 20,
-    "weapon": null
+    "max_stack": 20
   },
   {
     "id": "MediumHealthPotion",
@@ -99,8 +100,7 @@
       "Consumable"
     ],
     "tier": "D",
-    "max_stack": 1,
-    "weapon": null
+    "max_stack": 1
   },
   {
     "id": "MediumMaxHealthOrb",
