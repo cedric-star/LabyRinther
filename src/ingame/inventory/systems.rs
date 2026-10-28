@@ -37,6 +37,7 @@ pub fn set_hotkeys(
         inventory.selected = 9;
     }
 
+
     // go to inventory
     if keys.just_pressed(KeyCode::KeyE) {
         for (mut inv, mut visibility) in &mut inventory_show {

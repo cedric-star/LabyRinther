@@ -72,6 +72,7 @@ pub fn ingame_plugin(app: &mut App) {
                 weapon_use,
                 send_hit_msg,
                 resolve_hits,
+                animate_held_item,
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(

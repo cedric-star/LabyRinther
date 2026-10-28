@@ -9,6 +9,7 @@ use crate::constants::*;
 use crate::ingame::player::animation::*;
 use crate::ingame::items::attack::*;
 use crate::ingame::animation::*;
+use crate::ingame::items::structs::*;
 
 #[derive(Component)]
 #[require(Transform, Velocity, Stats, Health, Mana, Inventory, Equipment, Attacker)]
@@ -18,7 +19,7 @@ pub struct Player;
 //structs für waffenlogik
 #[derive(Component)] pub struct PlayerBody;
 #[derive(Component)] pub struct HandPivot;
-#[derive(Component)] pub struct HeldItemSprite;
+#[derive(Component)] pub struct HeldItemSprite(Option<ItemId>);
 
 
 impl Player {
@@ -97,7 +98,7 @@ impl Player {
                     Transform::from_xyz(PLAYER_WIDTH * 0.7, PLAYER_HEIGHT * 0.45, 0.1),
                     Visibility::default(),
                     children![(
-                        HeldItemSprite,
+                        HeldItemSprite(None),
                         Sprite::default(),
                         Anchor::BOTTOM_LEFT,
                         Visibility::Hidden,

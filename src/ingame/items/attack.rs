@@ -1,55 +1,34 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
-
+use crate::ingame::player::structs::*;
 
 ////definition einer waffe
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WeaponDef {
-    pub damage: f32,
-    pub timing: AttackTiming,
-    pub kind: AttackKind,
-    #[serde(default)]
-    pub fx: Option<AttackFx>,
+pub struct WeaponDef {// eigentliche waffe mit stats
+    base: WeaponBase,
+    kind: WeaponKind,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct WeaponBase {
+    damage: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum AttackFx {
-    Swing(SwingFx),
+pub enum WeaponKind {
+    Dagger(DaggerDef),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SwingFx {
-    pub sheet: String, //sheet mit schwungframes
-    pub arc_deg: f32, //schwung winkel
-    pub windup: f32,
-    #[serde(default)]
-    pub swish: Option<SwishFx>,
+pub struct DaggerDef {
+    distance: f32, //von player mitt zu dieser entfernung in maus richtung eine linie: alles in der linie ist getroffen, in pixeln 
+    duration: f32, //zeit von klick über ausgefahrenen dolch zurück zum normalen zustand in sekunden
+    hit_at: f32, //zeit punk zwischen 0 - duration, an dem es als physischer hit zählt
+    cooldown: f32, //zeit nach duration (animations- ) ende, die gewartet wird bis nächsten angriff
 }
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SwishFx {
-    pub sheet: String,
-    pub frames: u32,
-    pub offset_along: f32, //abstand zu klinge
-    pub range: f32,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AttackTiming {
-    pub duration: f32, //sekunden pro animation
-    pub hit_at: f32, //sekunden, wann treffer zählt
-    pub cooldown: f32, //pause nach erstem click bis wieder angegriffen wird
-    pub frames: f32, //frames in einer animation
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum AttackKind {
-    Melee { range: f32, arc_deg: f32 }, //reichweite und kegel, alles im kegel getroffen
-    Whip { range: f32 }, //nur reichweite, man kann nur ein bestimmtes tile anklicken
-    Projectile { speed: f32, lifetime: f32, asset: String },
-}////ende waffendefinition
+////ende waffendefinition
 
 
 //zustand eines attacks:
@@ -86,6 +65,56 @@ pub struct AttackHit {
     pub aim: Vec2,
 }
 
+pub fn animate_held_item(
+    items: Res<Items>,
+    attackers: Query<&Attacker>,
+    pivots: Query<&ChildOf, With<HandPivot>>,
+    mut sprites: Query<(&ChildOf, &mut Transform, &mut Visibility, &mut Sprite), With<HeldItemSprite>>,
+    asset_server: Res<AssetServer>,
+) {
+    for (sprite_parent, mut tf, mut vis, mut sprite) in &mut sprites {
+        // Sprite -> HandPivot -> Player
+        let Ok(pivot_parent) = pivots.get(sprite_parent.parent()) else { continue; };
+        let Ok(attacker) = attackers.get(pivot_parent.parent()) else { continue; };
+
+        let Some(active) = &attacker.active else {
+            // kein Angriff: zurücksetzen
+            *vis = Visibility::Hidden;
+            tf.translation = Vec3::ZERO;
+            tf.rotation = Quat::IDENTITY;
+            continue;
+        };
+
+        let Some(hand_item) = items.0.get(&active.item) else { continue; }; 
+        let Some(weapon) = hand_item.weapon.as_ref() else { continue; };
+
+        match &weapon.kind {
+            WeaponKind::Dagger(def) => {
+                if active.elapsed >= def.duration {
+                    *vis = Visibility::Hidden;
+                    tf.translation = Vec3::ZERO;
+                    tf.rotation = Quat::IDENTITY;
+                    continue;
+                }
+                *vis = Visibility::Visible;
+                let handle = asset_server.load(hand_item.asset.clone());
+                if sprite.image != handle {
+                    sprite.image = handle;
+                }
+
+
+                let t = (active.elapsed / def.duration).clamp(0.0, 1.0);
+                // 0 -> 1 -> 0: ausfahren und zurück
+                let thrust = (t * std::f32::consts::PI).sin();
+
+                let dir = active.aim.normalize_or_zero();
+                tf.translation = (dir * def.distance * thrust).extend(0.0);
+                tf.rotation = Quat::from_rotation_z(dir.to_angle() - 45.0_f32.to_radians());
+            }
+        }
+    }
+}
+
 //wenn enemy oder player linksclick drückt / angreift -> dann event senden, wenn zeit für hit ist
 pub fn send_hit_msg(
     time: Res<Time>,
@@ -106,23 +135,30 @@ pub fn send_hit_msg(
         };
 
         active.elapsed += dt;
+        let mut is_over = false;
 
-        if !active.hit_fired && active.elapsed >= weapon.timing.hit_at {
-            hits.write(AttackHit {
-                attacker: entity,
-                item: active.item,
-                origin: transform.translation.truncate(),
-                aim: active.aim,
-            });
-            info!("hit!!!");
+        //waffenspezifische animation und hit logik...
+        match &weapon.kind {
+            WeaponKind::Dagger(def) => {
+                if active.elapsed >= def.duration + def.cooldown {
+                    is_over = true;
+                } else if active.hit_fired == true{
+                    continue; // wenn hit bereits abgesetzt wurde hier stoppen
+                } else {
+                    if active.elapsed >= def.hit_at {
+                        hits.write(AttackHit {
+                            attacker: entity,
+                            item: active.item,
+                            origin: transform.translation.truncate(),
+                            aim: active.aim,
+                        });
+                        active.hit_fired = true;
+                    }
+                }                
+            }
         }
 
-        if active.elapsed >= weapon.timing.duration {
-            attacker.cooldown_left = weapon.timing.cooldown;
-            attacker.active = None;
-        }
-
-
+        if is_over { attacker.active = None; }
     }
 }
 
@@ -139,14 +175,8 @@ pub fn resolve_hits(
         let Some(weapon) = items.0.get(&hit.item)
             .and_then(|d| d.weapon.as_ref())
             else { continue; };
-        match &weapon.kind {
-            AttackKind::Melee { range, arc_deg } => {
-                println!("meele hit");
-            }
-            _ => {
-                println!("not melle hit");
-            }
-        }
+        info!("hittttt msg");
+        // &weapon.kind //hier weiterverwenden
     }
 }
 
