@@ -9,8 +9,7 @@ Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 
 # next
-- effects für items al vec eintragen und in json schreiben
-- effect dinge logik machen
+- GEGNER UIUIUI
 # todo
 
 - in welt können dinge platziert sein/werden (tilebasiert)

@@ -3,6 +3,7 @@ use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::*;
 use crate::ingame::animation::*;
+use crate::ingame::player::structs::*;
 
 #[derive(Component)]
 pub struct MyEntity;
@@ -30,8 +31,17 @@ pub struct Velocity {
 #[derive(Component)]
 #[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker)]
 pub struct Enemy {
-    pub weapon: WeaponDef,
+    pub weapon: ItemId,
 }
 
+
+
+impl Enemy {
+    pub fn new() -> Self {
+        Self {
+            weapon: ItemId::WoddenDagger,
+        }
+    }
+}
 
 

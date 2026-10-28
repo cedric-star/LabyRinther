@@ -59,7 +59,7 @@ pub struct Cords {
     pub y: i32,
 }
 
-impl Cords {
+impl Cords {//achtung, mit world sind pixel gemeint
     pub fn new(x: i32, y: i32) -> Self {
         Self {x, y}
     }
@@ -90,6 +90,21 @@ impl Cords {
         Self {
             x: (world_pos.x / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32,
             y: (world_pos.y / (CHUNK_SIZE as f32 * TILE_SIZE)).floor() as i32,
+        }
+    }
+
+    pub fn world_to_region(self) -> Self {
+        Self {
+            x: (self.x as f32 / REGION_WORLD_SIZE).floor() as i32,
+            y: (self.y as f32 / REGION_WORLD_SIZE).floor() as i32,
+        }
+    }
+
+    /// Region-Koordinate → Weltposition (linke untere Ecke der Region)
+    pub fn region_to_world(self) -> Vec2 {
+        Vec2 {
+            x: (self.x as f32) * REGION_WORLD_SIZE,
+            y: (self.y as f32) * REGION_WORLD_SIZE,
         }
     }
 }

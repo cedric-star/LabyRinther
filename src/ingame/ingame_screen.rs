@@ -16,6 +16,7 @@ use crate::ingame::items::systems::*;
 use crate::ingame::player::animation::*;
 use crate::ingame::items::attack::*;
 use crate::ingame::animation::*;
+use crate::ingame::entity::systems::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -73,6 +74,7 @@ pub fn ingame_plugin(app: &mut App) {
                 send_hit_msg,
                 resolve_hits,
                 animate_held_item,
+                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(2))),
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
