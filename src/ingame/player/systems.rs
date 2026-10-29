@@ -126,7 +126,7 @@ fn standing_of(s: HumanoidState) -> HumanoidState {
 }
 
 pub fn movement(
-    mut query_player: Query<(&mut Transform, &Velocity), With<Player>>,
+    mut query_player: Query<(&mut Transform, &Velocity), With<WallCollidable>>,
     chunk_pool: Res<ChunkPool>,
     chunks: Query<&Chunk>,
 ) {

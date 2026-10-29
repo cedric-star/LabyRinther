@@ -11,7 +11,7 @@ use crate::ingame::animation::*;
 use crate::ingame::items::structs::*;
 
 #[derive(Component)]
-#[require(Transform, Velocity, Stats, Health, Mana, Inventory, Equipment, Attacker)]
+#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker)]
 pub struct Player;
 
 
@@ -71,6 +71,7 @@ impl Player {
         (
             GameEntity,
             Player,
+            WallCollidable,
             Transform::from_xyz(16.0, 16.0, 1.0),
             Velocity { x: 0.0, y: 0.0 },
             Visibility::default(),

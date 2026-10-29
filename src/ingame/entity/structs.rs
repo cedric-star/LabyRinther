@@ -3,6 +3,9 @@ use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::*;
 
+#[derive(Component)]
+#[require(Velocity)]
+pub struct WallCollidable;
 
 #[derive(Component)]
 pub struct MyEntity;

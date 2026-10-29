@@ -3,6 +3,33 @@ use crate::ingame::player::structs::*;
 use crate::ingame::entity::util::*;
 use crate::components::*;
 use crate::resources::*;
+use crate::ingame::entity::structs::*;
+
+pub fn move_enemies(
+    mut enemies: Query<(&mut Transform, &mut Velocity), (With<Enemy>, Without<Player>)>,
+    player: Single<&Transform, (With<Player>, Without<Enemy>)>,
+) {
+    for (mut transform, mut velocity) in &mut enemies {
+        velocity.x = 0.0;
+        velocity.y = 0.0;
+
+        if transform.translation.x < player.translation.x {
+            velocity.x += 1.0;
+        }
+        if transform.translation.x > player.translation.x {
+            velocity.x -= 1.0;
+        }
+        if transform.translation.y < player.translation.y {
+            velocity.y += 1.0;
+        }
+        if transform.translation.y > player.translation.y {
+            velocity.y -= 1.0;
+        }
+
+        //transform.translation
+    }
+}
+
 
 pub fn spawn_enemy_near_player(
     player: Single<&Transform, With<Player>>,

@@ -36,7 +36,11 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(OnEnter(GameState::Welcome), cleanup_game)
         .add_systems(
             FixedUpdate,
-            (controls, load_map).run_if(in_state(GameState::InGame)),
+            (
+                controls, 
+                load_map,
+                move_enemies,
+            ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
             Update,
