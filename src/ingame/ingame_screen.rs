@@ -13,7 +13,6 @@ use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::systems::*;
 use crate::ingame::items::systems::*;
-use crate::ingame::player::animation::*;
 use crate::ingame::items::attack::*;
 use crate::ingame::animation::*;
 use crate::ingame::entity::systems::*;

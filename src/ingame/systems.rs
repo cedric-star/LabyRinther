@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use bevy::sprite::*;
 use crate::components::*;
-use crate::constants::*;
 use crate::world::region::*;
 use crate::ingame::player::structs::*;
 use crate::resources::*;

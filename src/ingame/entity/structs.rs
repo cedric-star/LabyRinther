@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::*;
-use crate::ingame::animation::*;
-use crate::ingame::player::structs::*;
+
 
 #[derive(Component)]
 pub struct MyEntity;
@@ -43,5 +42,7 @@ impl Enemy {
         }
     }
 }
+
+
 
 

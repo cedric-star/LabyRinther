@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use crate::ingame::entity::structs::*;
 
 #[derive(Component, Debug, Clone)]
 pub struct AnimClip {

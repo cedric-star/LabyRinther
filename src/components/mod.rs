@@ -60,6 +60,20 @@ pub struct Cords {
 }
 
 impl Cords {//achtung, mit world sind pixel gemeint
+    pub fn from_vec2(my_vec: Vec2) -> Self {
+        Self {
+            x: my_vec.x as i32,
+            y: my_vec.y as i32,
+        }
+    }
+
+    pub fn from_vec3(my_vec: Vec3) -> Self {
+        Self {
+            x: my_vec.x as i32,
+            y: my_vec.y as i32,
+        }
+    }
+
     pub fn new(x: i32, y: i32) -> Self {
         Self {x, y}
     }

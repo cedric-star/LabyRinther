@@ -6,7 +6,6 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::components::*;
 use crate::constants::*;
-use crate::ingame::player::animation::*;
 use crate::ingame::items::attack::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::structs::*;

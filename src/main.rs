@@ -15,7 +15,6 @@ use resources::*;
 use welcome::welcome_screen::*;
 use ingame::ingame_screen::*;
 use settings::settings_screen::*;
-use crate::ingame::player::structs::*;
 use ingame::items::structs::*;
 use ingame::recipes::structs::*;
 use ingame::entity::structs::*;
