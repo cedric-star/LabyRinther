@@ -6,12 +6,14 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::components::*;
 use crate::constants::*;
-use crate::ingame::items::attack::*;
+use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::structs::*;
+use crate::ingame::items::attack::structs::*;
+use crate::constants::*;
 
 #[derive(Component)]
-#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker)]
+#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker, Hitbox)]
 pub struct Player;
 
 
@@ -72,13 +74,14 @@ impl Player {
             GameEntity,
             Player,
             WallCollidable,
-            Transform::from_xyz(16.0, 16.0, 1.0),
+            Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, 1.0),
             Velocity { x: 0.0, y: 0.0 },
             Visibility::default(),
             children![
                 (
                     PlayerBody,
                     MyEntity,
+                    Visibility::default(),
                     Anim::Humanoid(HumanoidState::StandingFront),
                     Sprite {
                         custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
@@ -89,18 +92,22 @@ impl Player {
                         }),
                         ..default()
                     },
-                    Anchor::BOTTOM_LEFT,
+                    Anchor::CENTER,
                     Transform::default(),
                     clips,
                     timer,
                 ), (
                     HandPivot,
-                    Transform::from_xyz(PLAYER_WIDTH * 0.7, PLAYER_HEIGHT * 0.45, 0.1),
                     Visibility::default(),
+                    Transform::default(),
                     children![(
                         HeldItemSprite(None),
+                        Hitbox {
+                            size: Vec2::new(32.0, 32.0),
+                            offset: Vec2::new(0.0, 0.0),
+                        },
                         Sprite::default(),
-                        Anchor::BOTTOM_LEFT,
+                        Anchor::BOTTOM_LEFT, //weil sprite mittig starten soll
                         Visibility::Hidden,
                     )]
                 )

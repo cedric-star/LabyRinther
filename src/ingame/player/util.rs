@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
+use crate::ingame::entity::structs::*;
 
 pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
     let cs = CHUNK_SIZE as i32;
@@ -14,11 +15,14 @@ pub fn is_wall(tx: i32, ty: i32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bo
     chunk.tiles[tx.rem_euclid(cs) as usize][ty.rem_euclid(cs) as usize] == Tile::Wall
 }
 
-pub fn collides(x: f32, y: f32, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
-    let x0 = (x / TILE_SIZE).floor() as i32;
-    let x1 = ((x + PLAYER_WIDTH - 0.01) / TILE_SIZE).floor() as i32;
-    let y0 = (y / TILE_SIZE).floor() as i32;
-    let y1 = ((y + PLAYER_HEIGHT - 0.01) / TILE_SIZE).floor() as i32;
+pub fn collides(pos: Vec2, hitbox: &Hitbox, pool: &ChunkPool, chunks: &Query<&Chunk>) -> bool {
+    let min = hitbox.min(pos);
+    let max = hitbox.max(pos);
+
+    let x0 = (min.x / TILE_SIZE).floor() as i32;
+    let x1 = ((max.x - 0.01) / TILE_SIZE).floor() as i32;
+    let y0 = (min.y / TILE_SIZE).floor() as i32;
+    let y1 = ((max.y - 0.01) / TILE_SIZE).floor() as i32;
 
     for tx in x0..=x1 {
         for ty in y0..=y1 {

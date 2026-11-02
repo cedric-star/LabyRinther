@@ -1,78 +1,29 @@
 use bevy::prelude::*;
+use bevy::math::bounding::*;
 use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
 use crate::ingame::player::structs::*;
-
-////definition einer waffe
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WeaponDef {// eigentliche waffe mit stats
-    base: WeaponBase,
-    kind: WeaponKind,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WeaponBase {
-    damage: f32,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum WeaponKind {
-    Dagger(DaggerDef),
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DaggerDef {
-    distance: f32, //von player mitt zu dieser entfernung in maus richtung eine linie: alles in der linie ist getroffen, in pixeln 
-    duration: f32, //zeit von klick über ausgefahrenen dolch zurück zum normalen zustand in sekunden
-    hit_at: f32, //zeit punk zwischen 0 - duration, an dem es als physischer hit zählt
-    cooldown: f32, //zeit nach duration (animations- ) ende, die gewartet wird bis nächsten angriff
-}
-////ende waffendefinition
-
-
-//zustand eines attacks:
-#[derive(Component)]
-pub struct Attacker {
-    pub active: Option<ActiveAttack>,
-    pub cooldown_left: f32,
-}
-
-impl Default for Attacker {
-    fn default() -> Self {
-        Self {
-            active: None,
-            cooldown_left: 0.0,               
-        }
-    }
-}
-
-pub struct ActiveAttack {
-    pub item: ItemId,
-    pub elapsed: f32,
-    pub hit_fired: bool,
-    pub aim: Vec2,        // Richtung beim Start einfrieren
-}//attack zustand ende
-
-
-//löst dann aus, wenn hit_at in attack_timing erreicht wird und speichert wichtige infos
-//message die gesetzt und ausgelesen wird
-#[derive(Message)] 
-pub struct AttackHit {
-    pub attacker: Entity,
-    pub item: ItemId,
-    pub origin: Vec2,
-    pub aim: Vec2,
-}
+use crate::ingame::items::attack::structs::*;
+use crate::ingame::entity::structs::*;
+use crate::ingame::items::attack::util::*;
+use crate::constants::*;
 
 pub fn animate_held_item(
     items: Res<Items>,
     attackers: Query<&Attacker>,
     pivots: Query<&ChildOf, With<HandPivot>>,
-    mut sprites: Query<(&ChildOf, &mut Transform, &mut Visibility, &mut Sprite), With<HeldItemSprite>>,
+    mut sprites: Query<(
+        &ChildOf,
+        &mut Transform,
+        &GlobalTransform,
+        &mut Visibility,
+        &mut Sprite,
+        &Hitbox,
+    ), With<HeldItemSprite>>,
     asset_server: Res<AssetServer>,
+    mut gizmos: Gizmos,
 ) {
-    for (sprite_parent, mut tf, mut vis, mut sprite) in &mut sprites {
+    for (sprite_parent, mut tf, gt, mut vis, mut sprite, hitbox) in &mut sprites {
         // Sprite -> HandPivot -> Player
         let Ok(pivot_parent) = pivots.get(sprite_parent.parent()) else { continue; };
         let Ok(attacker) = attackers.get(pivot_parent.parent()) else { continue; };
@@ -88,27 +39,41 @@ pub fn animate_held_item(
         let Some(hand_item) = items.0.get(&active.item) else { continue; }; 
         let Some(weapon) = hand_item.weapon.as_ref() else { continue; };
 
+        hitbox.draw(&mut gizmos, gt.compute_transform());
+
         match &weapon.kind {
             WeaponKind::Dagger(def) => {
+                // wenn elapsed für animation vorbei ist, animation fertig -> abbruch
                 if active.elapsed >= def.duration {
                     *vis = Visibility::Hidden;
                     tf.translation = Vec3::ZERO;
                     tf.rotation = Quat::IDENTITY;
                     continue;
                 }
+
+                //sprite setzen und sichtbar machen
                 *vis = Visibility::Visible;
                 let handle = asset_server.load(hand_item.asset.clone());
                 if sprite.image != handle {
                     sprite.image = handle;
                 }
 
-
+                // elapsed/duration -> prozent, .clamp macht alles < zu 0 und > zu 1.
                 let t = (active.elapsed / def.duration).clamp(0.0, 1.0);
-                // 0 -> 1 -> 0: ausfahren und zurück
+                
+                //t = 0-1 -> 0/1 pi = 0, alles dazwischen wird zu einer sinuskurve (sinus rechnet mit pi werten)
                 let thrust = (t * std::f32::consts::PI).sin();
 
+                //einheitsvektor (länge 1) der richtung von hand aus
                 let dir = active.aim.normalize_or_zero();
+
+                //richtungsvektor * länge = vektor mit korekter richtung und könge
+                // * thrust verschiebt vektorurpsrung auf sinuskurve
+                //extend macht aus vec2 einen vec3 mit z=0
                 tf.translation = (dir * def.distance * thrust).extend(0.0);
+
+                // to_angle() macht aus vec2 einen radiant winkel
+                // - 45 wegen asset drehung von daggern
                 tf.rotation = Quat::from_rotation_z(dir.to_angle() - 45.0_f32.to_radians());
             }
         }
@@ -120,10 +85,10 @@ pub fn send_hit_msg(
     time: Res<Time>,
     items: Res<Items>,
     mut hits: MessageWriter<AttackHit>,
-    mut q: Query<(Entity, &mut Attacker, &Transform)>,
+    mut q: Query<(Entity, &mut Attacker, &Hitbox, &Transform)>,
 ) {
     let dt = time.delta_secs();
-    for (entity, mut attacker, transform) in &mut q {
+    for (entity, mut attacker, hitbox, transform) in &mut q {
         attacker.cooldown_left = (attacker.cooldown_left - dt).max(0.0);
 
         let Some(active) = attacker.active.as_mut() else { continue; };
@@ -149,8 +114,8 @@ pub fn send_hit_msg(
                         hits.write(AttackHit {
                             attacker: entity,
                             item: active.item,
-                            origin: transform.translation.truncate(),
-                            aim: active.aim,
+                            origin: hitbox.center(transform.translation.truncate()),
+                            aim: active.aim.normalize_or_zero(),
                         });
                         active.hit_fired = true;
                     }
@@ -166,17 +131,54 @@ pub fn send_hit_msg(
 
 
 //readed messages und reagiert mit entprechendem hit
+//nicht bei treffer, sondern bei angriff ausgelöst -> prüft ob treffer
 pub fn resolve_hits(
     mut hits: MessageReader<AttackHit>,
     items: Res<Items>,
     mut commands: Commands,
+    mut enemies: Query<(Entity, &mut Health, &mut Transform, &Hitbox)>,
 ) {
     for hit in hits.read() {
         let Some(weapon) = items.0.get(&hit.item)
             .and_then(|d| d.weapon.as_ref())
             else { continue; };
-        info!("hittttt msg");
-        // &weapon.kind //hier weiterverwenden
+        match &weapon.kind {
+            WeaponKind::Dagger(dagger_def) => {
+                for (entity, mut health, mut transform, hitbox) in enemies.iter_mut() {
+                    if hit.attacker == entity { continue; }
+                    resolve_dagger_attack(
+                        &mut health, 
+                        transform.translation.truncate(), 
+                        hitbox,
+                        hit,
+                        dagger_def,
+                    );
+                }
+            }
+            //weitere waffentyppen
+        }
     }
 }
 
+
+pub fn resolve_dagger_attack(
+    health: &mut Health,
+    target_pos: Vec2,
+    target_box: &Hitbox,
+    attack_hit: &AttackHit,
+    dagger: &DaggerDef,
+) {
+    let Ok(dir) = Dir2::new(attack_hit.aim) else { return };
+
+    // Optional: Strahl "dicker" machen, indem die Zielbox aufgeblasen wird
+    const THICKNESS: f32 = 3.0;
+    let mut aabb = target_box.aabb(target_pos);
+    aabb.min -= Vec2::splat(THICKNESS);
+    aabb.max += Vec2::splat(THICKNESS);
+
+    let ray = RayCast2d::new(attack_hit.origin, dir, dagger.distance);
+    if ray.aabb_intersection_at(&aabb).is_some() {
+        println!("HIT");
+        // health.health_points -= ...
+    }
+}

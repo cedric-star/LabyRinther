@@ -11,9 +11,9 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::util::*;
-use crate::ingame::items::attack::*;
+use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
-
+use crate::ingame::items::attack::structs::*;
 
 pub fn mana_regen(mut q: Query<(&mut Mana, &Stats), With<Player>>) {
     for (mut mana, stats) in &mut q {
@@ -126,20 +126,28 @@ fn standing_of(s: HumanoidState) -> HumanoidState {
 }
 
 pub fn movement(
-    mut query_player: Query<(&mut Transform, &Velocity), With<WallCollidable>>,
+    mut query: Query<(&mut Transform, &Velocity, &Hitbox), With<WallCollidable>>,
     chunk_pool: Res<ChunkPool>,
     chunks: Query<&Chunk>,
 ) {
-    for (mut transform, velocity) in &mut query_player {
-        let mut pos = transform.translation;
+    for (mut transform, velocity, hb) in &mut query {
+        let mut pos = transform.translation.truncate();
+
+        // Abstände von translation zu den Boxkanten
+        let left = hb.offset.x;
+        let right = hb.offset.x + hb.size.x;
+        let bottom = hb.offset.y;
+        let top = hb.offset.y + hb.size.y;
 
         // X-Achse
         let nx = pos.x + velocity.x;
-        if collides(nx, pos.y, &chunk_pool, &chunks) {
+        if collides(Vec2::new(nx, pos.y), hb, &chunk_pool, &chunks) {
             if velocity.x > 0.0 {
-                pos.x = ((nx + PLAYER_WIDTH) / TILE_SIZE).floor() * TILE_SIZE - PLAYER_WIDTH;
+                // rechte Kante an linke Kante der Wandkachel
+                pos.x = ((nx + right) / TILE_SIZE).floor() * TILE_SIZE - right;
             } else if velocity.x < 0.0 {
-                pos.x = ((nx / TILE_SIZE).floor() + 1.0) * TILE_SIZE;
+                // linke Kante an rechte Kante der Wandkachel
+                pos.x = ((nx + left) / TILE_SIZE).floor() * TILE_SIZE + TILE_SIZE - left;
             }
         } else {
             pos.x = nx;
@@ -147,17 +155,18 @@ pub fn movement(
 
         // Y-Achse
         let ny = pos.y + velocity.y;
-        if collides(pos.x, ny, &chunk_pool, &chunks) {
+        if collides(Vec2::new(pos.x, ny), hb, &chunk_pool, &chunks) {
             if velocity.y > 0.0 {
-                pos.y = ((ny + PLAYER_HEIGHT) / TILE_SIZE).floor() * TILE_SIZE - PLAYER_HEIGHT;
+                pos.y = ((ny + top) / TILE_SIZE).floor() * TILE_SIZE - top;
             } else if velocity.y < 0.0 {
-                pos.y = ((ny / TILE_SIZE).floor() + 1.0) * TILE_SIZE;
+                pos.y = ((ny + bottom) / TILE_SIZE).floor() * TILE_SIZE + TILE_SIZE - bottom;
             }
         } else {
             pos.y = ny;
         }
 
-        transform.translation = pos;
+        transform.translation.x = pos.x;
+        transform.translation.y = pos.y;
     }
 }
 
@@ -191,8 +200,7 @@ pub fn weapon_use(
     let (cam, cam_tf) = *camera;
     let Ok(world_pos) = cam.viewport_to_world_2d(cam_tf, cursor) else { return; };
 
-    let origin = transform.translation.truncate()
-        + Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT) * 0.5; // wegen Anchor::BOTTOM_LEFT
+    let origin = transform.translation.truncate(); 
     let aim = (world_pos - origin).normalize_or_zero();
 
     //attack erstellen und in player component setzen

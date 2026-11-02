@@ -13,9 +13,10 @@ use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::systems::*;
 use crate::ingame::items::systems::*;
-use crate::ingame::items::attack::*;
+use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
 use crate::ingame::entity::systems::*;
+use crate::ingame::items::attack::structs::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -39,7 +40,7 @@ pub fn ingame_plugin(app: &mut App) {
             (
                 controls, 
                 load_map,
-                move_enemies,
+                //move_enemies,
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
@@ -77,7 +78,7 @@ pub fn ingame_plugin(app: &mut App) {
                 send_hit_msg,
                 resolve_hits,
                 animate_held_item,
-                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(2))),
+                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(10))),
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
@@ -86,6 +87,7 @@ pub fn ingame_plugin(app: &mut App) {
                 rebuild_equipped_stats,
                 sync_vitals,
                 sync_inventory_rows,
+                draw_hitbox,
             )
                 .chain()
                 .run_if(in_state(GameState::InGame)),

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::*;
+use bevy::render::mesh::*;
+use bevy::asset::RenderAssetUsages;
 use crate::ingame::entity::structs::*;
 use crate::util::ui::constants::*;
 use crate::components::*;
@@ -47,6 +49,7 @@ pub fn get_enemy_bundle(
         Velocity { x: 0.0, y: 0.0 },
         Visibility::Visible,
         WallCollidable,
+        Anchor::CENTER,
         children![
             (
                 MyEntity,
@@ -60,7 +63,7 @@ pub fn get_enemy_bundle(
                     }),
                     ..default()
                 },
-                Anchor::BOTTOM_LEFT,
+                Anchor::CENTER,
                 Transform::default(),
                 clips,
                 timer,

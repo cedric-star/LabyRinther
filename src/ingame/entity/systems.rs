@@ -1,10 +1,11 @@
 use bevy::prelude::*;
+use bevy::render::mesh::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::entity::util::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::ingame::entity::structs::*;
-
+use crate::ingame::items::attack::structs::*;
 pub fn move_enemies(
     mut enemies: Query<(&mut Transform, &mut Velocity), (With<Enemy>, Without<Player>)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
@@ -51,10 +52,10 @@ pub fn spawn_enemy_near_player(
     //chunks loaded
     let mut chunk_num = 0;
     for chunk in &chunks { chunk_num += 1; }
-    println!("chunk_num: {:?}", chunk_num);
+    //println!("chunk_num: {:?}", chunk_num);
 
-    println!("region_cords: {:?}", region.cords);
-    println!("player_cords: {:?}", p_pos);
+    //println!("region_cords: {:?}", region.cords);
+    //println!("player_cords: {:?}", p_pos);
 
     commands.spawn(get_enemy_bundle(
         Cords::from_vec3(p_pos), 
@@ -63,4 +64,13 @@ pub fn spawn_enemy_near_player(
     ));
 
 
+}
+
+pub fn draw_hitbox(
+    q: Query<(&Transform, &Hitbox), Or<(With<Attacker>, With<HandPivot>)>>,
+    mut gizmos: Gizmos,
+) {
+    for (transform, hitbox) in &q {
+        hitbox.draw(&mut gizmos, *transform);
+    }
 }
