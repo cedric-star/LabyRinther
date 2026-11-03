@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
-use crate::ingame::player::structs::*;
+use crate::ingame::entity::structs::*;
 
 ////definition einer waffe
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -43,6 +43,7 @@ pub struct ActiveAttack {
     pub elapsed: f32,
     pub hit_fired: bool,
     pub aim: Vec2,        // Richtung beim Start einfrieren
+    pub hit_entities: Vec<Entity>,
 }//attack zustand ende
 
 
@@ -51,6 +52,7 @@ pub struct ActiveAttack {
 #[derive(Message)] 
 pub struct AttackHit {
     pub attacker: Entity,
+    pub attack_hitbox: Hitbox, //hitbox derentity/waffe die angreift
     pub item: ItemId,
     pub origin: Vec2, //trefferkoordinate ursprung in px
     pub aim: Vec2,    //richtungsvektor: kreis um origin, darauf ein punkt

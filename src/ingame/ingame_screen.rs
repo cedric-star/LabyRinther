@@ -75,8 +75,8 @@ pub fn ingame_plugin(app: &mut App) {
                 animate_entity,
                 switch_clip,
                 weapon_use,
-                send_hit_msg,
-                resolve_hits,
+                set_attacker,
+                //resolve_hits,
                 animate_held_item,
                 spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(10))),
             ).run_if(in_state(GameState::InGame)),
@@ -88,8 +88,13 @@ pub fn ingame_plugin(app: &mut App) {
                 sync_vitals,
                 sync_inventory_rows,
                 draw_hitbox,
+                draw_enemy_health_bar,
             )
                 .chain()
                 .run_if(in_state(GameState::InGame)),
+        )
+        .add_systems(
+            PostUpdate,
+            weapon_contact.after(TransformSystems::Propagate),
         );
 }

@@ -6,14 +6,12 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::components::*;
 use crate::constants::*;
-use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::attack::structs::*;
-use crate::constants::*;
 
 #[derive(Component)]
-#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker, Hitbox)]
+#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker, Hitbox, Hittable)]
 pub struct Player;
 
 

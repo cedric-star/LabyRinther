@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use crate::ingame::items::modifier::*;
-use crate::ingame::items::attack::systems::*;
 use crate::ingame::items::attack::structs::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]

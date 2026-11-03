@@ -1,12 +1,10 @@
 use bevy::prelude::*;
 use bevy::math::bounding::*;
-use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::attack::structs::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::attack::util::*;
-use crate::constants::*;
 
 pub fn animate_held_item(
     items: Res<Items>,
@@ -80,11 +78,10 @@ pub fn animate_held_item(
     }
 }
 
-//wenn enemy oder player linksclick drückt / angreift -> dann event senden, wenn zeit für hit ist
-pub fn send_hit_msg(
+//setzt relevante variablen des attacker wie zeit, oder ob angriff vorbei ist
+pub fn set_attacker(
     time: Res<Time>,
     items: Res<Items>,
-    mut hits: MessageWriter<AttackHit>,
     mut q: Query<(Entity, &mut Attacker, &Hitbox, &Transform)>,
 ) {
     let dt = time.delta_secs();
@@ -111,12 +108,7 @@ pub fn send_hit_msg(
                     continue; // wenn hit bereits abgesetzt wurde hier stoppen
                 } else {
                     if active.elapsed >= def.hit_at {
-                        hits.write(AttackHit {
-                            attacker: entity,
-                            item: active.item,
-                            origin: hitbox.center(transform.translation.truncate()),
-                            aim: active.aim.normalize_or_zero(),
-                        });
+                        
                         active.hit_fired = true;
                     }
                 }                
@@ -128,57 +120,58 @@ pub fn send_hit_msg(
 }
 
 
-
-
-//readed messages und reagiert mit entprechendem hit
-//nicht bei treffer, sondern bei angriff ausgelöst -> prüft ob treffer
-pub fn resolve_hits(
-    mut hits: MessageReader<AttackHit>,
+//Prüft jeden Frame, ob die (gedrehte) Hitbox einer geführten Waffe
+// die Hitbox eines Ziels überschneidet, und verteilt dann einmalig Schaden.
+pub fn weapon_contact(
     items: Res<Items>,
-    mut commands: Commands,
-    mut enemies: Query<(Entity, &mut Health, &mut Transform, &Hitbox)>,
+    // Waffen-Sprites: Weltposition+Rotation, lokale Box, Sichtbarkeit, Parent (= HandPivot/item in hand)
+    held_weapons: Query<(&GlobalTransform, &Hitbox, &Visibility, &ChildOf), With<HeldItemSprite>>,
+    hand_pivots: Query<&ChildOf, With<HandPivot>>, //nur für den parent wichtig
+    mut attackers: Query<&mut Attacker>, //alle angreifer
+    mut targets: Query<(Entity, &mut Health, &Transform, &Hitbox), With<Hittable>>, //alle potentiellen ziele des angriffs
 ) {
-    for hit in hits.read() {
-        let Some(weapon) = items.0.get(&hit.item)
-            .and_then(|d| d.weapon.as_ref())
-            else { continue; };
-        match &weapon.kind {
-            WeaponKind::Dagger(dagger_def) => {
-                for (entity, mut health, mut transform, hitbox) in enemies.iter_mut() {
-                    if hit.attacker == entity { continue; }
-                    resolve_dagger_attack(
-                        &mut health, 
-                        transform.translation.truncate(), 
-                        hitbox,
-                        hit,
-                        dagger_def,
-                    );
-                }
+    for (weapon_global_tf, weapon_hitbox, weapon_visibility, weapon_parent) in &held_weapons {
+        if *weapon_visibility == Visibility::Hidden { continue; } //keine waffe -> kein angriffh-´
+
+        let Ok(pivot_parent) = hand_pivots.get(weapon_parent.parent()) else { continue; };
+        let owner_entity = pivot_parent.parent(); // wer die waffe führt darf sich nicht selbst treffen
+        // Angriffszustand des Besitzers holen
+        let Ok(mut attacker) = attackers.get_mut(owner_entity) else { continue; };
+
+        // `active` = der gerade laufende Angriff (Option<ActiveAttack>):
+        // enthält Item, vergangene Zeit, Richtung und die bereits getroffenen Entities.
+        // Ist es None, greift der Besitzer gerade nicht an.
+        let Some(active_attack) = attacker.active.as_mut() else { continue; };
+
+        // Schaden aus der Waffendefinition: Items -> ItemDef -> WeaponDef -> base.damage
+        let damage = items.0.get(&active_attack.item)
+            .and_then(|item_def| item_def.weapon.as_ref())
+            .map(|weapon_def| weapon_def.base.damage)
+            .unwrap_or(0.0);
+
+        // Die vier Eckpunkte der Waffen-Hitbox in Weltkoordinaten.
+        // Position, Rotation und Skalierung stecken in der GlobalTransform.
+        let weapon_corners = world_corners(weapon_hitbox, weapon_global_tf);
+
+        for (target_entity, mut target_health, target_tf, target_hitbox) in &mut targets {
+            // Besitzer überspringen: kein Selbsttreffer
+            if target_entity == owner_entity { continue; }
+            // Ziel wurde in diesem Angriff schon getroffen: kein Mehrfachschaden
+            if active_attack.hit_entities.contains(&target_entity) { continue; }
+
+            // AABB = "Axis-Aligned Bounding Box": ein Rechteck, dessen Kanten
+            // parallel zur X- und Y-Achse liegen (nicht gedreht). Gespeichert als
+            // untere linke Ecke (min) und obere rechte Ecke (max).
+            // Gegner werden nicht rotiert, deshalb reicht eine AABB für sie.
+            let target_aabb = target_hitbox.aabb(target_tf.translation.truncate());
+
+            // Überschneidungstest gedrehtes Waffen-Rechteck gegen AABB
+            // (Separating Axis Theorem, siehe unten)
+            if obb_hits_aabb(&weapon_corners, &target_aabb) {
+                active_attack.hit_entities.push(target_entity); // als getroffen merken
+                target_health.health_points -= damage;
+                println!("HIT {target_entity:?}");
             }
-            //weitere waffentyppen
         }
-    }
-}
-
-
-pub fn resolve_dagger_attack(
-    health: &mut Health,
-    target_pos: Vec2,
-    target_box: &Hitbox,
-    attack_hit: &AttackHit,
-    dagger: &DaggerDef,
-) {
-    let Ok(dir) = Dir2::new(attack_hit.aim) else { return };
-
-    // Optional: Strahl "dicker" machen, indem die Zielbox aufgeblasen wird
-    const THICKNESS: f32 = 3.0;
-    let mut aabb = target_box.aabb(target_pos);
-    aabb.min -= Vec2::splat(THICKNESS);
-    aabb.max += Vec2::splat(THICKNESS);
-
-    let ray = RayCast2d::new(attack_hit.origin, dir, dagger.distance);
-    if ray.aabb_intersection_at(&aabb).is_some() {
-        println!("HIT");
-        // health.health_points -= ...
     }
 }

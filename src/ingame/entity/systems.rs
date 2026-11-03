@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::render::mesh::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::entity::util::*;
 use crate::components::*;
@@ -28,6 +27,16 @@ pub fn move_enemies(
         }
 
         //transform.translation
+    }
+}
+
+pub fn draw_enemy_health_bar(
+    enemies: Query<(&Health, &Transform), With<Enemy>>,
+    mut enemy_health_bar: Query<(&ChildOf, &mut Sprite), With<EnemyHealthBar>>,
+    
+) {
+    for enemy in &enemies {
+
     }
 }
 

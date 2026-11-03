@@ -1,8 +1,6 @@
 use bevy::prelude::*;
-use bevy::math::bounding::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
-use crate::ingame::items::attack::systems::*;
 use crate::ingame::items::attack::structs::*;
 use crate::constants::*;
 
@@ -34,11 +32,14 @@ pub struct Velocity {
 }
 
 #[derive(Component)]
-#[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hitbox)]
+#[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hitbox, Hittable)]
 pub struct Enemy {
     pub weapon: ItemId,
 }
 
+#[derive(Component)]
+#[require(Transform)]
+pub struct EnemyHealthBar;
 
 
 impl Enemy {
@@ -52,6 +53,9 @@ impl Enemy {
 
 //hitbox
 use bevy::math::bounding::Aabb2d;
+
+#[derive(Component, Default)]
+pub struct Hittable;
 
 /// Körperbox relativ zur Root-Position.
 /// `offset` = untere linke Ecke der Box relativ zu transform.translation

@@ -11,7 +11,6 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::util::*;
-use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::attack::structs::*;
 
@@ -209,6 +208,7 @@ pub fn weapon_use(
         elapsed: 0.0,
         hit_fired: false,
         aim,
+        hit_entities: Vec::new(),
     });
 
 

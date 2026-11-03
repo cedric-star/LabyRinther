@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::*;
-use bevy::render::mesh::*;
-use bevy::asset::RenderAssetUsages;
 use crate::ingame::entity::structs::*;
-use crate::util::ui::constants::*;
 use crate::components::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::animation::*;
@@ -67,6 +64,14 @@ pub fn get_enemy_bundle(
                 Transform::default(),
                 clips,
                 timer,
+            ),
+            (
+                Sprite {
+                    custom_size: Some(Vec2::new(80.0, 15.0)),
+                    color: Color::srgb(1.0, 0.0, 0.0),
+                    ..default()
+                },
+                EnemyHealthBar,
             )
         ],
     )
