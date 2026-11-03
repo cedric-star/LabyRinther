@@ -9,7 +9,11 @@ Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 
 # next
-- GEGNER UIUIUI
+- gegner greifen auch an -> dauerhaft mit waffe in hand
+- gegner animiert laufen
+- schaden als zahl animation über gegner
+- 
+- gegner mit knockback -> für waffe eintragen
 # todo
 
 - in welt können dinge platziert sein/werden (tilebasiert)
