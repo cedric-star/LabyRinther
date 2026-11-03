@@ -31,12 +31,27 @@ pub fn move_enemies(
 }
 
 pub fn draw_enemy_health_bar(
-    enemies: Query<(&Health, &Transform), With<Enemy>>,
-    mut enemy_health_bar: Query<(&ChildOf, &mut Sprite), With<EnemyHealthBar>>,
-    
+    enemies: Query<&Health, With<Enemy>>,
+    mut bars: Query<(&ChildOf, &mut Sprite, &mut Transform), With<EnemyHealthBar>>,
 ) {
-    for enemy in &enemies {
+    const FULL: f32 = 35.0;
+    for (child_of, mut sprite, mut tf) in &mut bars {
+        let Ok(health) = enemies.get(child_of.parent()) else { continue };
+        let ratio = (health.health_points / health.max_health).clamp(0.0, 1.0);
+        sprite.custom_size = Some(Vec2::new(FULL * ratio, 2.0));
+        // linksbündig halten: Mitte nach links verschieben
+        tf.translation.x = -FULL * (1.0 - ratio) * 0.5;
+    }
+}
 
+pub fn despawn_enemy_by_health(
+    enemies: Query<(&Health, Entity), With<Enemy>>,
+    mut commands: Commands,
+) {
+    for (health, entity) in &enemies {
+        if health.health_points <= 0.0 {
+            commands.entity(entity).despawn();
+        }
     }
 }
 

@@ -40,7 +40,7 @@ pub fn ingame_plugin(app: &mut App) {
             (
                 controls, 
                 load_map,
-                //move_enemies,
+                move_enemies,
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
@@ -71,7 +71,7 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                //trigger_animation_system,
+                despawn_enemy_by_health,
                 animate_entity,
                 switch_clip,
                 weapon_use,

@@ -55,12 +55,12 @@
     "tier": "F",
     "max_stack": 1,
     "weapon": {
-      "base": {"damage": 5.0},
+      "base": {"damage": 35.0},
       "kind": {
         "type": "dagger",
         "distance": 10.0,
-        "duration": 1.0, 
-        "hit_at": 0.5, 
+        "duration": 0.1, 
+        "hit_at": 0.05, 
         "cooldown": 0.2 
       }
     }

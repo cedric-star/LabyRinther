@@ -41,6 +41,11 @@ pub struct Enemy {
 #[require(Transform)]
 pub struct EnemyHealthBar;
 
+#[derive(Component)]
+#[require(Transform)]
+pub struct EnemyHealthBarBackground;
+
+
 
 impl Enemy {
     pub fn new() -> Self {

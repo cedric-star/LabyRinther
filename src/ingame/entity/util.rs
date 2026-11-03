@@ -66,13 +66,15 @@ pub fn get_enemy_bundle(
                 timer,
             ),
             (
-                Sprite {
-                    custom_size: Some(Vec2::new(80.0, 15.0)),
-                    color: Color::srgb(1.0, 0.0, 0.0),
-                    ..default()
-                },
+                Sprite { custom_size: Some(Vec2::new(35.0, 2.0)), color: Color::srgb(1.0, 0.0, 0.0), ..default() },
+                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, 0.1),
                 EnemyHealthBar,
-            )
+            ),
+            (
+                Sprite { custom_size: Some(Vec2::new(35.0, 2.0)), color: Color::srgb(0.5, 0.1, 0.1), ..default() },
+                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, 0.05),
+                EnemyHealthBarBackground,
+            ),
         ],
     )
 }
