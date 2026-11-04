@@ -60,6 +60,20 @@ impl From<HumanoidState> for Anim {
     fn from(s: HumanoidState) -> Self { Anim::Humanoid(s)}
 }
 
+impl HumanoidState {
+    pub fn to_standing(&self) -> Self {
+        use HumanoidState::*;
+        match self {
+            WalkingLeft | StandingLeft => StandingLeft,
+            WalkingRight | StandingRight => StandingRight,
+            WalkingBack | StandingBack => StandingBack,
+            WalkingFront | StandingFront => StandingFront,
+        }
+    }
+}
+
+
+
 
 
 /// Bei State-Wechsel Bild/Atlas umstellen

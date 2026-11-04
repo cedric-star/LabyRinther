@@ -101,7 +101,7 @@ pub fn controls(
     // Keine Bewegung -> in Blickrichtung stehen bleiben
     if velocity.x == 0.0 && velocity.y == 0.0 {
         if let Anim::Humanoid(s) = new_anim {
-            new_anim = standing_of(s).into();
+            new_anim = s.to_standing().into();
         }
     }
 
@@ -111,16 +111,6 @@ pub fn controls(
 
     if keys.pressed(KeyCode::Escape) {
         next_state.set(GameState::Settings);
-    }
-}
-
-fn standing_of(s: HumanoidState) -> HumanoidState {
-    use HumanoidState::*;
-    match s {
-        WalkingLeft | StandingLeft => StandingLeft,
-        WalkingRight | StandingRight => StandingRight,
-        WalkingBack | StandingBack => StandingBack,
-        WalkingFront | StandingFront => StandingFront,
     }
 }
 

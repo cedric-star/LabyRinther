@@ -47,24 +47,20 @@ pub fn get_enemy_bundle(
         Visibility::Visible,
         WallCollidable,
         Anchor::CENTER,
+        MyEntity,
+        Anim::Humanoid(HumanoidState::StandingFront),
+        Sprite {
+            custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
+            image: anim.image.clone(),
+            texture_atlas: Some(TextureAtlas {
+                layout: anim.layout.clone(),
+                index: anim.first.clone(),
+            }),
+            ..default()
+        },
+        clips,
+        timer,
         children![
-            (
-                MyEntity,
-                Anim::Humanoid(HumanoidState::StandingFront),
-                Sprite {
-                    custom_size: Some(Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT)),
-                    image: anim.image.clone(),
-                    texture_atlas: Some(TextureAtlas {
-                        layout: anim.layout.clone(),
-                        index: anim.first.clone(),
-                    }),
-                    ..default()
-                },
-                Anchor::CENTER,
-                Transform::default(),
-                clips,
-                timer,
-            ),
             (
                 Sprite { custom_size: Some(Vec2::new(35.0, 2.0)), color: Color::srgb(1.0, 0.0, 0.0), ..default() },
                 Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, 0.1),
