@@ -20,4 +20,4 @@ pub const CELL_PITCH: i32 = 4; // Gang + Wand (dickere Wände: 5)
 pub const GRID_SIZE: usize = ((REGION_TILE_SIZE - 1) / CELL_PITCH) as usize;
 pub const LOOP_PERCENT: u64 = 4; // Chance in %, zusätzliche Wände zu öffnen
 
-pub const DRAW_HITBOX: bool = true;
+pub const DRAW_HITBOX: bool = false;

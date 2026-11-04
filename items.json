@@ -59,9 +59,9 @@
       "kind": {
         "type": "dagger",
         "distance": 10.0,
-        "duration": 0.1, 
-        "hit_at": 0.05, 
-        "cooldown": 1.0 
+        "duration": 0.2, 
+        "hit_at": 0.1, 
+        "cooldown": 0.2
       }
     }
   },
