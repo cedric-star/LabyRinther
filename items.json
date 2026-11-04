@@ -61,7 +61,7 @@
         "distance": 10.0,
         "duration": 0.1, 
         "hit_at": 0.05, 
-        "cooldown": 0.2 
+        "cooldown": 1.0 
       }
     }
   },

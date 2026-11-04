@@ -10,9 +10,8 @@ Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 # next
 - gegner greifen auch an -> dauerhaft mit waffe in hand
-- gegner animiert laufen
 - schaden als zahl animation über gegner
-- 
+- gegner laufen smarter und etwas minimal random
 - gegner mit knockback -> für waffe eintragen
 # todo
 

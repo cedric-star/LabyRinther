@@ -6,6 +6,7 @@ use crate::resources::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::attack::structs::*;
 use crate::ingame::animation::*;
+use crate::constants::*;
 
 
 
@@ -115,6 +116,7 @@ pub fn draw_hitbox(
     q: Query<(&Transform, &Hitbox), Or<(With<Attacker>, With<HandPivot>)>>,
     mut gizmos: Gizmos,
 ) {
+    if !DRAW_HITBOX { return; }
     for (transform, hitbox) in &q {
         hitbox.draw(&mut gizmos, *transform);
     }

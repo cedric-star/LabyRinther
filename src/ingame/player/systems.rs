@@ -171,7 +171,9 @@ pub fn weapon_use(
     let (inventory, transform, mut attacker) = player_data.into_inner();
     let pos = transform.translation;
     
-    if !mouse.just_pressed(MouseButton::Left) { return; }
+    if mouse.just_pressed(MouseButton::Left) {  }
+    else if mouse.pressed(MouseButton::Left) {  }
+    else { return; }
 
     //hier ändern, wenn meherere angriffre gleicherzeitig
     //dann angriffe im Attacker als vec<opt<...>> speichern

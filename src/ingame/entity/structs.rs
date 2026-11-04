@@ -86,6 +86,8 @@ impl Hitbox {
     }
 
     pub fn draw(&self, giz: &mut Gizmos, tf: Transform) {
+        if !DRAW_HITBOX { return; }
+        
         // Mittelpunkt der Box relativ zum Entity, dann mit Rotation/Skalierung in die Welt
         let local_center = (self.offset + self.size * 0.5).extend(0.0);
         let world_center = tf.transform_point(local_center).truncate();
