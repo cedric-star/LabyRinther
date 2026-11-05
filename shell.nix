@@ -7,6 +7,11 @@ with pkgs;
 mkShell rec {
   nativeBuildInputs = [
     pkg-config
+    cargo
+    rustc
+    rust-analyzer
+    clippy
+    rustfmt
   ];
   buildInputs = [
     udev
@@ -15,9 +20,15 @@ mkShell rec {
     libx11
     libxcursor
     libxi
-    libxrandr # To use the x11 feature
+    libxrandr
     libxkbcommon
-    wayland # To use the wayland feature
+    wayland
   ];
   LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
+  RUST_SRC_PATH = rustPlatform.rustLibSrc;
+
+  shellHook = ''
+    codium .
+  '';
 }
+

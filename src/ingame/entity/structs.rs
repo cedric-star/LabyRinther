@@ -25,7 +25,7 @@ pub struct Mana {
     pub mana_regen: f32, //normal: 1/s
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone, Copy)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,
