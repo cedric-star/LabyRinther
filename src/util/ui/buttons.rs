@@ -1,10 +1,10 @@
 use bevy::prelude::*;
-use bevy::input_focus::tab_navigation::{TabIndex};
-use bevy::picking::hover::Hovered;
-use bevy::ui_widgets::{
-    Slider, SliderRange, SliderThumb, SliderValue, TrackClick,
-    SliderDragState
-};
+use bevy::ui::*;
+use bevy::picking::hover::*;
+use bevy::ui_widgets::*;
+use bevy::ui_widgets::Button;
+use std::collections::HashSet;
+use bevy::input_focus::tab_navigation::*;
 use crate::util::ui::constants::*;
 
 #[derive(Component, Clone)]
@@ -31,17 +31,36 @@ impl ButtonImages {
     }
 }
 
+
 pub fn button_visuals(
     mut query: Query<
-        (&Interaction, &ButtonImages, &mut ImageNode),
-        Changed<Interaction>,
+        (
+            Entity,
+            Ref<Hovered>,
+            Option<Ref<Pressed>>,
+            &ButtonImages,
+            &mut ImageNode,
+        ),
+        With<Button>,
     >,
+    mut removed_pressed: RemovedComponents<Pressed>,
 ) {
-    for (interaction, images, mut image_node) in &mut query {
-        image_node.image = match *interaction {
-            Interaction::Pressed => images.pressed.clone(),
-            Interaction::Hovered => images.hovered.clone(),
-            _ => images.normal.clone(),
+    // Buttons, bei denen Pressed in diesem Frame entfernt wurde
+    let just_unpressed: HashSet<Entity> = removed_pressed.read().collect();
+
+    for (entity, hovered, pressed, images, mut image_node) in &mut query {
+        let changed = hovered.is_changed()
+            || pressed.as_ref().is_some_and(Ref::is_changed)
+            || just_unpressed.contains(&entity);
+
+        if !changed {
+            continue;
+        }
+
+        image_node.image = match (pressed.is_some(), hovered.get()) {
+            (true, _) => images.pressed.clone(),
+            (false, true) => images.hovered.clone(),
+            (false, false) => images.normal.clone(),
         };
     }
 }
@@ -74,6 +93,7 @@ pub fn my_button(
 ) -> impl Bundle {
     (
         Button,
+        Hovered::default(),
         marker,
         Node {
             width: px(300),

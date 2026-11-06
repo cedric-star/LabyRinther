@@ -5,7 +5,6 @@ use crate::components::*;
 use crate::resources::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::attack::structs::*;
-use crate::ingame::animation::*;
 use crate::constants::*;
 
 

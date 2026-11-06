@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::ui_widgets::*;
+use bevy::picking::hover::*;
 use bevy::input_focus::tab_navigation::{TabNavigationPlugin};
 use bevy::input_focus::InputDispatchPlugin;
 use bevy::ui_widgets::{
@@ -22,7 +24,6 @@ pub struct GameSettings {
 }
 
 impl Default for GameSettings {
-
     fn default() -> Self {
         #![allow(non_upper_case_globals)]
         const camera_mult: f32 = 2.0;
@@ -186,6 +187,7 @@ fn settings_setup(
         p.spawn((
             GoBackButton,
             Button,
+            Hovered::default(),
             Node {
                 width: px(300),
                 height: px(65),

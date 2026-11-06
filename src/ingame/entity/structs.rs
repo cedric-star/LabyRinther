@@ -57,7 +57,6 @@ impl Enemy {
 
 
 //hitbox
-use bevy::math::bounding::Aabb2d;
 
 #[derive(Component, Default)]
 pub struct Hittable;

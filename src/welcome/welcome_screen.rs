@@ -1,4 +1,10 @@
 use bevy::prelude::*;
+use bevy::ui::*;
+use bevy::picking::hover::*;
+use bevy::ui_widgets::*;
+use bevy::ui_widgets::Button;
+use std::collections::HashSet;
+use bevy::input_focus::tab_navigation::*;
 use crate::components::*;
 use crate::util::ui::buttons::*;
 use crate::util::ui::constants::*;
@@ -46,54 +52,29 @@ fn welcome_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 fn welcome_button(
-    query: Query<&Interaction, (Changed<Interaction>, With<StartButton>)>,
-    mut was_pressed: Local<bool>,
+    query: Query<
+            Has<Pressed>, With<StartButton>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    for interaction in &query {
-        match *interaction {
-            Interaction::Pressed => *was_pressed = true,
-            Interaction::Hovered if *was_pressed => {
-                *was_pressed = false;
-                println!("ingame!");
-                next_state.set(GameState::InGame);
-            }
-            _ => *was_pressed = false,
-        }
+    for pressed in &query {
+        if pressed { next_state.set(GameState::InGame); }    
     }
 }
 
 fn quit_button(
-    query: Query<&Interaction, (Changed<Interaction>, With<QuitButton>)>,
-    mut was_pressed: Local<bool>,
+    query: Query<Has<Pressed>, With<QuitButton>>,
     mut app_exit_writer: MessageWriter<AppExit>,
 ) {
-    for interaction in &query {
-        match *interaction {
-            Interaction::Pressed => *was_pressed = true,
-            Interaction::Hovered if *was_pressed => {
-                *was_pressed = false;
-                println!("exit!!!");
-                app_exit_writer.write(AppExit::Success);
-            }
-            _ => *was_pressed = false,
-        }
+    for pressed in &query {
+        if pressed { app_exit_writer.write(AppExit::Success); }
     }
 }
 
 fn settings_button(
-    query: Query<&Interaction, (Changed<Interaction>, With<SettingsButton>)>,
-    mut was_pressed: Local<bool>,
+    query: Query<Has<Pressed>, With<SettingsButton>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    for interaction in &query {
-        match *interaction {
-            Interaction::Pressed => *was_pressed = true,
-            Interaction::Hovered if *was_pressed => {
-                *was_pressed = false;
-                next_state.set(GameState::Settings);
-            }
-            _ => *was_pressed = false,
-        }
+    for pressed in &query {
+        if pressed { next_state.set(GameState::Settings); }
     }
 }
