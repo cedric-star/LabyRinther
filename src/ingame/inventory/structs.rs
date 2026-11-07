@@ -22,6 +22,7 @@ pub struct InventorySlotItemNormalCords(pub usize, pub usize);
 pub struct InventorySlotUsablesCords(pub usize, pub usize);
 
 #[derive(Component, Debug)]
+#[require(Button, Hovered)]
 pub struct InventorySlotEquip(pub EquipSlot);
 
 #[derive(Component)]

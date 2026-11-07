@@ -242,15 +242,15 @@ pub fn update_euqipped_info_text(
     windows: Query<&Window, With<PrimaryWindow>>,
     equips: Single<&Equipment, With<Player>>,
     items: Res<Items>,
-    equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
+    equip_slots: Query<(&InventorySlotEquip, &Hovered)>,
     mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorItemInfoText>>,   
 ) {
     let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
     let Some(pos) = windows.single().ok().and_then(|w| w.cursor_position()) else {return;};
     
-    let Some((hovered_slot, _)) = equip_slots //hovered slot finden
+    let Some((hovered_slot, _)) = equip_slots 
         .iter()
-        .find(|(_, interaction)| **interaction == Interaction::Hovered)
+        .find(|(_, hover)| hover.get())
     else {
         return;
     };
@@ -280,7 +280,7 @@ pub fn update_inventory_info_text(
     windows: Query<&Window, With<PrimaryWindow>>,
     inventory: Single<&Inventory, With<Player>>,
     items: Res<Items>,
-    inv_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
+    inv_slots: Query<(&InventorySlotNormalCords, &Hovered)>,
     mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorItemInfoText>>,
 ) {
     let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
@@ -288,7 +288,7 @@ pub fn update_inventory_info_text(
     let pos = windows.single().ok().and_then(|w| w.cursor_position());
     let hovered_stack = inv_slots
         .iter()
-        .find(|(_, i)| **i != Interaction::None)
+        .find(|(_, h)| h.get())
         .and_then(|(c, _)| inventory.slot(c.0, c.1))
         .and_then(|slot| slot.stack);
 

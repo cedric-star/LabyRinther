@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy::ui_widgets::Button;
+use bevy::picking::hover::Hovered;
 use std::collections::HashMap;
 use crate::ingame::items::structs::*;
 use crate::settings::settings_screen::*;
@@ -62,7 +64,6 @@ pub fn sync_craftable_ui(
     list: Query<Entity, With<CraftableList>>,
     mut slots: Query<(Entity, &CraftableSlot, &mut ImageNode, &mut BackgroundColor, &Children)>,
     mut counts: Query<(&mut Text, &mut Visibility), With<CraftableCountText>>,
-    mut last: Local<Vec<ItemStack>>,
 ) {
     let Ok(list_entity) = list.single() else { return; };
 
@@ -96,7 +97,6 @@ pub fn sync_craftable_ui(
         commands.entity(list_entity).with_children(|parent| {
             parent.spawn((
                 CraftableSlot(i),
-                Interaction::default(),
                 Node {
                     width: percent(12.5),
                     aspect_ratio: Some(1.0),
@@ -151,7 +151,7 @@ pub fn craftable_hover(
     craftable: Res<CraftableItems>,
     recipes: Res<Recipes>,
     items: Res<Items>,
-    slots: Query<(&CraftableSlot, &Interaction)>,
+    slots: Query<(&CraftableSlot, &Hovered)>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut tooltip: Query<(&mut Node, &mut Text, &mut Visibility), With<CursorCraftInfoText>>,
 ) {
@@ -159,7 +159,7 @@ pub fn craftable_hover(
     let Ok((mut node, mut text, mut vis)) = tooltip.single_mut() else { return; };
 
     // genau den gehoverten slot suchen
-    let hovered = slots.iter().find(|(_, i)| **i != Interaction::None);
+    let hovered = slots.iter().find(|(_, hover)| hover.get());
     let pos = windows.single().ok().and_then(|w| w.cursor_position());
 
     let (Some((slot, _)), Some(pos)) = (hovered, pos) else {
@@ -185,7 +185,7 @@ pub fn craftable_hover(
 
 pub fn craftable_click(
     mouse: Res<ButtonInput<MouseButton>>,
-    slots: Query<(&CraftableSlot, &Interaction)>,
+    slots: Query<(&CraftableSlot, &Hovered)>,
     list_vis: Query<&Visibility, With<CraftableList>>,
     craftable: Res<CraftableItems>,
     recipes: Res<Recipes>,
@@ -200,7 +200,7 @@ pub fn craftable_click(
     let Ok(vis) = list_vis.single() else { return; };
     if *vis == Visibility::Hidden { return; }
 
-    let Some((slot, _)) = slots.iter().find(|(_, i)| **i != Interaction::None) else { return; };
+    let Some((slot, _)) = slots.iter().find(|(_, hover)| hover.get()) else { return; };
     let Some(stack) = craftable.0.get(slot.0) else { return; };
     let Some(recipe) = recipes.0.iter().find(|r| r.result.id == stack.id) else { return; };
 

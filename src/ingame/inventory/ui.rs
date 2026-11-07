@@ -79,7 +79,6 @@ pub fn get_inventory(
                                     ..default()
                                 },
                                 InventorySlotNormalCords(i_width, i_height),
-                                Interaction::default(),
                                 ImageNode::new(slot_pic.clone()),
                                 children![(
                                     InventorySlotItemNormalCords(i_width, i_height),
@@ -148,12 +147,10 @@ pub fn get_inventory(
 
 }
 
-/// Ein klickbarer Equip-Slot: Hintergrund-Node mit Interaction + Kind-Node für das Item-Bild.
 /// `left`/`top` sind Prozent relativ zum Inventar-Container (der 10x10 Einheiten groß ist).
 fn equip_slot(pic: Handle<Image>, slot: EquipSlot, left: f32, top: f32) -> impl Bundle {
     (
         InventorySlotEquip(slot),   // damit inventory_click den Slot findet
-        Interaction::default(),     // damit Bevy Hover/Klick meldet
         Node {
             position_type: PositionType::Absolute,
             width: percent(10.0),

@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
+use bevy::picking::hover::Hovered;
 use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
 
@@ -29,6 +31,7 @@ pub struct CursorCraftInfoText;
 pub struct CraftableList;          // eindeutiger Marker für den Container
 
 #[derive(Component)]
+#[require(Button, Hovered)]
 pub struct CraftableSlot(pub usize); // index in CraftableItems.0
 
 #[derive(Component)]
