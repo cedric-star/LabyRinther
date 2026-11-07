@@ -11,7 +11,7 @@ pub fn move_enemies(
         .iter() //iter ist mut
         .map(|(t, v, a, e)| (*t, *v, a.clone(), e.clone()))
         .collect();
-    println!("len: {}", enemies_clone.len());
+    //println!("len: {}", enemies_clone.len());
 
     for (mut transform, mut velocity, mut anim, entity) in &mut enemies {
         let mut other_enemies: Vec<(Transform, Velocity, Anim, Entity)> = enemies_clone
@@ -21,7 +21,7 @@ pub fn move_enemies(
             .map(|item| *item)
             .collect();
 
-        println!("len: {}", other_enemies.len());
+        //println!("len: {}", other_enemies.len());
 
         velocity.x = 0.0;
         velocity.y = 0.0;

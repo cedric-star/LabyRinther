@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
+use bevy::ui_widgets::Button;
+use bevy::picking::hover::Hovered;
 use crate::ingame::items::structs::*;
 
 
@@ -9,9 +11,11 @@ pub struct InventoryRoot;
 pub struct InventoryShow(pub bool);
 
 #[derive(Component)]
+#[require(Button, Hovered)]
 pub struct InventorySlotNormalCords(pub usize, pub usize);
 
 #[derive(Component)]
+#[require(Button, Hovered)]
 pub struct InventorySlotItemNormalCords(pub usize, pub usize);
 
 #[derive(Component)]

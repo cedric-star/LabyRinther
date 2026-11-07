@@ -179,12 +179,10 @@ fn equip_slot(pic: Handle<Image>, slot: EquipSlot, left: f32, top: f32) -> impl 
 
 
 
-pub fn get_cursor(
-    asset_server: &AssetServer,
-    s: &GameSettings,
-) -> impl Bundle {
+pub fn get_cursor() -> impl Bundle {
     (
         CursorItemVisual,
+        Pickable::IGNORE, //alles was potentielle buttons/slots/clickables überlagert
         Node {
             position_type: PositionType::Absolute,
             width: px(48),
@@ -196,6 +194,7 @@ pub fn get_cursor(
         Visibility::Hidden,
         children![(
             CursorCountText,
+            Pickable::IGNORE,
             Text::new(""),
             TextFont { font_size: FontSize::Px(14.0), ..default() },
             Node {

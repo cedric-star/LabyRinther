@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::ui_widgets::*;
+use bevy::ui::*;
 use bevy::picking::hover::*;
 use bevy::input_focus::tab_navigation::{TabNavigationPlugin};
 use bevy::input_focus::InputDispatchPlugin;
@@ -287,18 +288,18 @@ fn update_slider_pos(
     }
 }
 
+
 fn go_back_button(
-    query: Query<&Interaction, (Changed<Interaction>, With<GoBackButton>)>,
+    query: Query<Has<Pressed>, With<GoBackButton>>,
     mut next_state: ResMut<NextState<GameState>>,
     previous: Res<LastState>,
 ) {
-    for interaction in &query {
-        if *interaction == Interaction::Pressed {
-            println!("go back to {:?}", previous);
-            match previous.0 {
-                Some(GameState::InGame) => next_state.set(GameState::InGame),
-                _ => next_state.set(GameState::Welcome)
-            }
+    for pressed in &query {
+        if !pressed { return; }
+        if previous.0 == Some(GameState::InGame) {
+            next_state.set(GameState::InGame);
+        } else {
+            next_state.set(GameState::Welcome);
         }
     }
 }

@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::picking::hover::Hovered;
+use bevy::ui::*;
 use crate::ingame::player::structs::*;
 use bevy::window::PrimaryWindow;
 use crate::ingame::items::structs::*;
@@ -168,8 +170,8 @@ pub fn update_equipment_ui(
 // -> passende items aus slot geholt und in schwebenden modus gespeichert / oder wieder rausgeholt
 pub fn inventory_click(
     mouse: Res<ButtonInput<MouseButton>>,
-    grid_slots: Query<(&InventorySlotNormalCords, &Interaction)>,
-    equip_slots: Query<(&InventorySlotEquip, &Interaction)>,
+    grid_slots: Query<(&InventorySlotNormalCords, &Hovered)>,
+    equip_slots: Query<(&InventorySlotEquip, &Hovered)>,
     root: Query<&Visibility, With<InventoryRoot>>,
     player: Single<(&mut Inventory, &mut Equipment), With<Player>>,
     mut cursor: ResMut<CursorItem>,
@@ -182,19 +184,25 @@ pub fn inventory_click(
     let Ok(vis) = root.single() else { return; };
     if *vis == Visibility::Hidden { return; }
 
+    //player inventar und equipment slots extrahieren
     let (mut inventory, mut equipment) = player.into_inner();
 
-    if let Some((eq, _)) = equip_slots.iter().find(|(_, i)| **i != Interaction::None) {
-        let slot = equipment.equip_mut(eq.0);
-        match eq.0 {
-            EquipSlot::Secret(_) => { if slot.is_some() { return; }},
-            _ => {  },
-        }
-        apply_click(&mut cursor.0, slot, left, Some(eq.0), &items);
-        
-    } else if let Some((c, _)) = grid_slots.iter().find(|(_, i)| **i != Interaction::None) {
-        let Some(slot) = inventory.slot_mut(c.0, c.1) else { return; };
+    for (slot_cords, hovered) in &grid_slots {
+        if !hovered.get() { continue; }
+        println!("pressed: {}|{}", slot_cords.0, slot_cords.1);
+        let Some(slot) = inventory.slot_mut(slot_cords.0, slot_cords.1) else { return; };
         apply_click(&mut cursor.0, &mut slot.stack, left, None, &items);
+        return;
+    }
+
+    for (equip_slot, hovered) in &equip_slots {
+        if !hovered.get() { continue; }
+        let slot = equipment.equip_mut(equip_slot.0);
+        match equip_slot.0 {
+            EquipSlot::Secret(_) => { if slot.is_some() {return;}}
+            _ => {}
+        }
+        apply_click(&mut cursor.0, slot, left, Some(equip_slot.0), &items);
     }
 }
 

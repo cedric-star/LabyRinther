@@ -50,7 +50,7 @@ pub fn spawn_ui(
             get_bars(&s, &player),
             get_inventory(&asset_server, &s),
             get_craftable_item_field(&s, &player, &craftable_items),
-            get_cursor(&asset_server, &s),
+            get_cursor(),
             (
                 HotBar,
                 Node {
@@ -131,6 +131,7 @@ pub fn spawn_ui(
 //spawnt kästchen global, für tooltip am cursor
 pub fn get_info_tooltip(comp: impl Component) -> impl Bundle {
     (
+        Pickable::IGNORE,
         comp,
         IngameUi,
         Node {
