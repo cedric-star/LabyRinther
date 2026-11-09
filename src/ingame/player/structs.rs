@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::*;
+use avian2d::prelude::*;
 use std::collections::HashMap;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::entity::structs::*;
@@ -71,6 +72,8 @@ impl Player {
         (
             GameEntity,
             Player,
+            RigidBody::Kinematic,
+            Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
             WallCollidable,
             Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, 1.0),
             Velocity { x: 0.0, y: 0.0 },

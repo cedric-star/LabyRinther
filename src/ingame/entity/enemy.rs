@@ -1,59 +1,41 @@
 use bevy::prelude::*;
+use avian2d::prelude::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
 
 pub fn move_enemies(
-    mut enemies: Query<(&mut Transform, &mut Velocity, &mut Anim, Entity), (With<Enemy>, Without<Player>)>,
+    mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
-    let enemies_clone: Vec<(Transform, Velocity, Anim, Entity)> = enemies
-        .iter() //iter ist mut
-        .map(|(t, v, a, e)| (*t, *v, a.clone(), e.clone()))
-        .collect();
-    //println!("len: {}", enemies_clone.len());
+    let p_pos = player.translation.truncate();
 
-    for (mut transform, mut velocity, mut anim, entity) in &mut enemies {
-        let mut other_enemies: Vec<(Transform, Velocity, Anim, Entity)> = enemies_clone
-            .clone()
-            .iter()
-            .filter(|e| e.3 != entity)
-            .map(|item| *item)
-            .collect();
-
-        //println!("len: {}", other_enemies.len());
-
-        velocity.x = 0.0;
-        velocity.y = 0.0;
+    for (mut l_vel, transform, mut anim, enemy) in &mut enemies {
+        let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
         let mut new_anim = *anim;
 
-        let p_pos = player.translation;
+        //wenn enemy vom gegner weg ist (länge des vectors)
+        if to_player.length() > enemy.stop_distance {
+            let direction = to_player.normalize(); //richtungsvektor länge 1
+            l_vel.0 = direction * enemy.speed; //vektor auf richtung * geschwindigkeit setzen
 
-        if transform.translation.x < player.translation.x {
-            velocity.x += 1.0;
-            new_anim = HumanoidState::WalkingRight.into();
-        }
-        if transform.translation.x > player.translation.x {
-            velocity.x -= 1.0;
-            new_anim = HumanoidState::WalkingLeft.into();
-        }
-        if transform.translation.y < player.translation.y {
-            velocity.y += 1.0;
-            new_anim = HumanoidState::WalkingBack.into();
-        }
-        if transform.translation.y > player.translation.y {
-            velocity.y -= 1.0;
-            new_anim = HumanoidState::WalkingFront.into();
-        }
-
-        if velocity.x == 0.0 && velocity.y == 0.0 {
+            //animation je nach richtung setzen
+            new_anim = if direction.x.abs() > direction.y.abs() {
+                if direction.x > 0.0 { HumanoidState::WalkingRight.into() }
+                else { HumanoidState::WalkingLeft.into() }
+            } else if direction.y > 0.0 { HumanoidState::WalkingBack.into() }
+            else { HumanoidState::WalkingFront.into() }
+        } else {
+            l_vel.0 = Vec2::ZERO;
             if let Anim::Humanoid(s) = new_anim {
                 new_anim = s.to_standing().into();
             }
         }
+
+        //animation nur setzen, wenn geändert
         if *anim != new_anim {
             *anim = new_anim;
         }
-        //transform.translation
+        
     }
 }

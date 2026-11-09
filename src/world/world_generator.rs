@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::*;
+use avian2d::prelude::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
@@ -74,14 +75,22 @@ pub fn load_map(
                 let tiles = gen_tiles(seed.seed, region, chunk_cords);
                 let chunk_world_pos = chunk_cords.chunk_to_world();
 
-                let chunk_entity = commands
+
+                //collider aus tile walls für chunk bauen
+                let collider = build_chunk_collider(&tiles);
+
+                let mut chunk_cmd = commands
                     .spawn((
                         GameEntity,
                         Chunk { tiles, cords: chunk_cords },
                         Transform::from_xyz(chunk_world_pos.x, chunk_world_pos.y, 0.0),
                         Visibility::default(),
-                    ))
-                    .id();
+                        RigidBody::Static,
+                    ));
+                if let Some(c) = collider {
+                    chunk_cmd.insert(c);
+                }
+                let chunk_entity = chunk_cmd.id();
 
                 commands.entity(chunk_entity).with_children(|parent| {
                     for (local_x, row) in tiles.iter().enumerate() {
@@ -127,4 +136,33 @@ fn gen_tiles(seed: u64, region: &Region, chunk_cords: Cords) -> [[Tile; CHUNK_SI
 
 fn is_even(num: u64) -> bool {
     num as usize % 2 == 0
+}
+
+
+fn build_chunk_collider(tiles: &[[Tile; CHUNK_SIZE]; CHUNK_SIZE]) -> Option<Collider> {
+    let mut parts: Vec<(Vec2, f32, Collider)> = Vec::new();
+
+    for x in 0..CHUNK_SIZE {
+        let mut y = 0;
+        while y < CHUNK_SIZE {
+            if tiles[x][y] == Tile::Wall {
+                let start = y;
+                while y < CHUNK_SIZE && tiles[x][y] == Tile::Wall {
+                    y += 1;
+                }
+                let len = (y - start) as f32;
+
+                // lokal zum Chunk-Entity, Mittelpunkt des Rechtecks
+                let center = Vec2::new(
+                    (x as f32 + 0.5) * TILE_SIZE,
+                    (start as f32 + len / 2.0) * TILE_SIZE,
+                );
+                parts.push((center, 0.0, Collider::rectangle(TILE_SIZE, len * TILE_SIZE)));
+            } else {
+                y += 1;
+            }
+        }
+    }
+
+    if parts.is_empty() { None } else { Some(Collider::compound(parts)) }
 }

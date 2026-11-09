@@ -35,6 +35,8 @@ pub struct Velocity {
 #[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hitbox, Hittable)]
 pub struct Enemy {
     pub weapon: ItemId,
+    pub speed: f32,
+    pub stop_distance: f32,
 }
 
 #[derive(Component)]
@@ -51,6 +53,8 @@ impl Enemy {
     pub fn new() -> Self {
         Self {
             weapon: ItemId::WoddenDagger,
+            speed: 100.0,
+            stop_distance: 4.0,
         }
     }
 }

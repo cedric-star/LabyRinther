@@ -8,6 +8,7 @@ mod ingame;
 mod settings;
 
 use bevy::prelude::*;
+use avian2d::prelude::*;
 use bevy::sprite::*;
 use bevy::camera::*;
 use components::*;
@@ -68,6 +69,7 @@ fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(PhysicsPlugins::default())
         .init_state::<GameState>()
         .init_resource::<Items>()
         .init_resource::<Recipes>()
