@@ -35,7 +35,7 @@ fn setup_cam(
         }),
         Transform::from_xyz(0.0, 0.0, 1.0),
         Velocity {x: 0.0, y: 0.0 },
-        Anchor::BOTTOM_LEFT,
+        Anchor::CENTER,
     ));
 }
 

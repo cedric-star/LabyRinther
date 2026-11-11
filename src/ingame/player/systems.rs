@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::*;
+use avian2d::prelude::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
@@ -46,118 +47,67 @@ pub fn use_item_system(
 
 pub fn controls(
     keys: Res<ButtonInput<KeyCode>>,
-    transform: Single<&Transform, (With<Player>, Without<Camera2d>)>,
-    mut cam_vel: Single<&mut Velocity, (With<Camera2d>, Without<Player>)>,
-    cam_transform: Single<&Transform, (With<Camera2d>, Without<Player>)>,
+    player: Single<(&mut LinearVelocity, &Transform, &Stats), (With<Player>, Without<Camera2d>)>,
+    mut cam: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
     s: Res<GameSettings>,
     mut next_state: ResMut<NextState<GameState>>,
-    mut player: Single<(&mut Velocity, &Stats), (With<Player>, Without<Camera2d>)>,
     mut player_anim: Single<&mut Anim, With<PlayerBody>>,
 ) {
-    let (velocity, stats) = &mut *player;
-    let mov_speed = s.mov_speed as f32 * stats.get(Stat::MoveSpeed);
-    velocity.x = 0.0;
-    velocity.y = 0.0;
-    cam_vel.x = 0.0;
-    cam_vel.y = 0.0;
+    //player variablen/dinge
+    let (mut p_vel, p_transform, p_stats) = player.into_inner();
+    
+    let mov_speed = if keys.pressed(KeyCode::ShiftLeft) {
+        p_stats.get(Stat::SprintSpeed)
+    } else { p_stats.get(Stat::WalkSpeed) };
+     
 
+    //keys auslesen --> nur richtung setzen
+    let mut dir = Vec2::ZERO;
+    if keys.pressed(KeyCode::KeyW) { dir.y += 1.0; }
+    if keys.pressed(KeyCode::KeyS) { dir.y -= 1.0; }
+    if keys.pressed(KeyCode::KeyA) { dir.x -= 1.0; }
+    if keys.pressed(KeyCode::KeyD) { dir.x += 1.0; }
+    let dir = dir.normalize_or_zero();
+
+    //bewegung linearvel setzen
+    p_vel.0 = dir * mov_speed;
+
+    //animation
     let mut new_anim: Anim = **player_anim;
-    let cam_pos = cam_transform.translation;
-
-    if keys.pressed(KeyCode::KeyW) {
-        velocity.y = mov_speed;
-        if transform.translation.y + PLAYER_HEIGHT >= cam_pos.y + s.player_walk_border_height {
-            cam_vel.y = mov_speed;
+    if dir != Vec2::ZERO {
+        new_anim = if dir.x.abs() > dir.y.abs() {
+            if dir.x > 0.0 { HumanoidState::WalkingRight.into() }
+            else { HumanoidState::WalkingLeft.into() }
+        } else if dir.y > 0.0 {
+            HumanoidState::WalkingBack.into()
         } else {
-            new_anim = HumanoidState::WalkingBack.into();
-        }
+            HumanoidState::WalkingFront.into()
+        };
+    } else if let Anim::Humanoid(st) = new_anim {
+        new_anim = st.to_standing().into();
     }
-    if keys.pressed(KeyCode::KeyS) {
-        velocity.y = -mov_speed;
-        if transform.translation.y <= cam_pos.y - s.player_walk_border_height {
-            cam_vel.y = -mov_speed;
-        } else {
-            new_anim = HumanoidState::WalkingFront.into();
-        }
-        
-    }
-    if keys.pressed(KeyCode::KeyA) {
-        velocity.x = -mov_speed;
-        if transform.translation.x <= cam_pos.x - s.player_walk_border_width {
-            cam_vel.x = -mov_speed;
-        } else {
-            new_anim = HumanoidState::WalkingLeft.into();
-        }
-    }
-    if keys.pressed(KeyCode::KeyD) {
-        velocity.x = mov_speed;
-        if transform.translation.x + PLAYER_WIDTH >= cam_pos.x + s.player_walk_border_width {
-            cam_vel.x = mov_speed;
-        } else {
-            new_anim = HumanoidState::WalkingRight.into();
-        }
-    }
-
-    // Keine Bewegung -> in Blickrichtung stehen bleiben
-    if velocity.x == 0.0 && velocity.y == 0.0 {
-        if let Anim::Humanoid(s) = new_anim {
-            new_anim = s.to_standing().into();
-        }
-    }
-
     if **player_anim != new_anim {
         **player_anim = new_anim;
     }
 
+    //kamera anhand von player pos mitbewegen
+    let p = p_transform.translation.truncate();
+    let offset = p - cam.translation.truncate();
+    let clamped = offset.clamp(
+        Vec2::new(-s.player_walk_border_width, -s.player_walk_border_height),
+        Vec2::new(s.player_walk_border_width, s.player_walk_border_height),
+    );
+    let target = p - clamped;
+    cam.translation.x = target.x;
+    cam.translation.y = target.y;
+
+    //settings menü öffnen
     if keys.pressed(KeyCode::Escape) {
         next_state.set(GameState::Settings);
     }
+   
 }
 
-pub fn movement(
-    mut query: Query<(&mut Transform, &Velocity, &Hitbox), With<WallCollidable>>,
-    chunk_pool: Res<ChunkPool>,
-    chunks: Query<&Chunk>,
-) {
-    for (mut transform, velocity, hb) in &mut query {
-        let mut pos = transform.translation.truncate();
-
-        // Abstände von translation zu den Boxkanten
-        let left = hb.offset.x;
-        let right = hb.offset.x + hb.size.x;
-        let bottom = hb.offset.y;
-        let top = hb.offset.y + hb.size.y;
-
-        // X-Achse
-        let nx = pos.x + velocity.x;
-        if collides(Vec2::new(nx, pos.y), hb, &chunk_pool, &chunks) {
-            if velocity.x > 0.0 {
-                // rechte Kante an linke Kante der Wandkachel
-                pos.x = ((nx + right) / TILE_SIZE).floor() * TILE_SIZE - right;
-            } else if velocity.x < 0.0 {
-                // linke Kante an rechte Kante der Wandkachel
-                pos.x = ((nx + left) / TILE_SIZE).floor() * TILE_SIZE + TILE_SIZE - left;
-            }
-        } else {
-            pos.x = nx;
-        }
-
-        // Y-Achse
-        let ny = pos.y + velocity.y;
-        if collides(Vec2::new(pos.x, ny), hb, &chunk_pool, &chunks) {
-            if velocity.y > 0.0 {
-                pos.y = ((ny + top) / TILE_SIZE).floor() * TILE_SIZE - top;
-            } else if velocity.y < 0.0 {
-                pos.y = ((ny + bottom) / TILE_SIZE).floor() * TILE_SIZE + TILE_SIZE - bottom;
-            }
-        } else {
-            pos.y = ny;
-        }
-
-        transform.translation.x = pos.x;
-        transform.translation.y = pos.y;
-    }
-}
 
 pub fn weapon_use(
     mouse: Res<ButtonInput<MouseButton>>,

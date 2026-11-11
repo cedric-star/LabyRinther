@@ -5,10 +5,6 @@ use crate::ingame::items::attack::structs::*;
 use crate::constants::*;
 
 #[derive(Component)]
-#[require(Velocity)]
-pub struct WallCollidable;
-
-#[derive(Component)]
 pub struct MyEntity;
 
 #[derive(Component)]
@@ -31,11 +27,11 @@ pub struct Velocity {
     pub y: f32,
 }
 
+
 #[derive(Component)]
 #[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hitbox, Hittable)]
 pub struct Enemy {
     pub weapon: ItemId,
-    pub speed: f32,
     pub stop_distance: f32,
 }
 
@@ -53,7 +49,6 @@ impl Enemy {
     pub fn new() -> Self {
         Self {
             weapon: ItemId::WoddenDagger,
-            speed: 100.0,
             stop_distance: 4.0,
         }
     }

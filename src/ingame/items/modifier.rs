@@ -12,7 +12,8 @@ pub enum Stat {
     HealthRegen,
     ManaRegen,
     InventoryRows,
-    MoveSpeed,
+    WalkSpeed,
+    SprintSpeed,
     Armor,
 }
 
@@ -51,7 +52,8 @@ impl Default for Stats {
             (Stat::HealthRegen, 1.0),
             (Stat::ManaRegen, 1.0),
             (Stat::InventoryRows, 2.0),
-            (Stat::MoveSpeed, 1.0),
+            (Stat::WalkSpeed, 100.0),
+            (Stat::SprintSpeed, 140.0)
         ]);
         Self {base, permanent: vec![], equipped: vec![] }
     }

@@ -48,7 +48,6 @@ pub fn get_enemy_bundle(
         Enemy::new(),
         Transform::from_xyz(pos.x as f32, pos.y as f32, 1.0),
         Visibility::Visible,
-        WallCollidable,
         Anchor::CENTER,
         MyEntity,
         Anim::Humanoid(HumanoidState::StandingFront),

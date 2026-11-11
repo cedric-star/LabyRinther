@@ -72,11 +72,11 @@ impl Player {
         (
             GameEntity,
             Player,
-            RigidBody::Kinematic,
+            RigidBody::Dynamic,
+            LockedAxes::ROTATION_LOCKED,//damit man sich nicht hässlich dreht
             Collider::rectangle(PLAYER_WIDTH, PLAYER_HEIGHT),
-            WallCollidable,
+            Mass(10000000.0),
             Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, 1.0),
-            Velocity { x: 0.0, y: 0.0 },
             Visibility::default(),
             children![
                 (

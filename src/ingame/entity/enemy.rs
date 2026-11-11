@@ -3,21 +3,22 @@ use avian2d::prelude::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
+use crate::ingame::items::modifier::*;
 
 pub fn move_enemies(
-    mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy)>,
+    mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
     let p_pos = player.translation.truncate();
 
-    for (mut l_vel, transform, mut anim, enemy) in &mut enemies {
+    for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
         let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
         let mut new_anim = *anim;
 
         //wenn enemy vom gegner weg ist (länge des vectors)
         if to_player.length() > enemy.stop_distance {
             let direction = to_player.normalize(); //richtungsvektor länge 1
-            l_vel.0 = direction * enemy.speed; //vektor auf richtung * geschwindigkeit setzen
+            l_vel.0 = direction * stats.get(Stat::WalkSpeed); //vektor auf richtung * geschwindigkeit setzen
 
             //animation je nach richtung setzen
             new_anim = if direction.x.abs() > direction.y.abs() {

@@ -85,3 +85,6 @@
   - relevant für zwei schnell sich bewegende rigidbodies
   -
 
+# Vec
+- clamp() 
+  - gib ein min unc max an, und der werte wird abgeschnitten, wenn er kleiner/größer als min max ist

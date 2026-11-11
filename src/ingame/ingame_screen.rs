@@ -52,7 +52,7 @@ pub fn ingame_plugin(app: &mut App) {
                 craftable_click,
                 set_hotkeys,
                 update_bars,
-                movement,
+                //movement,
                 update_ui,
                 update_inventory_items,
                 inventory_click.before(update_inventory),
