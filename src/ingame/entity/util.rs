@@ -30,7 +30,7 @@ impl Default for Mana {
 
 
 pub fn get_enemy_bundle(
-    pos: Cords,
+    pos: Vec3,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 
@@ -46,7 +46,7 @@ pub fn get_enemy_bundle(
         LockedAxes::ROTATION_LOCKED,//damit sich gegner nicht hässlich dreht
         GameEntity,
         Enemy::new(),
-        Transform::from_xyz(pos.x as f32, pos.y as f32, 1.0),
+        Transform::from_translation(pos),
         Visibility::Visible,
         Anchor::CENTER,
         MyEntity,

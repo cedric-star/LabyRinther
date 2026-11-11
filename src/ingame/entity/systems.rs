@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::ingame::player::structs::*;
+use crate::settings::settings_screen::*;
 use crate::ingame::entity::util::*;
 use crate::components::*;
 use crate::resources::*;
@@ -35,16 +36,19 @@ pub fn despawn_enemy_by_health(
 
 
 pub fn spawn_enemy_near_player(
+    s: Res<GameSettings>,
     player: Single<&Transform, With<Player>>,
     region_pool: Res<RegionPool>,
     regions: Query<&Region>,
     chunks: Query<&Chunk>,
+    chunk_pool: Res<ChunkPool>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     //player
     let p_pos = player.translation;
+    let p_chunk_pos = Cords::from_vec3(p_pos).world_to_chunk().extend(0.0);
 
     //region
     let r_cords = Cords::new(p_pos.x as i32, p_pos.y as i32).world_to_region();
@@ -54,19 +58,34 @@ pub fn spawn_enemy_near_player(
     //chunks loaded
     let mut chunk_num = 0;
     for chunk in &chunks { chunk_num += 1; }
-    //println!("chunk_num: {:?}", chunk_num);
+    println!("chunk_num: {:?}", chunk_num);
 
-    //println!("region_cords: {:?}", region.cords);
-    //println!("player_cords: {:?}", p_pos);
+    println!("region_cords: {:?}", region.cords);
+    println!("player_cords: {:?}", p_pos);
+    
+    let chunk_vec: Vec<&Chunk> = chunks.iter().collect();
+    let chunk_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.chunks_enemy_spawnable, p_pos);
+    let enemy_spawn_point: Vec3 = find_enemy_spawn_point(p_pos, chunk_2_spawn_enemies);
+
 
     commands.spawn(get_enemy_bundle(
-        Cords::from_vec3(p_pos), 
+        enemy_spawn_point,
         &asset_server, 
         &mut texture_atlas_layouts
     ));
-
-
 }
+
+pub fn chunks_spawn_enemy(chunks: Vec<&Chunk>, chunk_num: f32, p_pos: Vec3) -> Vec<&Chunk> {
+    chunks
+}
+
+pub fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Vec3 {
+    p_pos
+}
+
+
+
+
 
 pub fn draw_hitbox(
     q: Query<(&Transform, &Hitbox), Or<(With<Attacker>, With<HandPivot>)>>,

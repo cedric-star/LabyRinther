@@ -22,6 +22,7 @@ pub struct GameSettings {
     pub player_walk_border_height: f32,
     pub chunks_loading: i32,
     pub ui_scale: f32,
+    pub chunks_enemy_spawnable: f32, //baut viereck um player chunk, mit in jede richtung, 1-> 1chunk, 2-> 3x3chunks, 3->7x7 chunks, ...
 }
 
 impl Default for GameSettings {
@@ -44,6 +45,8 @@ impl Default for GameSettings {
             chunks_loading: 6,
 
             ui_scale: 6.0,
+
+            chunks_enemy_spawnable: 2.0,
         }
     }
 }

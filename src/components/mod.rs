@@ -99,6 +99,12 @@ impl Cords {//achtung, mit world sind pixel gemeint
             y: (self.y as f32) * (CHUNK_SIZE as f32) * TILE_SIZE,
         }
     }
+    pub fn world_to_chunk(self) -> Vec2 {
+        Vec2 {
+            x: (self.x as f32) / (CHUNK_SIZE as f32 * TILE_SIZE as f32),
+            y: (self.y as f32) / (CHUNK_SIZE as f32 * TILE_SIZE as f32),
+        }
+    }
 
     pub fn world_to_chunk(world_pos: Vec2) -> Self {
         Self {

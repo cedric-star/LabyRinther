@@ -2,16 +2,13 @@ use bevy::prelude::*;
 use bevy::window::*;
 use avian2d::prelude::*;
 use crate::components::*;
-use crate::constants::*;
-use crate::resources::*;
 use crate::settings::settings_screen::*;
-use crate::ingame::player::util::*;
-use crate::ingame::player::structs::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::inventory::structs::*;
 use crate::ingame::items::util::*;
+use crate::ingame::player::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::attack::structs::*;
 
@@ -119,7 +116,6 @@ pub fn weapon_use(
     camera: Single<(&Camera, &GlobalTransform), With<Camera2d>>,
 ) {
     let (inventory, transform, mut attacker) = player_data.into_inner();
-    let pos = transform.translation;
     
     if mouse.just_pressed(MouseButton::Left) {  }
     else if mouse.pressed(MouseButton::Left) {  }
