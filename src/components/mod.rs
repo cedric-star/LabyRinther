@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::math::*;
 use crate::constants::*;
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -47,86 +48,51 @@ impl Tile {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Chunk {
-    pub tiles: [[Tile; CHUNK_SIZE]; CHUNK_SIZE],
-    pub cords: Cords,
+    pub tiles: [[Tile; U_CHUNK_SIZE]; U_CHUNK_SIZE],
+    pub cords: IVec2,
 }
 
-#[derive(Clone, Hash, Eq, Copy, Debug, PartialEq)]
-pub struct Cords {
-    pub x: i32,
-    pub y: i32,
+pub trait CordsExt {
+    fn world_to_tile(self) -> IVec2; //gibt tile cords zurück in der der pixel liegt
+    fn world_to_chunk(self) -> IVec2; //chunk cord, in dem eingabe world pixel liegen
+    fn world_to_region(self) -> IVec2; //region cord, in der world pixel cords liegt
+
+    fn tile_to_world(self) -> IVec2; //world kord, des unteren linken pixels des tiles
+    fn tile_to_chunk(self) -> IVec2; //chunk cord, in dem die tile liegt
+    fn tile_to_region(self) -> IVec2; //region cords, in der die tile liegt
+
+    fn chunk_to_world(self)-> IVec2; //unterer linker px des chunks
+    fn chunk_to_tile(self) -> IVec2; //unterer linker tile eines chunks
+    fn chunk_to_region(self) -> IVec2; //region cords, in der der chunk liegt
+
+    fn region_to_world(self) -> IVec2; //unterer linker pixel der region
+    fn region_to_tile(self) -> IVec2; //unterer linker tile der region
+    fn region_to_chunk(self) -> IVec2; //unterer linker chunk in einer region
 }
 
-impl Cords {//achtung, mit world sind pixel gemeint
-    pub fn from_vec2(my_vec: Vec2) -> Self {
-        Self {
-            x: my_vec.x as i32,
-            y: my_vec.y as i32,
-        }
-    }
+impl CordsExt for IVec2 {
+    fn world_to_tile(self) -> IVec2 { self.div_euclid(TILE_SIZE_VEC2) }
+    fn world_to_chunk(self) -> IVec2 { self.div_euclid(CHUNK_WORLD_SIZE_VEC2) }
+    fn world_to_region(self) -> IVec2 { self.div_euclid(REGION_WORLD_SIZE_VEC2) }
 
-    pub fn from_vec3(my_vec: Vec3) -> Self {
-        Self {
-            x: my_vec.x as i32,
-            y: my_vec.y as i32,
-        }
-    }
+    fn tile_to_world(self) -> IVec2 { self * TILE_SIZE_VEC2 }
+    fn tile_to_chunk(self) -> IVec2 { self.div_euclid(CHUNK_SIZE_VEC2) }
+    fn tile_to_region(self) -> IVec2 { self.div_euclid(REGION_TILE_SIZE_VEC2) }
 
-    pub fn new(x: i32, y: i32) -> Self {
-        Self {x, y}
-    }
+    fn chunk_to_world(self)-> IVec2 { self * CHUNK_WORLD_SIZE }
+    fn chunk_to_tile(self) -> IVec2 { self * CHUNK_SIZE }
+    fn chunk_to_region(self) -> IVec2 { self.div_euclid(REGION_SIZE_VEC2) }
 
-    pub fn to_world(self) -> Vec2 {
-        Vec2 {
-            x: (self.x as f32) * TILE_SIZE + TILE_SIZE,
-            y: (self.y as f32) * TILE_SIZE + TILE_SIZE,
-        }
-
-    }
-
-    pub fn from_world(world_pos: Vec2) -> Self {
-        Self {
-            x: (world_pos.x / TILE_SIZE).floor() as i32,
-            y: (world_pos.y / TILE_SIZE).floor() as i32,
-        }
-    }
-
-    pub fn chunk_to_world(self) -> Vec2 {
-        Vec2 {
-            x: (self.x as f32) * (CHUNK_SIZE as f32) * TILE_SIZE,
-            y: (self.y as f32) * (CHUNK_SIZE as f32) * TILE_SIZE,
-        }
-    }
-    pub fn world_to_chunk(self) -> Vec2 {
-        Vec2 {
-            x: (self.x as f32) / (CHUNK_SIZE as f32 * TILE_SIZE as f32),
-            y: (self.y as f32) / (CHUNK_SIZE as f32 * TILE_SIZE as f32),
-        }
-    }
-
-    
-
-    pub fn world_to_region(self) -> Self {
-        Self {
-            x: (self.x as f32 / REGION_WORLD_SIZE).floor() as i32,
-            y: (self.y as f32 / REGION_WORLD_SIZE).floor() as i32,
-        }
-    }
-
-    /// Region-Koordinate → Weltposition (linke untere Ecke der Region)
-    pub fn region_to_world(self) -> Vec2 {
-        Vec2 {
-            x: (self.x as f32) * REGION_WORLD_SIZE,
-            y: (self.y as f32) * REGION_WORLD_SIZE,
-        }
-    }
+    fn region_to_world(self) -> IVec2 { self * REGION_WORLD_SIZE }
+    fn region_to_tile(self) -> IVec2 { self * REGION_TILE_SIZE }
+    fn region_to_chunk(self) -> IVec2 { self * REGION_SIZE }
 }
 
 #[derive(Component, Clone, Debug)]
 pub struct Region {
-    pub cords: Cords,
+    pub cords: IVec2,
     pub rooms: Vec<Room>,
     pub map: crate::world::region::RegionMap,
 }
@@ -135,12 +101,12 @@ pub struct Region {
 pub struct Room {
     pub id: RoomId,
 
-    pub cords: Cords,
+    pub cords: IVec2,
     pub width: i32,
     pub height: i32,
 
     pub entry: Direction,
-    pub entry_cords: Cords,
+    pub entry_cords: IVec2,
     pub room_type: RoomType,
 }
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]

@@ -46,7 +46,7 @@ impl Default for GameSettings {
 
             ui_scale: 6.0,
 
-            chunks_enemy_spawnable: 2.0,
+            chunks_enemy_spawnable: 1.0,
         }
     }
 }

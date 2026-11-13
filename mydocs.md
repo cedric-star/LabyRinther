@@ -31,6 +31,31 @@
 - mit `.add_plugin()` den struct hinzufügen
 
 # Rust
+## Lifetimes
+```rust
+//lifetime checker weis nicht, ob rückgabe chunks aus vec<chunks> oder chunkpool stammt -> fehler
+//lsg: 1. lifetimeannotation: 'a in funktion erstellt lifetime namens a
+//2. 'a im vec: chunk referenzen leben mindesten 'a lang -> so lang wie funktion
+//3. 'a im return (->): ergebnis hängt von 'a lifetime also vom vec ab
+//-> lifetime sagt nicht wie lange etwas lebt, sonder beschreibt beziehungen
+pub fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, pool: &ChunkPool, chunk_num: f32, p_pos: Vec3) -> Vec<&'a Chunk> {
+    chunks
+}
+```
+## Iterator
+- iter()
+  - leiht elemente aus -> gibt referenzen zurück (&T)
+  - ursprüngliche collection ist aber noch dannach verwendbar
+  - nur wenn gelesen wird und dannach weiterbenutzen
+- iter_mut()
+  - wie iter() aber gibt &mut T zurück
+  - um elemente in collection zu ändern
+- into_iter()
+  - übernimmt ownership von collection 
+  - gibt elemente selbst
+  - ruft kein .clone() auf elementen auf
+  - wenn elemente z.b. in andere sammlung verschoben werden sollen
+
 
 # avian2d
 

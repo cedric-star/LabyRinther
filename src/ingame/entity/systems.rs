@@ -1,3 +1,4 @@
+
 use bevy::prelude::*;
 use crate::ingame::player::structs::*;
 use crate::settings::settings_screen::*;
@@ -48,24 +49,24 @@ pub fn spawn_enemy_near_player(
 ) {
     //player
     let p_pos = player.translation;
-    let p_chunk_pos = Cords::from_vec3(p_pos).world_to_chunk().extend(0.0);
+    let p_chunk_pos = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_chunk();
 
-    //region
-    let r_cords = Cords::new(p_pos.x as i32, p_pos.y as i32).world_to_region();
+    //regionp
+    let r_cords = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_region();
     let Some(&region_entity) = region_pool.regions.get(&r_cords) else { return; };
     let Ok(region) = regions.get(region_entity) else { return; };
 
     //chunks loaded
-    let mut chunk_num = 0;
-    for chunk in &chunks { chunk_num += 1; }
-    println!("chunk_num: {:?}", chunk_num);
+    let mut chunk_num = chunks.iter().count();
 
-    println!("region_cords: {:?}", region.cords);
-    println!("player_cords: {:?}", p_pos);
-    
+    //all chunks as vec
     let chunk_vec: Vec<&Chunk> = chunks.iter().collect();
-    let chunk_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.chunks_enemy_spawnable, p_pos);
-    let enemy_spawn_point: Vec3 = find_enemy_spawn_point(p_pos, chunk_2_spawn_enemies);
+
+    //filtered, only chunks near player
+    let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, &chunk_pool, s.chunks_enemy_spawnable, p_chunk_pos);
+
+    //a world koordinate, where a place is free
+    let enemy_spawn_point: Vec3 = find_enemy_spawn_point(p_pos, chunks_2_spawn_enemies);
 
 
     commands.spawn(get_enemy_bundle(
@@ -75,11 +76,29 @@ pub fn spawn_enemy_near_player(
     ));
 }
 
-pub fn chunks_spawn_enemy(chunks: Vec<&Chunk>, chunk_num: f32, p_pos: Vec3) -> Vec<&Chunk> {
+//lifetime checker weis nicht, ob rückgabe chunks aus vec<chunks> oder chunkpool stammt -> fehler
+//lsg: 1. lifetimeannotation: 'a in funktion erstellt lifetime namens a
+//2. 'a im vec: chunk referenzen leben mindesten 'a lang -> so lang wie funktion
+//3. 'a im return (->): ergebnis hängt von 'a lifetime also vom vec ab
+//-> lifetime sagt nicht wie lange etwas lebt, sonder beschreibt beziehungen
+pub fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, pool: &ChunkPool, chunk_num: f32, p_pos: IVec2) -> Vec<&'a Chunk> {
+    let p_pos = p_pos.as_vec2();
+    let min_x  = (p_pos.x - chunk_num).floor() as i32;
+    let min_y = (p_pos.y - chunk_num).floor() as i32;
+    let max_x = (p_pos.x + chunk_num).ceil() as i32;
+    let max_y = (p_pos.y + chunk_num).ceil() as i32;
+
     chunks
+        .into_iter()
+        .filter(
+            |c|
+            c.cords.x >= min_x && c.cords.y >= min_y && c.cords.x <= max_x && c.cords.y <= max_y
+        )
+        .collect()
 }
 
 pub fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Vec3 {
+    //let chunk = chunks.
     p_pos
 }
 

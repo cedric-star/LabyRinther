@@ -1,3 +1,4 @@
+use bevy::math::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::util::seed_service::*;
@@ -136,7 +137,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                     (
                         cell(cx + k, cy + h - 1),
                         cell(cx + k, cy + h),
-                        Cords::new(origin(cx + k) + 1, origin(cy + h) - 1),
+                        IVec2::new(origin(cx + k) + 1, origin(cy + h) - 1),
                     )
                 }
                 Direction::SOUTH => {
@@ -144,7 +145,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                     (
                         cell(cx + k, cy),
                         cell(cx + k, cy - 1),
-                        Cords::new(origin(cx + k) + 1, origin(cy) - 1),
+                        IVec2::new(origin(cx + k) + 1, origin(cy) - 1),
                     )
                 }
                 Direction::EAST => {
@@ -152,7 +153,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                     (
                         cell(cx + w - 1, cy + k),
                         cell(cx + w, cy + k),
-                        Cords::new(origin(cx + w) - 1, origin(cy + k) + 1),
+                        IVec2::new(origin(cx + w) - 1, origin(cy + k) + 1),
                     )
                 }
                 Direction::WEST => {
@@ -160,7 +161,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                     (
                         cell(cx, cy + k),
                         cell(cx - 1, cy + k),
-                        Cords::new(origin(cx) - 1, origin(cy + k) + 1),
+                        IVec2::new(origin(cx) - 1, origin(cy + k) + 1),
                     )
                 }
             };
@@ -169,7 +170,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
             let (width, height) = room_type.dimensions();
             rooms.push(Room {
                 id: RoomId(rooms.len() as i32),
-                cords: Cords::new(origin(cx), origin(cy)),
+                cords: IVec2::new(origin(cx), origin(cy)),
                 width,
                 height,
                 entry,
@@ -269,14 +270,11 @@ pub fn set_region_tiles(x: i32, y: i32, region: &Region) -> Tile {
 }
 
 // rx, ry = Regionsindex (nicht Tile-Koordinaten)
-pub fn generate_region(world_seed: u64, r: Cords) -> Region {
+pub fn generate_region(world_seed: u64, r: IVec2) -> Region {
     let (mut map, mut rooms) = generate_maze(calc_region_seed(world_seed, r.x, r.y));
     carve_exits(&mut map, world_seed, r.x, r.y);
 
-    let cords = Cords {
-        x: r.x * REGION_TILE_SIZE,
-        y: r.y * REGION_TILE_SIZE,
-    };
+    let cords = r.region_to_tile();
 
     for room in rooms.iter_mut() {
         room.cords.x += cords.x;

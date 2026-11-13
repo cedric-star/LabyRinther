@@ -16,9 +16,9 @@ pub fn startup(
     let start_t = Instant::now();
     commands.spawn(Player::new_entity(&asset_server, &mut texture_atlas_layouts));
 
-    let region_entity = commands.spawn(generate_region(seed.seed, Cords::new(0, 0))).id();
+    let region_entity = commands.spawn(generate_region(seed.seed, IVec2::new(0, 0))).id();
 
-    regions.regions.insert(Cords::new(0, 0), region_entity);
+    regions.regions.insert(IVec2::new(0, 0), region_entity);
 
     let end_t = start_t.elapsed().as_millis();
     println!("startup_time: {}ms", end_t);

@@ -19,18 +19,18 @@ pub fn load_map(
     s: Res<GameSettings>,
 ) {
     for player in &players {
-        let player_chunk_x = (player.translation.x / CHUNK_WORLD_SIZE).floor() as i32;
-        let player_chunk_y = (player.translation.y / CHUNK_WORLD_SIZE).floor() as i32;
+        let player_chunk_x = (player.translation.x / CHUNK_WORLD_SIZE as f32).floor() as i32;
+        let player_chunk_y = (player.translation.y / CHUNK_WORLD_SIZE as f32).floor() as i32;
 
-        let player_chunks: Vec<Cords> = players
+        let player_chunks: Vec<IVec2> = players
             .iter()
-            .map(|t| Cords::new(
-                (t.translation.x / CHUNK_WORLD_SIZE).floor() as i32,
-                (t.translation.y / CHUNK_WORLD_SIZE).floor() as i32,
+            .map(|t| IVec2::new(
+                (t.translation.x / CHUNK_WORLD_SIZE as f32).floor() as i32,
+                (t.translation.y / CHUNK_WORLD_SIZE as f32).floor() as i32,
             ))
             .collect();
 
-        let out_of_scope: Vec<Cords> = pool
+        let out_of_scope: Vec<IVec2> = pool
             .chunks
             .keys()
             .copied()
@@ -48,17 +48,14 @@ pub fn load_map(
         }
         for c_view_x in -s.chunks_loading..=s.chunks_loading {
             for c_view_y in -s.chunks_loading..=s.chunks_loading {
-                let chunk_cords = Cords::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
+                let chunk_cords = IVec2::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
 
                 if pool.chunks.contains_key(&chunk_cords) {
                     continue;
                 }
 
                 // Region, zu der dieser Chunk gehört
-                let region_key = Cords::new(
-                    chunk_cords.x.div_euclid(REGION_SIZE),
-                    chunk_cords.y.div_euclid(REGION_SIZE),
-                );
+                let region_key = chunk_cords.chunk_to_region();
 
                 let region_entity = regions.regions.get(&region_key).copied();
                 let Some(region_entity) = region_entity else {
@@ -73,7 +70,7 @@ pub fn load_map(
                 };
 
                 let tiles = gen_tiles(seed.seed, region, chunk_cords);
-                let chunk_world_pos = chunk_cords.chunk_to_world();
+                let chunk_world_pos = chunk_cords.chunk_to_world().as_vec2();
 
 
                 //collider aus tile walls für chunk bauen
@@ -99,12 +96,12 @@ pub fn load_map(
                                 GameEntity,
                                 Sprite {
                                     image: asset_server.load(tile.asset()),
-                                    custom_size: Some(Vec2::new(TILE_SIZE, TILE_SIZE)),
+                                    custom_size: Some(IVec2::new(TILE_SIZE, TILE_SIZE).as_vec2()),
                                     ..default()
                                 },
                                 Transform::from_xyz(
-                                    local_x as f32 * TILE_SIZE,
-                                    local_y as f32 * TILE_SIZE,
+                                    local_x as f32 * TILE_SIZE as f32,
+                                    local_y as f32 * TILE_SIZE as f32,
                                     0.0,
                                 ),
                                 Anchor::BOTTOM_LEFT,
@@ -118,11 +115,11 @@ pub fn load_map(
         }
     }
 }
-fn gen_tiles(seed: u64, region: &Region, chunk_cords: Cords) -> [[Tile; CHUNK_SIZE]; CHUNK_SIZE] {
-    let mut tiles: [[Tile; CHUNK_SIZE]; CHUNK_SIZE] = [[Tile::Wall; CHUNK_SIZE]; CHUNK_SIZE];
+fn gen_tiles(seed: u64, region: &Region, chunk_cords: IVec2) -> [[Tile; U_CHUNK_SIZE]; U_CHUNK_SIZE] {
+    let mut tiles: [[Tile; U_CHUNK_SIZE]; U_CHUNK_SIZE] = [[Tile::Wall; U_CHUNK_SIZE]; U_CHUNK_SIZE];
 
-    for local_x in 0..CHUNK_SIZE {
-        for local_y in 0..CHUNK_SIZE {
+    for local_x in 0..U_CHUNK_SIZE {
+        for local_y in 0..U_CHUNK_SIZE {
 
             let world_x = chunk_cords.x * CHUNK_SIZE as i32 + local_x as i32;
             let world_y = chunk_cords.y * CHUNK_SIZE as i32 + local_y as i32;
@@ -139,25 +136,25 @@ fn is_even(num: u64) -> bool {
 }
 
 
-fn build_chunk_collider(tiles: &[[Tile; CHUNK_SIZE]; CHUNK_SIZE]) -> Option<Collider> {
+fn build_chunk_collider(tiles: &[[Tile; U_CHUNK_SIZE]; U_CHUNK_SIZE]) -> Option<Collider> {
     let mut parts: Vec<(Vec2, f32, Collider)> = Vec::new();
 
-    for x in 0..CHUNK_SIZE {
+    for x in 0..U_CHUNK_SIZE {
         let mut y = 0;
-        while y < CHUNK_SIZE {
+        while y < U_CHUNK_SIZE {
             if tiles[x][y] == Tile::Wall {
                 let start = y;
-                while y < CHUNK_SIZE && tiles[x][y] == Tile::Wall {
+                while y < U_CHUNK_SIZE && tiles[x][y] == Tile::Wall {
                     y += 1;
                 }
                 let len = (y - start) as f32;
 
                 // lokal zum Chunk-Entity, Mittelpunkt des Rechtecks
                 let center = Vec2::new(
-                    (x as f32 + 0.5) * TILE_SIZE,
-                    (start as f32 + len / 2.0) * TILE_SIZE,
+                    (x as f32 + 0.5) * TILE_SIZE as f32,
+                    (start as f32 + len / 2.0) * TILE_SIZE as f32,
                 );
-                parts.push((center, 0.0, Collider::rectangle(TILE_SIZE, len * TILE_SIZE)));
+                parts.push((center, 0.0, Collider::rectangle(TILE_SIZE as f32, len * TILE_SIZE as f32)));
             } else {
                 y += 1;
             }
