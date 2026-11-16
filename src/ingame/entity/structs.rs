@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use avian2d::prelude::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::structs::*;

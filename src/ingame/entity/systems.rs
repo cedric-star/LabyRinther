@@ -99,7 +99,9 @@ pub fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, pool: &ChunkPool, chunk_nu
 
 pub fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Vec3 {
     //let chunk = chunks.
-    p_pos
+    let mut p_pos: Vec3 = p_pos;
+    p_pos.x += PLAYER_WIDTH + 2.0;
+    return p_pos;
 }
 
 

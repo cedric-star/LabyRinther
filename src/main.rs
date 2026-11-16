@@ -69,7 +69,7 @@ fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins(PhysicsPlugins::default())
+        .add_plugins(PhysicsPlugins::default().with_length_unit(32.0))
         .init_state::<GameState>()
         .init_resource::<Items>()
         .init_resource::<Recipes>()
