@@ -1,175 +1,174 @@
 use bevy::prelude::*;
+use avian2d::prelude::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::attack::structs::*;
 use crate::ingame::entity::structs::*;
-use crate::ingame::items::attack::util::*;
 
-pub fn animate_held_item(
-    items: Res<Items>,
-    attackers: Query<&Attacker>,
-    pivots: Query<&ChildOf, With<HandPivot>>,
-    mut sprites: Query<(
-        &ChildOf,
-        &mut Transform,
-        &GlobalTransform,
-        &mut Visibility,
-        &mut Sprite,
-        &Hitbox,
-    ), With<HeldItemSprite>>,
-    asset_server: Res<AssetServer>,
-    mut gizmos: Gizmos,
-) {
-    for (sprite_parent, mut tf, gt, mut vis, mut sprite, hitbox) in &mut sprites {
-        // Sprite -> HandPivot -> Player
-        let Ok(pivot_parent) = pivots.get(sprite_parent.parent()) else { continue; };
-        let Ok(attacker) = attackers.get(pivot_parent.parent()) else { continue; };
-
-        let Some(active) = &attacker.active else {
-            // kein Angriff: zurücksetzen
-            *vis = Visibility::Hidden;
-            tf.translation = Vec3::ZERO;
-            tf.rotation = Quat::IDENTITY;
-            continue;
-        };
-
-        let Some(hand_item) = items.0.get(&active.item) else { continue; }; 
-        let Some(weapon) = hand_item.weapon.as_ref() else { continue; };
-
-        hitbox.draw(&mut gizmos, gt.compute_transform());
-
-        match &weapon.kind {
-            WeaponKind::Dagger(def) => {
-                // wenn elapsed für animation vorbei ist, animation fertig -> abbruch
-                if active.elapsed >= def.duration {
-                    *vis = Visibility::Hidden;
-                    tf.translation = Vec3::ZERO;
-                    tf.rotation = Quat::IDENTITY;
-                    continue;
-                }
-
-                //sprite setzen und sichtbar machen
-                *vis = Visibility::Visible;
-                let handle = asset_server.load(hand_item.asset.clone());
-                if sprite.image != handle {
-                    sprite.image = handle;
-                }
-
-                // elapsed/duration -> prozent, .clamp macht alles < zu 0 und > zu 1.
-                let t = (active.elapsed / def.duration).clamp(0.0, 1.0);
-                
-                //t = 0-1 -> 0/1 pi = 0, alles dazwischen wird zu einer sinuskurve (sinus rechnet mit pi werten)
-                let thrust = (t * std::f32::consts::PI).sin();
-
-                //einheitsvektor (länge 1) der richtung von hand aus
-                let dir = active.aim.normalize_or_zero();
-
-                //richtungsvektor * länge = vektor mit korekter richtung und könge
-                // * thrust verschiebt vektorurpsrung auf sinuskurve
-                //extend macht aus vec2 einen vec3 mit z=0
-                tf.translation = (dir * def.distance * thrust).extend(0.0);
-
-                // to_angle() macht aus vec2 einen radiant winkel
-                // - 45 wegen asset drehung von daggern
-                tf.rotation = Quat::from_rotation_z(dir.to_angle() - 45.0_f32.to_radians());
-            }
-        }
-    }
-}
-
-//setzt relevante variablen des attacker wie zeit, oder ob angriff vorbei ist
+//setzt im active attack cooldown/hit zeiten
+//setzt active attack auf none wenn zeit vorbei
 pub fn set_attacker(
     time: Res<Time>,
     items: Res<Items>,
-    mut q: Query<(Entity, &mut Attacker, &Hitbox, &Transform)>,
+    mut attackers: Query<&mut Attacker>,
 ) {
-    let dt = time.delta_secs();
-    for (entity, mut attacker, hitbox, transform) in &mut q {
+    let dt = time.delta_secs(); //zeit zwischen letztem frame und aktuellem
+
+    //iteriere durch alle attacekr
+    for mut attacker in &mut attackers {
+
+        //vergangene zeit von cooldown subtrahieren
         attacker.cooldown_left = (attacker.cooldown_left - dt).max(0.0);
 
+        //active struct mut holen und weapon item holen
         let Some(active) = attacker.active.as_mut() else { continue; };
-        let Some(weapon) = items.0.get(&active.item).and_then(
-            |d| d.weapon.as_ref()
-        ) else { 
-            attacker.active = None;
-            continue; 
+        let Some(weapon) = items.0
+            .get(&active.item)
+            .and_then(|d| d.weapon.as_ref()) 
+        else {
+            attacker.active = None; //kein active attack, wenn waffe nicht gefunden
+            continue;
         };
 
+        //vergangene attackzeit setzen
         active.elapsed += dt;
-        let mut is_over = false;
 
-        //waffenspezifische animation und hit logik...
-        match &weapon.kind {
+        let is_over = match &weapon.kind {
             WeaponKind::Dagger(def) => {
-                if active.elapsed >= def.duration + def.cooldown {
-                    is_over = true;
-                } else if active.hit_fired == true{
-                    continue; // wenn hit bereits abgesetzt wurde hier stoppen
-                } else {
-                    if active.elapsed >= def.hit_at {
-                        
-                        active.hit_fired = true;
-                    }
-                }                
+                if active.elapsed >= def.hit_at {
+                    active.hit_fired = true; //auf active attack hit setzen, wenn zeit gekommen ist
+                }
+                active.elapsed >= def.duration + def.cooldown
             }
-        }
+        };
 
         if is_over { attacker.active = None; }
+
     }
 }
 
+//collider für waffen ein und ausschalten
+fn set_hit_enabled(
+    commands: &mut Commands,
+    entity: Entity,
+    enabled: bool,
+    is_disabled: bool,
+) {
+    if enabled && is_disabled {
+        commands.entity(entity).remove::<ColliderDisabled>();
+    } else if !enabled && !is_disabled {
+        commands.entity(entity).insert(ColliderDisabled);
+    }
+}
 
-//Prüft jeden Frame, ob die (gedrehte) Hitbox einer geführten Waffe
-// die Hitbox eines Ziels überschneidet, und verteilt dann einmalig Schaden.
+//animiert item in playerhand
+//iteriert über attacker und setzt zeitbasierte dinge
+    // -> animationszeiten
+    // -> ob collider für waffe an ist
+    // -> ob sprite sichtbar/unsichtbar ist
+pub fn animate_held_item(
+    mut commands: Commands,
+    items: Res<Items>,
+    asset_server: Res<AssetServer>,
+    attackers: Query<&Attacker>,
+    pivots: Query<&ChildOf, With<HandPivot>>,
+    mut sprites: Query<(
+        Entity,
+        &ChildOf,
+        &mut Transform,
+        &mut Visibility,
+        &mut Sprite,
+        Has<ColliderDisabled> //bool, ob colliderdisabled existiert in entity
+    ), With<HeldItemSprite>>,
+) {
+    for (entity, parent, mut tf, mut vis, mut sprite, is_disabled) in &mut sprites {
+        let Ok(pivot_parent) = pivots.get(parent.parent()) else { continue; };
+        let Ok(attacker) = attackers.get(pivot_parent.parent()) else {continue; };
+
+        let mut visible = false;    //ob waffe sichtbar ist
+        let mut hit_window = false; //ob collider aktiv ist
+
+        //wenn aktier attack am laufen ist
+        if let Some(active) = &attacker.active {
+            //wenn item gefunden wird (bzw. waffe)
+            if let Some(item) = items.0.get(&active.item) {
+                //weapon struct/informationen aus item herausziehen
+                if let Some(weapon) = item.weapon.as_ref() {
+                    //angriff je nach waffenart animieren
+                    match &weapon.kind {
+                        WeaponKind::Dagger(def) => {
+                            //wenn vergangene zeit innerhalb der animationszeit liegt
+                            if active.elapsed < def.duration {
+                                visible = true; //wenn zeit innerhalb animation -> sprite zeichnen
+                                hit_window = active.elapsed >= def.hit_at; //collider einschalten, sobald hit_at punkt erreicht ist
+
+                                //bild einmalig setzen, nur wenn sich es ändert, neu setzen
+                                let handle = asset_server.load(item.asset.clone());
+                                if sprite.image != handle { sprite.image = handle; }
+
+                            //linearvergehende zeit auf sinuskruve für bewegung mappen
+                                //animationszeit zwischen 0 und 1 normalisieren (quasi prozente)
+                                let t = (active.elapsed / def.duration).clamp(0.0, 1.0); 
+                                //t = 0-1 -> 0/1 pi = 0, alles dazwischen wird zu einer sinuskurve (sinus rechnet mit pi werten)
+                                let thrust = (t * std::f32::consts::PI).sin();
+                                //zielrichtung der waffe festlegen
+                                let dir = active.aim.normalize_or_zero();
+
+                                //richtungsvektor * länge = vektor mit korekter richtung und könge
+                                // * thrust verschiebt vektorurpsrung auf sinuskurve
+                                //extend macht aus vec2 einen vec3 mit z=0
+                                tf.translation = (dir * def.distance * thrust).extend(0.0);
+
+                                tf.rotation = Quat::from_rotation_z(
+                                    dir.to_angle() - 45.0_f32.to_radians(),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //sprite zurücksetzen wenn unsichtbar
+        if !visible {
+            tf.translation = Vec3::ZERO;
+            tf.rotation = Quat::IDENTITY;
+        }
+
+        //vis auf passenden enum setzen -> nur wenn es sich ändert
+        vis.set_if_neq(if visible { Visibility::Visible } else  { Visibility::Hidden });
+
+        //schlussendlich ColliderDisabled setzen oder löschen, um waffencollider an/auszuschalten
+        set_hit_enabled(&mut commands, entity, hit_window, is_disabled);
+
+    }
+}
+
+//erkennt überlappung zwischen waffen-sensor und setzt damage
 pub fn weapon_contact(
     items: Res<Items>,
-    // Waffen-Sprites: Weltposition+Rotation, lokale Box, Sichtbarkeit, Parent (= HandPivot/item in hand)
-    held_weapons: Query<(&GlobalTransform, &Hitbox, &Visibility, &ChildOf), With<HeldItemSprite>>,
-    hand_pivots: Query<&ChildOf, With<HandPivot>>, //nur für den parent wichtig
-    mut attackers: Query<&mut Attacker>, //alle angreifer
-    mut targets: Query<(Entity, &mut Health, &Transform, &Hitbox), With<Hittable>>, //alle potentiellen ziele des angriffs
+    weapons: Query<(&CollidingEntities, &ChildOf), (With<HeldItemSprite>, Without<ColliderDisabled>)>,
+    pivots: Query<&ChildOf, With<HandPivot>>,
+    mut attackers: Query<&mut Attacker>,
+    mut targets: Query<&mut Health, With<Hittable>>,
 ) {
-    for (weapon_global_tf, weapon_hitbox, weapon_visibility, weapon_parent) in &held_weapons {
-        if *weapon_visibility == Visibility::Hidden { continue; } //keine waffe -> kein angriffh-´
+    for (colliding, parent) in &weapons {
+        let Ok(pivot_parent) = pivots.get(parent.parent()) else { continue; };
+        let owner = pivot_parent.parent();
+        let Ok(mut attacker) = attackers.get_mut(owner) else { continue; };
+        let Some(active) = attacker.active.as_mut() else { continue; };
 
-        let Ok(pivot_parent) = hand_pivots.get(weapon_parent.parent()) else { continue; };
-        let owner_entity = pivot_parent.parent(); // wer die waffe führt darf sich nicht selbst treffen
-        // Angriffszustand des Besitzers holen
-        let Ok(mut attacker) = attackers.get_mut(owner_entity) else { continue; };
-
-        // `active` = der gerade laufende Angriff (Option<ActiveAttack>):
-        // enthält Item, vergangene Zeit, Richtung und die bereits getroffenen Entities.
-        // Ist es None, greift der Besitzer gerade nicht an.
-        let Some(active_attack) = attacker.active.as_mut() else { continue; };
-
-        // Schaden aus der Waffendefinition: Items -> ItemDef -> WeaponDef -> base.damage
-        let damage = items.0.get(&active_attack.item)
-            .and_then(|item_def| item_def.weapon.as_ref())
-            .map(|weapon_def| weapon_def.base.damage)
+        let damage = items.0.get(&active.item) 
+            .and_then(|d| d.weapon.as_ref())
+            .map(|w| w.base.damage)
             .unwrap_or(0.0);
 
-        // Die vier Eckpunkte der Waffen-Hitbox in Weltkoordinaten.
-        // Position, Rotation und Skalierung stecken in der GlobalTransform.
-        let weapon_corners = world_corners(weapon_hitbox, weapon_global_tf);
+        for &target in colliding.iter() {
+            if target == owner || active.hit_entities.contains(&target) { continue; }
 
-        for (target_entity, mut target_health, target_tf, target_hitbox) in &mut targets {
-            // Besitzer überspringen: kein Selbsttreffer
-            if target_entity == owner_entity { continue; }
-            // Ziel wurde in diesem Angriff schon getroffen: kein Mehrfachschaden
-            if active_attack.hit_entities.contains(&target_entity) { continue; }
-
-            // AABB = "Axis-Aligned Bounding Box": ein Rechteck, dessen Kanten
-            // parallel zur X- und Y-Achse liegen (nicht gedreht). Gespeichert als
-            // untere linke Ecke (min) und obere rechte Ecke (max).
-            // Gegner werden nicht rotiert, deshalb reicht eine AABB für sie.
-            let target_aabb = target_hitbox.aabb(target_tf.translation.truncate());
-
-            // Überschneidungstest gedrehtes Waffen-Rechteck gegen AABB
-            // (Separating Axis Theorem, siehe unten)
-            if obb_hits_aabb(&weapon_corners, &target_aabb) {
-                active_attack.hit_entities.push(target_entity); // als getroffen merken
-                target_health.health_points -= damage;
-                println!("HIT {target_entity:?}");
+            if let Ok(mut health) = targets.get_mut(target) {
+                health.health_points -= damage;
+                active.hit_entities.push(target);
             }
         }
     }

@@ -55,10 +55,30 @@ pub fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, pool: &ChunkPool, chunk_nu
   - gibt elemente selbst
   - ruft kein .clone() auf elementen auf
   - wenn elemente z.b. in andere sammlung verschoben werden sollen
-
+## nützliche Funktionen
+- `var.set_if_neq(new_val)` 
+  - setzt auf variable nur dann neuen wert, wenn sich neuer wert von var unterscheidet
+  - gibt `true` zurück, wenn geschrieben wurde
+- `.as_mut()`
+  - eigentlich trait `AsMut`
+  - variable die das aufruft erhält mutable referenz auf diese variable
+  ```rust
+    let mut a = Box::new(5);
+    let b = a.as_mut();
+    *b = 10;
+    println!("a is {}", a) // a is 10
+  ```
 
 # avian2d
-
+## CollisionLayers
+```rust
+pub struct CollisionLayers {
+    pub memberships: LayerMask,
+    pub filters: LayerMask,
+}
+```
+- membership: wozu gehört component (zu welcher layer)
+- filters: mit welchen layern kann man interacten
 ## RigidBody
 
 - types:
@@ -112,4 +132,4 @@ pub fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, pool: &ChunkPool, chunk_nu
 
 # Vec
 - clamp() 
-  - gib ein min unc max an, und der werte wird abgeschnitten, wenn er kleiner/größer als min max ist
+  - gib ein min und max an, und der werte wird abgeschnitten, wenn er kleiner/größer als min max ist

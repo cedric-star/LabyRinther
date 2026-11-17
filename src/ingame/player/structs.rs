@@ -8,11 +8,11 @@ use crate::ingame::items::modifier::*;
 use crate::components::*;
 use crate::constants::*;
 use crate::ingame::animation::*;
-use crate::ingame::items::structs::*;
 use crate::ingame::items::attack::structs::*;
+use crate::ingame::structs::*;
 
 #[derive(Component)]
-#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker, Hitbox, Hittable)]
+#[require(Transform, Stats, Health, Mana, Inventory, Equipment, Attacker, Hittable)]
 pub struct Player;
 
 
@@ -21,8 +21,7 @@ pub struct Player;
 #[derive(Component)] pub struct HandPivot;
 
 #[derive(Component)]
-#[require(Sensor)]
- pub struct HeldItemSprite(Option<ItemId>);
+ pub struct HeldItemSprite;
 
 
 impl Player {
@@ -78,6 +77,7 @@ impl Player {
             RigidBody::Dynamic,
             LockedAxes::ROTATION_LOCKED,//damit man sich nicht hässlich dreht
             Collider::circle(PLAYER_WIDTH / 2.0),
+            CollisionLayers::new(Layer::Player, [Layer::Wall, Layer::Enemy, Layer::EnemyWeapon]),
             Mass(10000000.0),
             Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, 1.0),
             Visibility::default(),
@@ -105,14 +105,15 @@ impl Player {
                     Visibility::default(),
                     Transform::default(),
                     children![(
-                        HeldItemSprite(None),
-                        Hitbox {
-                            size: Vec2::new(32.0, 32.0),
-                            offset: Vec2::new(0.0, 0.0),
-                        },
+                        HeldItemSprite,
                         Sprite::default(),
                         Anchor::BOTTOM_LEFT, //weil sprite mittig starten soll
                         Visibility::Hidden,
+                        Sensor,
+                        Collider::compound(vec![(Vec2::new(16.0, 16.0), 0.0, Collider::rectangle(32.0, 32.0))]),
+                        ColliderDisabled, 
+                        CollisionLayers::new(Layer::PlayerWeapon, [Layer::Enemy]),
+                        CollidingEntities::default(),
                     )]
                 )
             ],

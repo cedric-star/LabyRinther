@@ -88,7 +88,6 @@ pub fn ingame_plugin(app: &mut App) {
                 rebuild_equipped_stats,
                 sync_vitals,
                 sync_inventory_rows,
-                draw_hitbox,
                 draw_enemy_health_bar,
             )
                 .chain()

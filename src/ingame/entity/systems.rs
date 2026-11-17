@@ -6,7 +6,6 @@ use crate::ingame::entity::util::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::ingame::entity::structs::*;
-use crate::ingame::items::attack::structs::*;
 use crate::constants::*;
 
 
@@ -105,15 +104,3 @@ pub fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Vec3 {
 }
 
 
-
-
-
-pub fn draw_hitbox(
-    q: Query<(&Transform, &Hitbox), Or<(With<Attacker>, With<HandPivot>)>>,
-    mut gizmos: Gizmos,
-) {
-    if !DRAW_HITBOX { return; }
-    for (transform, hitbox) in &q {
-        hitbox.draw(&mut gizmos, *transform);
-    }
-}

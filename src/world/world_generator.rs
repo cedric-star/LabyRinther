@@ -7,6 +7,7 @@ use crate::constants::*;
 use crate::world::region::*;
 use crate::settings::settings_screen::*;
 use crate::ingame::player::structs::*;
+use crate::ingame::structs::*;
 
 pub fn load_map(
     mut commands: Commands,
@@ -86,6 +87,7 @@ pub fn load_map(
                     ));
                 if let Some(c) = collider {
                     chunk_cmd.insert(c);
+                    chunk_cmd.insert(CollisionLayers::new(Layer::Wall, [Layer::Player, Layer::Enemy]));
                 }
                 let chunk_entity = chunk_cmd.id();
 

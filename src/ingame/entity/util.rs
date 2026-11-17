@@ -6,13 +6,13 @@ use crate::components::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::animation::*;
 use crate::constants::*;
+use crate::ingame::structs::*;
 
 impl Default for Health {
     fn default() -> Self {
         Self {
             health_points: 100.0,
             max_health: 100.0,
-            health_regen: 1.0,      
         }
     }
 }
@@ -22,7 +22,6 @@ impl Default for Mana {
         Self {
             mana_points: 0.0,
             max_mana: 100.0,
-            mana_regen: 1.0,    
         }
     }
 }
@@ -43,6 +42,7 @@ pub fn get_enemy_bundle(
     (
         RigidBody::Dynamic,
         Collider::circle(PLAYER_WIDTH / 2.0),
+        CollisionLayers::new(Layer::Enemy, [Layer::Wall, Layer::Player, Layer::PlayerWeapon]),
         LockedAxes::ROTATION_LOCKED,//damit sich gegner nicht hässlich dreht
         GameEntity,
         Enemy::new(),
