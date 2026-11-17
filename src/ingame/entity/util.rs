@@ -42,7 +42,7 @@ pub fn get_enemy_bundle(
     (
         RigidBody::Dynamic,
         Collider::circle(PLAYER_WIDTH / 2.0),
-        CollisionLayers::new(Layer::Enemy, [Layer::Wall, Layer::Player, Layer::PlayerWeapon]),
+        CollisionLayers::new(Layer::Enemy, [Layer::Wall, Layer::Player, Layer::PlayerWeapon, Layer::Enemy]),
         LockedAxes::ROTATION_LOCKED,//damit sich gegner nicht hässlich dreht
         GameEntity,
         Enemy::new(),

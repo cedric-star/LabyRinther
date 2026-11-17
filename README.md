@@ -9,11 +9,11 @@ Private Nutzung und Weitergabe sind erlaubt, Namensnennung ist immer Pflicht.
 Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 # NEXT
+- enemies erhalten knockback
+- cleanup: unused imports, unused struct dinge (health mana eigentlich über stats)
 
-- enemies collidieren
 - enemies greifen an
 - enemies spawnen random verteilt
-- cleanup: unused imports, unused struct dinge (health mana eigentlich über stats)
 
 ---
 - physics engine (rapier, avian)
