@@ -5,11 +5,18 @@ use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::modifier::*;
 
+//bewege eneies in richtung player
 pub fn move_enemies(
+    time: Res<Time>,
     mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
+    const ACCEL: f32 = 8.0;
+
     let p_pos = player.translation.truncate();
+    let t = (ACCEL * time.delta_secs()).min(1.0);
+
+
 
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
         let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
@@ -18,7 +25,9 @@ pub fn move_enemies(
         //wenn enemy vom gegner weg ist (länge des vectors)
         if to_player.length() > enemy.stop_distance {
             let direction = to_player.normalize(); //richtungsvektor länge 1
-            l_vel.0 = direction * stats.get(Stat::WalkSpeed); //vektor auf richtung * geschwindigkeit setzen
+            let desired = direction * stats.get(Stat::WalkSpeed); //vektor auf richtung * geschwindigkeit setzen
+
+            l_vel.0 = l_vel.0.lerp(desired, t);
 
             //animation je nach richtung setzen
             new_anim = if direction.x.abs() > direction.y.abs() {
@@ -27,7 +36,7 @@ pub fn move_enemies(
             } else if direction.y > 0.0 { HumanoidState::WalkingBack.into() }
             else { HumanoidState::WalkingFront.into() }
         } else {
-            l_vel.0 = Vec2::ZERO;
+            l_vel.0 = l_vel.0.lerp(Vec2::ZERO, t);
             if let Anim::Humanoid(s) = new_anim {
                 new_anim = s.to_standing().into();
             }

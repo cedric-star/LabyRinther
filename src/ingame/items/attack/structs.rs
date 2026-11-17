@@ -3,24 +3,25 @@ use serde::{Serialize, Deserialize};
 use crate::ingame::items::structs::*;
 
 ////definition einer waffe
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct WeaponDef {// eigentliche waffe mit stats
     pub base: WeaponBase,
     pub kind: WeaponKind,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct WeaponBase {
     pub damage: f32,
+    pub knockback: f32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum WeaponKind {
     Dagger(DaggerDef),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct DaggerDef {
     pub distance: f32, //von player mitt zu dieser entfernung in maus richtung eine linie: alles in der linie ist getroffen, in pixeln 
     pub duration: f32, //zeit von klick über ausgefahrenen dolch zurück zum normalen zustand in sekunden

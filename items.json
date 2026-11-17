@@ -55,7 +55,10 @@
     "tier": "F",
     "max_stack": 1,
     "weapon": {
-      "base": {"damage": 35.0},
+      "base": {
+        "damage": 35.0,
+        "knockback": 500.0
+      },
       "kind": {
         "type": "dagger",
         "distance": 10.0,

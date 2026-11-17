@@ -149,26 +149,38 @@ pub fn weapon_contact(
     items: Res<Items>,
     weapons: Query<(&CollidingEntities, &ChildOf), (With<HeldItemSprite>, Without<ColliderDisabled>)>,
     pivots: Query<&ChildOf, With<HandPivot>>,
-    mut attackers: Query<&mut Attacker>,
-    mut targets: Query<&mut Health, With<Hittable>>,
+    mut attackers: Query<(&mut Attacker, &Transform)>,
+    mut targets: Query<(&mut Health, &Transform, &ComputedMass, Forces), With<Hittable>>,
 ) {
     for (colliding, parent) in &weapons {
         let Ok(pivot_parent) = pivots.get(parent.parent()) else { continue; };
         let owner = pivot_parent.parent();
-        let Ok(mut attacker) = attackers.get_mut(owner) else { continue; };
+        let Ok((mut attacker, attacker_tf)) = attackers.get_mut(owner) else { continue; };
         let Some(active) = attacker.active.as_mut() else { continue; };
 
-        let damage = items.0.get(&active.item) 
-            .and_then(|d| d.weapon.as_ref())
-            .map(|w| w.base.damage)
-            .unwrap_or(0.0);
+        let weapon_def: WeaponDef = match items.0.get(&active.item) {
+            Some(item) => {
+                match &item.weapon {
+                    Some(weapon) => { *weapon }
+                    None => { continue; }
+                }
+            }
+            None => { continue; }
+        };
+
+        let damage = weapon_def.base.damage;
 
         for &target in colliding.iter() {
             if target == owner || active.hit_entities.contains(&target) { continue; }
 
-            if let Ok(mut health) = targets.get_mut(target) {
+            if let Ok((mut health, transform, mass, mut forces)) = targets.get_mut(target) {//hier passiert der hit
                 health.health_points -= damage;
                 active.hit_entities.push(target);
+
+                let knockback = weapon_def.base.knockback;
+                let impulse_vec = active.aim.normalize_or_zero() * knockback * mass.value();
+                forces.apply_linear_impulse(impulse_vec);
+                info!("hit {:?}, impulse {:?}, aim {:?}", target, impulse_vec, active.aim);
             }
         }
     }
