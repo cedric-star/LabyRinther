@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::picking::hover::Hovered;
-use bevy::ui::*;
 use crate::ingame::player::structs::*;
 use bevy::window::PrimaryWindow;
 use crate::ingame::items::structs::*;

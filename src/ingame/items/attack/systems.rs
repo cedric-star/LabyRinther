@@ -180,7 +180,6 @@ pub fn weapon_contact(
                 let knockback = weapon_def.base.knockback;
                 let impulse_vec = active.aim.normalize_or_zero() * knockback * mass.value();
                 forces.apply_linear_impulse(impulse_vec);
-                info!("hit {:?}, impulse {:?}, aim {:?}", target, impulse_vec, active.aim);
             }
         }
     }

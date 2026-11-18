@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::math::*;
 use crate::constants::*;
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -17,17 +16,6 @@ pub struct LastState(pub Option<GameState>);
 pub struct GameEntity;
 
 
-#[derive(Component, Default)]
-struct Position {
-    pub x: f32,
-    pub y: f32,
-}
-
-#[derive(Component)]
-struct Collider {
-    width: f32,
-    height: f32,
-}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Tile {
@@ -139,17 +127,6 @@ impl RoomType {
     }
 }
 
-pub struct Connection {
-    pub from: RoomId,
-    pub to: RoomId,
-
-    pub kind: ConnectionKind,
-}
-
-pub enum ConnectionKind {
-    Corridor,
-    Maze,
-}
 
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub struct RoomId(pub i32);
