@@ -35,7 +35,7 @@ pub struct Enemy {
     pub stop_distance: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 pub enum EnemyTarget {
     NextPlayer,
     Nothing,

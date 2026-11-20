@@ -78,9 +78,10 @@ pub fn ingame_plugin(app: &mut App) {
                 switch_clip,
                 weapon_use,
                 set_attacker,
+                set_enemy_player_seen,
                 //resolve_hits,
                 animate_held_item,
-                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(3))),
+                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(5))),
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(

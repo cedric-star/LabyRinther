@@ -1,33 +1,24 @@
 use bevy::prelude::*;
 use avian2d::prelude::*;
+use crate::ingame::entity::structs::EnemyTarget::NextPlayer;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::modifier::*;
-use crate::components::*;
+use crate::world::grid::*;
 
 //hat ein enemy einen player gesehen? -> dann soll verfolgung aufgenommen werden!
 pub fn set_enemy_player_seen(
     mut enemies: Query<(&mut Enemy, &Transform)>,
-    chunks: Query<&Chunk>,
+    grid: WorldGrid,
     player: Single<&Transform, With<Player>>,
 ) {
-    let player_tile = player
-                    .translation
-                    .truncate()
-                    .as_ivec2()
-                    .world_to_tile();
-
-    
-                
-    let chunks: Vec<&Chunk> = chunks.iter().collect();
-    
-    for (enemy, transform) in &mut enemies {
-        let enemy_tile = transform
-            .translation
-            .truncate()
-            .as_ivec2()
-            .world_to_tile();
+    for (mut enemy, transform) in &mut enemies {
+        let can_view = grid.can_view(&enemy, transform, &player);
+        if enemy.target != NextPlayer && can_view {
+            enemy.target = EnemyTarget::NextPlayer;
+            println!("see player!!!");
+        }
     }
 }
 
@@ -37,6 +28,7 @@ pub fn move_enemies(
     mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
+    
     const ACCEL: f32 = 8.0;
 
     let p_pos = player.translation.truncate();
@@ -45,6 +37,7 @@ pub fn move_enemies(
 
 
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
+        if enemy.target == EnemyTarget::Nothing { return; }
         let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
         let mut new_anim = *anim;
 
