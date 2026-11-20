@@ -4,6 +4,32 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::modifier::*;
+use crate::components::*;
+
+//hat ein enemy einen player gesehen? -> dann soll verfolgung aufgenommen werden!
+pub fn set_enemy_player_seen(
+    mut enemies: Query<(&mut Enemy, &Transform)>,
+    chunks: Query<&Chunk>,
+    player: Single<&Transform, With<Player>>,
+) {
+    let player_tile = player
+                    .translation
+                    .truncate()
+                    .as_ivec2()
+                    .world_to_tile();
+
+    
+                
+    let chunks: Vec<&Chunk> = chunks.iter().collect();
+    
+    for (enemy, transform) in &mut enemies {
+        let enemy_tile = transform
+            .translation
+            .truncate()
+            .as_ivec2()
+            .world_to_tile();
+    }
+}
 
 //bewege eneies in richtung player
 pub fn move_enemies(

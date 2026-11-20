@@ -17,7 +17,8 @@ use crate::ingame::items::attack::systems::*;
 use crate::ingame::animation::*;
 use crate::ingame::entity::systems::*;
 use crate::ingame::items::attack::structs::*;
-use crate::ingame::entity::enemy::*;
+use crate::ingame::entity::move_enemy::*;
+use crate::ingame::entity::spawn_enemy::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app

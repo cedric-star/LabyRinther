@@ -9,7 +9,6 @@ Private Nutzung und Weitergabe sind erlaubt, Namensnennung ist immer Pflicht.
 Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 # NEXT
-- enemies spawnen random verteilt
 - enemies finden klugen pfad
 - enemies halten waffe in hand
 - enemies greifen an

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::structs::*;
+use crate::components::*;
 
 #[derive(Component)]
 pub struct MyEntity;
@@ -29,7 +30,15 @@ pub struct Velocity {
 #[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hittable)]
 pub struct Enemy {
     pub weapon: ItemId,
+    pub heading: Direction,
+    pub target: EnemyTarget,
     pub stop_distance: f32,
+}
+
+#[derive(Component)]
+pub enum EnemyTarget {
+    NextPlayer,
+    Nothing,
 }
 
 #[derive(Component)]
@@ -46,7 +55,9 @@ impl Enemy {
     pub fn new() -> Self {
         Self {
             weapon: ItemId::WoddenDagger,
+            target: EnemyTarget::Nothing,
             stop_distance: 4.0,
+            heading: Direction::North,
         }
     }
 }

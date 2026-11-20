@@ -99,10 +99,31 @@ pub struct Room {
 }
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum Direction {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST,
+    North,
+    East,
+    South,
+    West,
+}
+
+impl Direction {
+    //angle as degrees
+    pub fn from_angle_deg(angle: f32) -> Direction {
+        //corner:
+            // 45°
+            // 135°
+            // 225°
+            // 315° 
+        let angle = angle.rem_euclid(360.0);
+
+        match angle {
+            a if a < 45.0  => Direction::North,
+            a if a < 135.0 => Direction::East,
+            a if a < 225.0 => Direction::South,
+            a if a < 315.0 => Direction::West,
+            _                   => Direction::North, 
+        
+        }
+    }
 }
 
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]

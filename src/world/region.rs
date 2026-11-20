@@ -132,7 +132,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
             // genau ein Eingang: öffnet die Wand zwischen Raum und Nachbarzelle
             let entry = random_direction(&mut rng);
             let (a, b, entry_cords) = match entry {
-                Direction::NORTH => {
+                Direction::North => {
                     let k = rng.below(w);
                     (
                         cell(cx + k, cy + h - 1),
@@ -140,7 +140,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                         IVec2::new(origin(cx + k) + 1, origin(cy + h) - 1),
                     )
                 }
-                Direction::SOUTH => {
+                Direction::South => {
                     let k = rng.below(w);
                     (
                         cell(cx + k, cy),
@@ -148,7 +148,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                         IVec2::new(origin(cx + k) + 1, origin(cy) - 1),
                     )
                 }
-                Direction::EAST => {
+                Direction::East => {
                     let k = rng.below(h);
                     (
                         cell(cx + w - 1, cy + k),
@@ -156,7 +156,7 @@ fn generate_maze(seed: u64) -> (RegionMap, Vec<Room>) {
                         IVec2::new(origin(cx + w) - 1, origin(cy + k) + 1),
                     )
                 }
-                Direction::WEST => {
+                Direction::West => {
                     let k = rng.below(h);
                     (
                         cell(cx, cy + k),
@@ -228,10 +228,10 @@ fn random_room_type(rng: &mut Rng) -> RoomType {
 
 fn random_direction(rng: &mut Rng) -> Direction {
     match rng.below(4) {
-        0 => Direction::NORTH,
-        1 => Direction::EAST,
-        2 => Direction::SOUTH,
-        _ => Direction::WEST,
+        0 => Direction::North,
+        1 => Direction::East,
+        2 => Direction::South,
+        _ => Direction::West,
     }
 }
 

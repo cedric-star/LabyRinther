@@ -1,13 +1,25 @@
 # Bevy
 
-## Ressourcen
+## SystemParam
+- systeme = funktion deren parameter automatisch gefüllt werden
+- eigene `SystemParam` struct hat nur solche (Query, Res, ..) als attribute
+- `SystemParam` bündelt System Parameter zu einem
+  - also `fn system(pool: Res<ChunkPool>, chunks: Query<&Chunk>, ...) { ... }`
+  - wird zu `fn system(grid: WorldGrid, ...) { ... }`
+- zwei lifetimes: `'w` und `'s`
+- `'w` wird an alle parameter übergeben, die (world-lifetime)
+  - auf weltdaten zugreifen
+  - query, res, resmut, commands
+- `'s` wird an alle parameter übergeben, die (state-lifetime)
+  - einen Zustand halten
+  - local, comands, ...
 
+## Ressourcen
 - quasi ein Singleton
 - mit `commands.insert_resource()` da erstellt man selber
 - mit `commands.init_resource<>()` da wird Default aufgerufen
 
 ## States
-
 - State des spiels (ingame, settings, splashmenu, ...)
 - als enum definiert, ein enum element muss `#[default]` haben
 - dann mit `init_state::<enum>()`
@@ -16,14 +28,12 @@
   - dann `next.set(...)`
 
 ### Scoped
-
 - Componente `StateScoped` hinzufügen:
   `.enable_state_scoped_entities::<GameState>()`
 - dann in einem `impl Bundle`: `StateScoped(enum)` setzten
 - dieses Entity wird beim verlassen des states automatisch gelöscht
 
 ## Plugins
-
 - für Plugin ein struct ohne alles anlegen `struct MyPlugin;`
 - dann `impl Plugin for MyPlugin`
   - `fn build(&self, app: &mut App)`
