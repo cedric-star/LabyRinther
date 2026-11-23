@@ -50,7 +50,7 @@ impl Grid for WorldGrid<'_, '_> {
         let to = IVec2::transform_to_tile(to_view);
 
         //wenn to_view direkt um enemy ist dann wird er immer gesehen
-        let tiles_near_enemy = from_tile.get_surrounding(1);
+        let tiles_near_enemy = from_tile.get_surrounding(3);
         if tiles_near_enemy.contains(&to) { return true; }
 
         if Direction::from_vec(dir_vec) != viewer.heading { return false; }
