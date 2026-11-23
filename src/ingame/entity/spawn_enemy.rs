@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::structs::*;
-
+use crate::constants::*;
 
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(
@@ -21,6 +21,7 @@ pub fn spawn_enemy_near_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    spatial_query: SpatialQuery,
 ) {
     //player
     let p_pos = player.translation;
@@ -40,15 +41,30 @@ pub fn spawn_enemy_near_player(
     //filtered: only chunks near player (number based on settings)
     let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.chunks_enemy_spawnable, p_chunk_pos);
 
-    //a world koordinate, where a place is free
-    let Some(enemy_spawn_point) = find_enemy_spawn_point(p_pos, chunks_2_spawn_enemies) else {return;};
 
+    for _ in 1..=5 {
+        //a world koordinate, where a place is free
+        let Some(enemy_spawn_point) = find_enemy_spawn_point(p_pos, &chunks_2_spawn_enemies) else {continue;};
 
-    commands.spawn(get_enemy_bundle(
-        enemy_spawn_point,
-        &asset_server, 
-        &mut texture_atlas_layouts
-    ));
+        //schauen ob da schon ein gegner ist
+        if spatial_query.shape_intersections(
+            &Collider::circle(PLAYER_WIDTH / 2.0), 
+            enemy_spawn_point.truncate(),
+            0.0,
+            &SpatialQueryFilter::from_mask([
+                Layer::Enemy,
+                Layer::Player,
+                Layer::Wall,
+            ])
+        ).is_empty() {// wenn frei dann spawnen und loop unterbrechen
+            commands.spawn(get_enemy_bundle(
+                enemy_spawn_point,
+                &asset_server, 
+                &mut texture_atlas_layouts
+            ));
+            break;
+        }//wenn nicht insgesammt 5 mal neu probieren einen punkt zu finden
+    }
 }
 
 //lifetime checker weis nicht, ob rückgabe chunks aus vec<chunks> oder chunkpool stammt -> fehler
@@ -73,12 +89,11 @@ fn chunks_spawn_enemy<'a>(chunks: Vec<&'a Chunk>, chunk_num: f32, p_pos: IVec2) 
 }
 
 //finde einen freien chunk in den verfügbaren chunks
-fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Option<Vec3> {
+fn find_enemy_spawn_point(p_pos: Vec3, chunks: &Vec<&Chunk>) -> Option<Vec3> {
     //let chunk = chunks.
     let mut rng = rand::rng();
-    let idx = rng.random_range(0..chunks.len());
+    let chunk = chunks.choose(&mut rand::rng())?;
 
-    let Some(chunk) = chunks.get(idx) else { return None; };
     let Some(tile_cords) = find_free_tile_in_chunk(*chunk) else {return None; };
 
     let tile_pos_in_chunk_middle_point = tile_cords.tile_to_world() + IVec2::splat((PLAYER_WIDTH / 2.0) as i32);
@@ -89,28 +104,31 @@ fn find_enemy_spawn_point(p_pos: Vec3, chunks: Vec<&Chunk>) -> Option<Vec3> {
 
 //finde ein tile in einem chunk das floor ist, und drumherum ein kreis aus floors
 fn find_free_tile_in_chunk(chunk: &Chunk) -> Option<IVec2> {
-    //alle row und col indexe durchlaufen und tiles holen
-    for (col_idx, _) in chunk.tiles.iter().enumerate() {
-        'tile_loop: for (row_idx, tile) in chunk.tiles[col_idx].iter().enumerate() {
 
-            //ränder des chunks ausschließen
-            if row_idx == 0 || row_idx == 7 { continue; }
-            if col_idx == 0 || col_idx == 7 { continue; }
+    let mut possible_tiles: Vec<IVec2> = Vec::new();
 
-            //wenn tile floor is..
-            if *tile == Tile::Floor {
-                //.. dann prüfe ob ring da ist
-                for x in 1_i32..=-1_i32 { for y in -1_i32..1 {
-                    if chunk.tiles[col_idx + x as usize][row_idx + y as usize] != Tile::Floor {
-                        continue 'tile_loop;
+    //chunk borders nicht spawnable machen, also last und 1 statt 0
+    let last = CHUNK_SIZE as usize - 1;
+    for col in 1..last {
+        'tile: for row in 1..last {
+            if chunk.tiles[col][row] != Tile::Floor { continue; }
+
+            //3x3 tile umgebung prüfen
+            for dx in -1_i32..=1 {
+                for dy in -1_i32..=1 {
+                    let c = (col as i32 + dx) as usize;
+                    let r = (row as i32 + dy) as usize;
+
+                    if chunk.tiles[c][r] != Tile::Floor {
+                        continue 'tile;
                     }
-                }}
-                return Some(IVec2::new(col_idx as i32, row_idx as i32));
-
+                }
             }
+            possible_tiles.push(IVec2::new(col as i32, row as i32));
         }
     }
-    return None;
+    possible_tiles.choose(&mut rand::rng()).copied()
+
 }
 
 
