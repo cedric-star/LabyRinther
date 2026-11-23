@@ -44,16 +44,18 @@ impl Grid for WorldGrid<'_, '_> {
         //pos in welcher richtung? -> richtung bestimmen
         let dir_vec = to_view.translation.truncate() - viewer_pos.translation.truncate();
 
+        //enemy_tile
+        let from_tile = IVec2::transform_to_tile(viewer_pos);
+        //2 view tile
+        let to = IVec2::transform_to_tile(to_view);
+
         //wenn to_view direkt um enemy ist dann wird er immer gesehen
         let tiles_near_enemy = from_tile.get_surrounding(1);
         if tiles_near_enemy.contains(&to) { return true; }
 
         if Direction::from_vec(dir_vec) != viewer.heading { return false; }
 
-        //enemy_tile
-        let from_tile = IVec2::transform_to_tile(viewer_pos);
-        //2 view tile
-        let to = IVec2::transform_to_tile(to_view);
+
 
  
         //current für algorithmus setzen
