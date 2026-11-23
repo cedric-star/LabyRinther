@@ -78,6 +78,7 @@ fn main() {
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
         .insert_resource(WorldSeed{ seed: 3 })
+        .insert_resource(Gravity(Vec2::ZERO))
         .add_systems(Startup, setup_cam)
         .add_systems(StateTransition, track_previous_state.before(EnterSchedules::<GameState>::default()),)
         .add_systems(Update, (update_cam, track_previous_state))

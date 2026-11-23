@@ -43,6 +43,11 @@ impl Grid for WorldGrid<'_, '_> {
     fn can_view(&self, viewer: &Enemy, viewer_pos: &Transform, to_view: &Transform) -> bool {
         //pos in welcher richtung? -> richtung bestimmen
         let dir_vec = to_view.translation.truncate() - viewer_pos.translation.truncate();
+
+        //wenn to_view direkt um enemy ist dann wird er immer gesehen
+        let tiles_near_enemy = from_tile.get_surrounding(1);
+        if tiles_near_enemy.contains(&to) { return true; }
+
         if Direction::from_vec(dir_vec) != viewer.heading { return false; }
 
         //enemy_tile
@@ -50,10 +55,7 @@ impl Grid for WorldGrid<'_, '_> {
         //2 view tile
         let to = IVec2::transform_to_tile(to_view);
 
-        //wenn to_view direkt um enemy ist dann wird er immer gesehen
-        let tiles_near_enemy = from_tile.get_surrounding(1);
-        if tiles_near_enemy.contains(&to) { return true; }
-
+ 
         //current für algorithmus setzen
         let mut cur = from_tile;
 
