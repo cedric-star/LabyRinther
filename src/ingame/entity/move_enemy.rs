@@ -37,7 +37,7 @@ pub fn move_enemies(
 
 
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
-        if enemy.target == EnemyTarget::Nothing { return; }
+        if enemy.target == EnemyTarget::Nothing { continue; }
         let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
         let mut new_anim = *anim;
 

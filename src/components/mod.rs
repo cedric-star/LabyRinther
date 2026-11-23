@@ -58,7 +58,12 @@ pub trait CordsExt {
     fn region_to_world(self) -> IVec2; //unterer linker pixel der region
     fn region_to_tile(self) -> IVec2; //unterer linker tile der region
     fn region_to_chunk(self) -> IVec2; //unterer linker chunk in einer region
+
+    //funky extra funcs
+    fn transform_to_tile(tr: &Transform) -> Self; //nimmt eine world pos und berechnet tile koordinate
+    fn get_surrounding(&self, size: i32) -> Vec<IVec2>;
 }
+
 
 impl CordsExt for IVec2 {
     fn world_to_tile(self) -> IVec2 { self.div_euclid(TILE_SIZE_VEC2) }
@@ -76,6 +81,28 @@ impl CordsExt for IVec2 {
     fn region_to_world(self) -> IVec2 { self * REGION_WORLD_SIZE }
     fn region_to_tile(self) -> IVec2 { self * REGION_TILE_SIZE }
     fn region_to_chunk(self) -> IVec2 { self * REGION_SIZE }
+
+    fn transform_to_tile(tr: &Transform) -> Self {
+        tr.translation 
+            .truncate()
+            .floor()
+            .as_ivec2() 
+            .world_to_tile()
+    }
+
+    //unabhängig von tile oder chunk, auf alle anwendbar, da mit ganzzahligen zahlen gerechnet wird.
+    fn get_surrounding(&self, size: i32) -> Vec<IVec2> {
+        let mut my_vec: Vec<IVec2> = Vec::new();
+
+        for x in -size..=size { for y in -size..=size {
+            let mut new_cord = *self;
+            new_cord.x = self.x + x;
+            new_cord.y = self.y + y;
+            my_vec.push(new_cord);
+        }}
+
+        my_vec
+    }
 }
 
 #[derive(Component, Clone, Debug)]
@@ -106,26 +133,32 @@ pub enum Direction {
 }
 
 impl Direction {
-    //angle as degrees
+    /// angle in Grad, wie von Vec2::to_angle().to_degrees() geliefert:
+    /// 0° = Ost (+X), 90° = Nord (+Y), gegen den Uhrzeigersinn
     pub fn from_angle_deg(angle: f32) -> Direction {
-        //corner:
-            // 45°
-            // 135°
-            // 225°
-            // 315° 
-        let angle = angle.rem_euclid(360.0);
+        let angle = angle.rem_euclid(360.0); // -30° -> 330°, alles in 0..360
 
         match angle {
-            a if a < 45.0  => Direction::North,
-            a if a < 135.0 => Direction::East,
-            a if a < 225.0 => Direction::South,
-            a if a < 315.0 => Direction::West,
-            _                   => Direction::North, 
-        
+            a if a <  45.0 => Direction::East,
+            a if a < 135.0 => Direction::North,
+            a if a < 225.0 => Direction::West,
+            a if a < 315.0 => Direction::South,
+            _              => Direction::East, // 315..360 gehört wieder zu Ost
+        }
+    }
+
+    //alternative: from vector2d
+    pub fn from_vec(v: Vec2) -> Direction {
+        // Die dominante Achse entscheidet
+        if v.x.abs() > v.y.abs() {
+            if v.x > 0.0 { Direction::East } else { Direction::West }
+        } else if v.y > 0.0 {
+            Direction::North
+        } else {
+            Direction::South
         }
     }
 }
-
 #[derive(Component,Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum RoomType {
     SMALL,
