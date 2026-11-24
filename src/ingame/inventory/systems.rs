@@ -99,7 +99,7 @@ pub fn update_inventory(
 }
 
 //setzt items in hotbar + stückzahl setzen
-pub fn update_inventory_items(
+pub fn update_hotbar_items_ui(
     inventory: Single<&Inventory, With<Player>>,
     mut hotbar: Query<(&HotBarItem, &mut ImageNode, &mut Visibility), Without<HotBarItemNum>>,
     mut hotbar_item: Query<(&HotBarItemNum, &mut Text, &mut Visibility), Without<HotBarItem>>,

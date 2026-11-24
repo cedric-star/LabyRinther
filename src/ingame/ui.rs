@@ -150,7 +150,7 @@ pub fn get_info_tooltip(comp: impl Component) -> impl Bundle {
     )
 }
 
-pub fn update_ui(
+pub fn update_selected_hotbar_slot_ui(
     inventory: Single<&Inventory, With<Player>>,
     mut hot_bar_slot: Query<&mut Node, With<HotBarSelector>>,
 ) {

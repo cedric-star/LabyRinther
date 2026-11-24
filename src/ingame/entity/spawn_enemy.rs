@@ -30,7 +30,9 @@ pub fn spawn_enemy_near_player(
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     spatial_query: SpatialQuery,
+    enemy_res: Res<Enemies>,
 ) {
+    if enemy_res.num >= enemy_res.max { return; }
     //player
     let p_pos = player.translation;
     let p_chunk_pos = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_chunk();

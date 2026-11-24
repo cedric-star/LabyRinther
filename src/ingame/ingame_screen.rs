@@ -24,63 +24,116 @@ pub fn ingame_plugin(app: &mut App) {
     app
         .init_resource::<CursorItem>()
         .init_resource::<CraftableItems>()
-        .add_systems(
-            OnEnter(GameState::InGame),
-            (
-                startup.run_if(not(any_with_component::<Player>)),
-                spawn_ui,
-            ).chain(),
+        .add_message::<AttackHit>()
 
+        //---------
+        //startup
+        .add_systems(OnEnter(GameState::InGame),(
+            startup.run_if(not(any_with_component::<Player>)),//nur wennn player nicht schon existiert
+            spawn_ui,
+        ).chain(),)
+        //---------
+
+        //---------
+        //beim exit aus ingame
+        .add_systems(OnExit(GameState::InGame),
+        cleanup_ui,
         )
-        .add_systems(
-            OnExit(GameState::InGame),
-            cleanup_ui,
+
+        //wenn in welcom gegangen wird, alles löschen/aufräumen
+        .add_systems(OnEnter(GameState::Welcome),
+         cleanup_game
         )
-        .add_systems(OnEnter(GameState::Welcome), cleanup_game)
-        .add_systems(
+        //---------
+
+        //---------
+        //fixed update: controls, alles was fest oft durchlaufen wird
+       .add_systems(
             FixedUpdate,
             (
-                controls, 
-                load_map,
-                move_enemies,
+                controls, //spieler mit wasd bewegen
+                load_map, //map laden (chunks, ...) für player, um chunksize
+                move_enemies, //gegner automatisch bewegen (einfach rumlaufen oder verfolgen, ...)
             ).run_if(in_state(GameState::InGame)),
         )
+        //---------
+
+        //---------
+        // normale updates
+
+        // ui für player
         .add_systems(
             Update,
             (
-                sync_craftable_ui,
-                craftable_hover,
-                craftable_click,
-                set_hotkeys,
-                update_bars,
-                //movement,
-                update_ui,
-                update_inventory_items,
-                inventory_click.before(update_inventory),
-                update_inventory,
-                update_euqipped_info_text,
-                update_cursor_visual,
-                update_inventory_info_text,
-                update_equipment_ui,
+                //crafting
+                set_craftable_items.run_if(on_timer(Duration::from_millis(200))), //craftable items berechnen
+                craftable_click, //erkennt klicks im craft menü -> einzelne items/alle craften und in schwebende ansich heben
+
+                //items im ui anhand von informationen anzeigen
+                update_cursor_visual, //aktualisiert schwebende anzeige im ui -> item sprite setzen
+                update_equipment_ui, //zeigt items aus euqipment inventar im ui an
+                sync_craftable_ui, //zeigt craftable items links im ui, anhand verfügbarer items im inventar
+                update_inventory,//items im inventar im ui anzeigen
+                update_hotbar_items_ui, //zeigt items im ui aus hotbar an 
+
+                //tooltips
+                update_inventory_info_text, //tooltip für items aus normalen inventar slots
+                update_euqipped_info_text, //tooltip für items aus equipment slots
+                craftable_hover, //wenn über craftable item gehovered -> tooltip anzeigen 
+
+                //andere
+                set_hotkeys, //tastenerennung für 0-9 und setzen hotkeys + und e für inventar öffnen     
+                update_selected_hotbar_slot_ui, //ausgewählten hotbarslot im ui anzeigen
+                inventory_click.before(update_inventory), //erkennt klick in inventar -> sschwebende anzeige
+            ).run_if(in_state(GameState::InGame))
+        )
+
+        //health/mana/armor systeme
+        .add_systems(
+            Update,
+            (
+                update_bars, //bars oben rechts in ecke: mana, health, armor
+                mana_regen.run_if(on_timer(Duration::from_secs(1))), //mana regenerieren
+                health_regen.run_if(on_timer(Duration::from_secs(1))), //health regenerieren
+                despawn_enemy_by_health, //gegner weg, wenn tot
+
+            ).run_if(in_state(GameState::InGame)),
+        )
+
+        //item interaktionen/bezogene dinge /(und waffen)
+        .add_systems(
+            Update,
+            (
+                use_item_system, //wenn ein item ausgewählt und benutzt wird -> aktion durchführen
+                weapon_use, //wenn weapon geklickt
+            ).run_if(in_state(GameState::InGame)),
+        )
+
+        //enemy spezifische systee
+        .add_systems(
+            Update,
+            (
+                set_enemy_player_seen,
+            ).run_if(in_state(GameState::InGame)),
+        )
+
+
+ 
+        .add_systems(
+            Update,
+            (    
                 mov_cam,
-                use_item_system,
-                mana_regen.run_if(on_timer(Duration::from_secs(1))),
-                health_regen.run_if(on_timer(Duration::from_secs(1))),
-                set_craftable_items.run_if(on_timer(Duration::from_millis(200))),
             ).run_if(in_state(GameState::InGame)),
         )
-        .add_message::<AttackHit>()
         .add_systems(
             Update,
             (
-                despawn_enemy_by_health,
                 animate_entity,
                 switch_clip,
-                weapon_use,
                 set_attacker,
-                set_enemy_player_seen,
                 //resolve_hits,
                 animate_held_item,
+                set_enemies_num_res,
                 spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(1))),
             ).run_if(in_state(GameState::InGame)),
         )

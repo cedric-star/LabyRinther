@@ -13,7 +13,7 @@ pub struct RegionPool {
     pub regions: HashMap<IVec2, Entity>,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct Enemies {
     pub num: u32,
     pub max: u32,
@@ -21,7 +21,7 @@ pub struct Enemies {
 
 impl Default for Enemies {
     fn default() -> Self {
-        Slef {
+        Self {
             num: 0,
             max: 4,
         }
