@@ -10,12 +10,21 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::structs::*;
 
+pub fn set_enemies_num_res(
+    mut enemies_res: ResMut<Enemies>,
+    enemies: Query<&Enemy>,
+) {
+    let num = enemies.iter().count() as u32;
+    if num != enemies_res.num {
+        enemies_res.num = num;
+    }
+}
+
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(
     s: Res<GameSettings>,
     player: Single<&Transform, With<Player>>,
     region_pool: Res<RegionPool>,
-    regions: Query<&Region>,
     chunks: Query<&Chunk>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -29,17 +38,12 @@ pub fn spawn_enemy_near_player(
     //region in dem player is
     let r_cords = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_region();
     let Some(&region_entity) = region_pool.regions.get(&r_cords) else { return; };
-    let Ok(region) = regions.get(region_entity) else { return; };
-
-    //chunks loaded
-    let chunk_num = chunks.iter().count();
 
     //all chunks as vec
     let chunk_vec: Vec<&Chunk> = chunks.iter().collect();
 
     //filtered: only chunks near player (number based on settings)
     let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.chunks_enemy_spawnable, p_chunk_pos);
-
 
     for _ in 1..=5 {
         //a world koordinate, where a place is free

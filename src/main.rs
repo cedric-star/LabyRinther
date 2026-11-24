@@ -77,6 +77,7 @@ fn main() {
         .init_resource::<LastState>()
         .init_resource::<ChunkPool>()
         .init_resource::<RegionPool>()
+        .init_resource::<Enemies>()
         .insert_resource(WorldSeed{ seed: 3 })
         .insert_resource(Gravity(Vec2::ZERO))
         .add_systems(Startup, setup_cam)
