@@ -9,7 +9,6 @@ use crate::constants::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::structs::*;
-use crate::constants::*;
 
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(
@@ -97,7 +96,7 @@ fn find_enemy_spawn_point(p_pos: Vec3, chunks: &Vec<&Chunk>) -> Option<Vec3> {
     let Some(tile_cords) = find_free_tile_in_chunk(*chunk) else {return None; };
 
     let tile_pos_in_chunk_middle_point = tile_cords.tile_to_world() + IVec2::splat((PLAYER_WIDTH / 2.0) as i32);
-    let enemy_cords = (chunk.cords.chunk_to_world() + tile_pos_in_chunk_middle_point).extend(0);
+    let enemy_cords = (chunk.cords.chunk_to_world() + tile_pos_in_chunk_middle_point).extend(ZLayer::Enemy.z().floor() as i32);
 
     return Some(enemy_cords.as_vec3());
 }
@@ -170,12 +169,12 @@ pub fn get_enemy_bundle(
         children![
             (
                 Sprite { custom_size: Some(Vec2::new(35.0, 2.0)), color: Color::srgb(1.0, 0.0, 0.0), ..default() },
-                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, 0.1),
+                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, ZLayer::EnemyHealthBarForeground.z()),
                 EnemyHealthBar,
             ),
             (
                 Sprite { custom_size: Some(Vec2::new(35.0, 2.0)), color: Color::srgb(0.5, 0.1, 0.1), ..default() },
-                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, 0.05),
+                Transform::from_xyz(0.0, (PLAYER_HEIGHT / 2.0) + 2.0, ZLayer::EnemyHealthBarBackground.z()),
                 EnemyHealthBarBackground,
             ),
         ],

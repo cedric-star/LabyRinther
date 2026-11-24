@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::constants::*;
+use crate::{constants::*, ingame::entity::structs::EnemyHealthBar};
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {
@@ -16,6 +16,38 @@ pub struct LastState(pub Option<GameState>);
 pub struct GameEntity;
 
 
+pub enum ZLayer {
+    Floor,
+    Wall, 
+    Enemy,
+    EnemyHealthBarBackground,
+    EnemyHealthBarForeground,
+    Player,
+    Weapon,
+    Projectile,
+    Ui,
+    UiLevatating,
+    Camera,
+}
+
+impl ZLayer {
+    pub const fn z(self) -> f32 {
+        use ZLayer::*;
+        match self {
+            Floor => 0.0,
+            Wall => 5.0,
+            Enemy => 10.0,
+            EnemyHealthBarBackground => 11.0,
+            EnemyHealthBarForeground => 12.0,
+            Player => 15.0,
+            Weapon => 20.0,
+            Projectile => 25.0,
+            Ui => 30.0,
+            UiLevatating => 35.0,
+            Camera => 100.0,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Tile {
@@ -32,6 +64,12 @@ impl Tile {
             Tile::Floor => "ground_simple.png",
             Tile::RoomFloor => "room_ground_simple.png", // später eigene Textur
             Tile::RoomEntry => "ground_simple.png",     // später eigene Textur
+        }
+    }
+    pub fn get_z_layer(&self) -> ZLayer {
+        match self {
+            Tile::Wall => ZLayer::Wall,
+            Tile::Floor | Tile::RoomFloor | Tile::RoomEntry => ZLayer::Floor,
         }
     }
 }

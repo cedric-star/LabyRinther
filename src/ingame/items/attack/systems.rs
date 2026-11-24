@@ -150,7 +150,7 @@ pub fn weapon_contact(
     weapons: Query<(&CollidingEntities, &ChildOf), (With<HeldItemSprite>, Without<ColliderDisabled>)>,
     pivots: Query<&ChildOf, With<HandPivot>>,
     mut attackers: Query<(&mut Attacker, &Transform)>,
-    mut targets: Query<(&mut Health, &Transform, &ComputedMass, Forces), With<Hittable>>,
+    mut targets: Query<(&mut Enemy, &mut Health, &Transform, &ComputedMass, Forces), With<Hittable>>,
 ) {
     for (colliding, parent) in &weapons {
         let Ok(pivot_parent) = pivots.get(parent.parent()) else { continue; };
@@ -173,10 +173,10 @@ pub fn weapon_contact(
         for &target in colliding.iter() {
             if target == owner || active.hit_entities.contains(&target) { continue; }
 
-            if let Ok((mut health, transform, mass, mut forces)) = targets.get_mut(target) {//hier passiert der hit
+            if let Ok((mut enemy, mut health, transform, mass, mut forces)) = targets.get_mut(target) {//hier passiert der hit
                 health.health_points -= damage;
                 active.hit_entities.push(target);
-
+                enemy.target = EnemyTarget::NextPlayer;
                 let knockback = weapon_def.base.knockback;
                 let impulse_vec = active.aim.normalize_or_zero() * knockback * mass.value();
                 forces.apply_linear_impulse(impulse_vec);

@@ -33,7 +33,7 @@ fn setup_cam(
             },
             ..OrthographicProjection::default_2d()
         }),
-        Transform::from_xyz(0.0, 0.0, 1.0),
+        Transform::from_xyz(0.0, 0.0, ZLayer::Camera.z()),
         Velocity {x: 0.0, y: 0.0 },
         Anchor::CENTER,
     ));

@@ -81,7 +81,7 @@ pub fn load_map(
                     .spawn((
                         GameEntity,
                         Chunk { tiles, cords: chunk_cords },
-                        Transform::from_xyz(chunk_world_pos.x, chunk_world_pos.y, 0.0),
+                        Transform::from_xyz(chunk_world_pos.x, chunk_world_pos.y, ZLayer::Wall.z()),
                         Visibility::default(),
                         RigidBody::Static,
                     ));
@@ -94,6 +94,7 @@ pub fn load_map(
                 commands.entity(chunk_entity).with_children(|parent| {
                     for (local_x, row) in tiles.iter().enumerate() {
                         for (local_y, tile) in row.iter().enumerate() {
+                            let z = tile.get_z_layer().z();
                             parent.spawn((
                                 GameEntity,
                                 Sprite {
@@ -104,7 +105,7 @@ pub fn load_map(
                                 Transform::from_xyz(
                                     local_x as f32 * TILE_SIZE as f32,
                                     local_y as f32 * TILE_SIZE as f32,
-                                    0.0,
+                                    z,
                                 ),
                                 Anchor::BOTTOM_LEFT,
                             ));

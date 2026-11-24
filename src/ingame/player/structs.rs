@@ -79,7 +79,7 @@ impl Player {
             Collider::circle(PLAYER_WIDTH / 2.0),
             CollisionLayers::new(Layer::Player, [Layer::Wall, Layer::Enemy, Layer::EnemyWeapon]),
             Mass(10000000.0),
-            Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, 1.0),
+            Transform::from_xyz(16.0 + PLAYER_WIDTH as f32 / 2.0, 16.0 + PLAYER_HEIGHT as f32 / 2.0, ZLayer::Player.z()),
             Visibility::default(),
             children![
                 (
