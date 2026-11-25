@@ -9,7 +9,11 @@ Private Nutzung und Weitergabe sind erlaubt, Namensnennung ist immer Pflicht.
 Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
 # NEXT
-- enemies finden klugen pfad
+
+- settings aufsplitten -> über game änderbar und nicht, über ui änderbar
+- inventar/ui anzeige nicht als fettes system, sonder über gamestate (Ingame(IngameState) oder so) 
+- enemies laufen funky herum wenn kein gegner gesehen
+- enemy nicht rein sekundnebasiert, sondern wellenbasiert spawnen (zb. jede minute eine welle, mit verschiedenen größen)
 - enemies halten waffe in hand
 - enemies greifen an
 

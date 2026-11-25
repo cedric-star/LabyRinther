@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::components::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::ingame::player::structs::*;
 use crate::util::ui::constants::*;
 use crate::ingame::inventory::structs::*;
@@ -12,7 +12,7 @@ pub fn get_craftable_item_field(
     player: &Player,
     craftable_items: &CraftableItems
 ) -> impl Bundle {
-    let scale = s.ui_scale * 0.27;
+    let scale = s.ui.ui_scale * 0.27;
     (
         IngameUi,
         GameEntity,

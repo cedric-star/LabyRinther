@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::util::ui::constants::*;
 use crate::ingame::player::structs::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::ingame::status_bars::*;
 use crate::ingame::recipes::structs::*;
 use crate::ingame::recipes::ui::*;
@@ -19,7 +19,7 @@ pub fn spawn_ui(
     craftable_items: Res<CraftableItems>,
 ) {
     let col = Color::srgba(1.0,1.0,1.0,0.1);
-    let scale = s.ui_scale;
+    let scale = s.ui.ui_scale;
     let Ok(player) = player.single() else {
         println!("no player found");
         return; // kein oder mehrere Spieler

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 use avian2d::prelude::*;
 use crate::ingame::player::structs::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
@@ -45,7 +45,7 @@ pub fn spawn_enemy_near_player(
     let chunk_vec: Vec<&Chunk> = chunks.iter().collect();
 
     //filtered: only chunks near player (number based on settings)
-    let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.chunks_enemy_spawnable, p_chunk_pos);
+    let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.gameplay.chunks_enemy_spawnable, p_chunk_pos);
 
     for _ in 1..=5 {
         //a world koordinate, where a place is free

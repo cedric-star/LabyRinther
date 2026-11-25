@@ -5,7 +5,7 @@ use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
 use crate::world::region::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::structs::*;
 
@@ -37,7 +37,7 @@ pub fn load_map(
             .copied()
             .filter(|c| {
                 !player_chunks.iter().any(|p| {
-                    (c.x - p.x).abs() <= s.chunks_loading && (c.y - p.y).abs() <= s.chunks_loading
+                    (c.x - p.x).abs() <= s.ui.chunks_loading && (c.y - p.y).abs() <= s.ui.chunks_loading
                 })
             })
             .collect();
@@ -47,8 +47,8 @@ pub fn load_map(
                 commands.entity(entity).despawn();
             }
         }
-        for c_view_x in -s.chunks_loading..=s.chunks_loading {
-            for c_view_y in -s.chunks_loading..=s.chunks_loading {
+        for c_view_x in -s.ui.chunks_loading..=s.ui.chunks_loading {
+            for c_view_y in -s.ui.chunks_loading..=s.ui.chunks_loading {
                 let chunk_cords = IVec2::new(player_chunk_x + c_view_x, player_chunk_y + c_view_y);
 
                 if pool.chunks.contains_key(&chunk_cords) {

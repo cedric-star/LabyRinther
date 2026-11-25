@@ -1,62 +1,25 @@
-use bevy::prelude::*;
-use bevy::ui_widgets::*;
-use bevy::ui::*;
 use bevy::picking::hover::*;
-use bevy::input_focus::tab_navigation::{TabNavigationPlugin};
-use bevy::input_focus::InputDispatchPlugin;
-use bevy::ui_widgets::{
-    SliderPlugin, SliderRange, SliderValue, UiWidgetsPlugins,
-    ValueChange,
-};
+use bevy::prelude::*;
+use bevy::ui::*;
+use bevy::ui_widgets::*;
+
 use crate::components::*;
-use crate::util::ui::constants::*;
+use crate::settings::aspect_ratio::*;
+use crate::settings::settings::*;
 use crate::util::ui::buttons::*;
+use crate::util::ui::constants::*;
 
-#[derive(Resource)]
-pub struct GameSettings {
-    pub mov_speed: u64,
-    pub camera_mult: f32,
-    pub camera_width: f32,
-    pub camera_height: f32,
-    pub player_walk_border_width: f32,
-    pub player_walk_border_height: f32,
-    pub chunks_loading: i32,
-    pub ui_scale: f32,
-    pub chunks_enemy_spawnable: f32, //baut viereck um player chunk, mit in jede richtung, 1-> 1chunk, 2-> 3x3chunks, 3->7x7 chunks, ...
-}
+// ---------------------------------------------------------------------------
+// Slider-Bindings (Zahlen-Settings)
+// ---------------------------------------------------------------------------
 
-impl Default for GameSettings {
-    fn default() -> Self {
-        #![allow(non_upper_case_globals)]
-        const camera_mult: f32 = 2.0;
-        const camera_width: f32 = 480.0 * camera_mult;
-        const camera_height: f32 = 270.0 * camera_mult;
-
-        Self {
-            mov_speed: 4,
-
-            camera_mult,
-            camera_width,
-            camera_height,
-
-            player_walk_border_width: camera_width / (1.5 * camera_mult),
-            player_walk_border_height: camera_height / (1.5 * camera_mult),
-
-            chunks_loading: 6,
-
-            ui_scale: 6.0,
-
-            chunks_enemy_spawnable: 1.0,
-        }
-    }
-}
-
-macro_rules! setting {
+/// Bindet ein Feld aus `GameSettings.ui` an einen Slider.
+macro_rules! ui_setting {
     ($label:expr, $field:ident, $min:expr, $max:expr, $step:expr) => {
         SettingBinding {
             label: $label,
-            get: |s| s.$field as f32,
-            set: |s, v| s.$field = v as _, // `as _` nimmt automatisch den Typ des Feldes
+            get: |s| s.ui.$field as f32,
+            set: |s, v| s.ui.$field = v as _, // `as _` nimmt automatisch den Typ des Feldes
             min: $min,
             max: $max,
             step: $step,
@@ -64,33 +27,45 @@ macro_rules! setting {
     };
 }
 
+/// Neues Slider-Setting = eine neue Zeile. Abgeleitete Werte werden
+/// automatisch über `GameSettings::recompute()` nachgezogen.
 const SETTINGS: &[SettingBinding] = &[
-    setting!("Move Speed", mov_speed, 1.0, 12.0, 1.0),
-    SettingBinding {
-        label: "Camera Zoom",
-        get: |s| s.camera_mult,
-        set: |s, v| {
-            s.camera_mult = v;
-            s.camera_width = 480.0 * v;
-            s.camera_height = 270.0 * v;
-            s.player_walk_border_width = s.camera_width / (1.5 * v);
-            s.player_walk_border_height = s.camera_height / (1.5 * v);
-        },
-        min: 2.0,
-        max: 8.0,
-        step: 0.1,
-    },
-    setting!("Chunks Loading", chunks_loading, 2.0, 16.0, 1.0),
-    setting!("UI Scale", ui_scale, 2.0, 8.0, 0.1),
-
-    // neues Setting = eine neue Zeile
+    ui_setting!("Camera Zoom", camera_mult, 2.0, 8.0, 0.1),
+    ui_setting!("Chunks Loading", chunks_loading, 2.0, 16.0, 1.0),
+    ui_setting!("UI Scale", ui_scale, 2.0, 8.0, 0.1),
+    // mov_speed & Co. sind bewusst NICHT hier -> nicht im UI änderbar
 ];
 
+// ---------------------------------------------------------------------------
+// Auswahl-Settings (Buttons)
+// ---------------------------------------------------------------------------
+
+const ASPECTS: [(AspectRatio, &str); 4] = [
+    (AspectRatio::R16_9, "16:9"),
+    (AspectRatio::R16_10, "16:10"),
+    (AspectRatio::R4_3, "4:3"),
+    (AspectRatio::R21_9, "21:9"),
+];
+
+const COL_BG: Color = Color::srgb(0.15, 0.15, 0.15);
+const COL_SELECTED: Color = Color::srgb(0.30, 0.45, 0.30);
+const COL_TEXT: Color = Color::srgb(0.9, 0.9, 0.9);
+
 #[derive(Component)]
-struct GoBackButton;
+pub struct AspectButton(AspectRatio);
+
+#[derive(Component)]
+pub struct ResolutionButton(f32); // Fensterhöhe
+
+// ---------------------------------------------------------------------------
+// Komponenten
+// ---------------------------------------------------------------------------
+
+#[derive(Component)]
+pub struct GoBackButton;
 
 #[derive(Component, Clone, Copy)]
-struct SettingBinding {
+pub struct SettingBinding {
     label: &'static str,
     get: fn(&GameSettings) -> f32,
     set: fn(&mut GameSettings, f32),
@@ -114,57 +89,29 @@ impl SettingBinding {
 }
 
 #[derive(Component)]
-struct DemoSlider;
+pub struct DemoSlider;
 
 #[derive(Component)]
-struct DemoSliderThumb;
+pub struct DemoSliderThumb;
 
 #[derive(Component)]
-struct SettingValueText(SettingBinding);
-
-pub fn settings_plugin(app: &mut App) {
-    // Widget-Plugins nur hinzufügen, falls sie nicht schon woanders aktiv sind.
-    if !app.is_plugin_added::<SliderPlugin>() {
-        app.add_plugins(UiWidgetsPlugins);
-    }
-    if !app.is_plugin_added::<InputDispatchPlugin>() {
-        app.add_plugins(InputDispatchPlugin);
-    }
-    if !app.is_plugin_added::<TabNavigationPlugin>() {
-        app.add_plugins(TabNavigationPlugin);
-    }
-
-    app
-        .add_systems(OnEnter(GameState::Settings), settings_setup)
-        .add_systems(
-            Update,
-            (
-                go_back_button,
-                update_slider_pos,
-                update_value_texts,
-                button_visuals,
-                slider_thumb_visuals,
-            ).run_if(in_state(GameState::Settings)),
-        )
-        .add_observer(on_setting_change);
-}
+pub struct SettingValueText(SettingBinding);
 
 // ---------------------------------------------------------------------------
 // UI-Aufbau
 // ---------------------------------------------------------------------------
 
-fn settings_setup(
+pub fn settings_setup(
     mut commands: Commands,
     settings: Res<GameSettings>,
     asset_server: Res<AssetServer>,
     previous: Res<LastState>,
-    s: Res<GameSettings>,
 ) {
     let radio_images = ButtonImages::load_btn_radio(&asset_server);
     let prev_text = match previous.0 {
-        Some(GameState::Welcome) => { "Go Back" },
-        Some(GameState::InGame) => { "Unpause" },
-        _ => { "nonono not nog ):" },
+        Some(GameState::Welcome) => "Go Back",
+        Some(GameState::InGame) => "Unpause",
+        _ => "nonono not nog ):",
     };
 
     let root = commands
@@ -184,10 +131,28 @@ fn settings_setup(
         .id();
 
     commands.entity(root).with_children(|p| {
+        // Slider-Zeilen
         for b in SETTINGS {
             p.spawn(setting_row(*b, &settings, &radio_images));
         }
 
+        // Seitenverhältnis
+        spawn_option_row(
+            p,
+            "Aspect Ratio",
+            ASPECTS.iter().map(|(a, l)| (l.to_string(), AspectButton(*a))),
+        );
+
+        // Auflösung (Fensterhöhe, Breite folgt aus dem Seitenverhältnis)
+        spawn_option_row(
+            p,
+            "Resolution",
+            WINDOW_HEIGHTS
+                .iter()
+                .map(|h| (format!("{}p", *h as u32), ResolutionButton(*h))),
+        );
+
+        // Zurück / Unpause
         p.spawn((
             GoBackButton,
             Button,
@@ -199,36 +164,26 @@ fn settings_setup(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+            BackgroundColor(COL_BG),
             children![(
                 Text::new(prev_text),
                 TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                TextColor(COL_TEXT),
             )],
         ));
     });
 }
 
-/// Eine Zeile: Label links, Slider rechts. Das Binding sitzt direkt auf dem Slider.
-fn setting_row(b: SettingBinding, settings: &GameSettings, imgs: &ButtonImages) -> impl Bundle {
-
+/// Eine Zeile: Label links, Slider mitte, Wert rechts. Das Binding sitzt direkt auf dem Slider.
+pub fn setting_row(b: SettingBinding, settings: &GameSettings, imgs: &ButtonImages) -> impl Bundle {
     (
-        Node {
-            width: percent(80),
-            height: px(65),
-            padding: UiRect::horizontal(px(20)),
-            justify_content: JustifyContent::SpaceBetween,
-            align_items: AlignItems::Center,
-            flex_direction: FlexDirection::Row,
-            column_gap: px(20),
-            ..default()
-        },
-        BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+        row_node(),
+        BackgroundColor(COL_BG),
         children![
             (
                 Text::new(b.label),
                 TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                TextColor(COL_TEXT),
             ),
             (
                 slider(b.min, b.max, (b.get)(settings), DemoSlider, DemoSliderThumb, &imgs),
@@ -237,18 +192,79 @@ fn setting_row(b: SettingBinding, settings: &GameSettings, imgs: &ButtonImages) 
             (
                 Text::new(b.format((b.get)(settings))),
                 TextFont { font_size: FontSize::Px(33.0), ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                TextColor(COL_TEXT),
                 Node { width: px(60), ..default() }, // feste Breite, damit das Layout nicht springt
                 SettingValueText(b),
-)        ],
+            ),
+        ],
     )
+}
+
+fn row_node() -> Node {
+    Node {
+        width: percent(80),
+        height: px(65),
+        padding: UiRect::horizontal(px(20)),
+        justify_content: JustifyContent::SpaceBetween,
+        align_items: AlignItems::Center,
+        flex_direction: FlexDirection::Row,
+        column_gap: px(20),
+        ..default()
+    }
+}
+
+/// Zeile mit Label links und einer Reihe von Buttons rechts.
+/// `C` ist die Marker-Komponente des jeweiligen Buttons (AspectButton, ResolutionButton, ...).
+fn spawn_option_row<C: Component>(
+    parent: &mut ChildSpawnerCommands,
+    label: &str,
+    options: impl IntoIterator<Item = (String, C)>,
+) {
+    parent
+        .spawn((row_node(), BackgroundColor(COL_BG)))
+        .with_children(|row| {
+            row.spawn((
+                Text::new(label),
+                TextFont { font_size: FontSize::Px(33.0), ..default() },
+                TextColor(COL_TEXT),
+            ));
+
+            row.spawn(Node {
+                column_gap: px(10),
+                align_items: AlignItems::Center,
+                ..default()
+            })
+            .with_children(|buttons| {
+                for (text, marker) in options {
+                    buttons.spawn((
+                        marker,
+                        Button,
+                        Hovered::default(),
+                        Node {
+                            min_width: px(90),
+                            height: px(45),
+                            padding: UiRect::horizontal(px(12)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(COL_BG),
+                        children![(
+                            Text::new(text),
+                            TextFont { font_size: FontSize::Px(26.0), ..default() },
+                            TextColor(COL_TEXT),
+                        )],
+                    ));
+                }
+            });
+        });
 }
 
 // ---------------------------------------------------------------------------
 // Logik
 // ---------------------------------------------------------------------------
 
-fn on_setting_change(
+pub fn on_setting_change(
     change: On<ValueChange<f32>>,
     mut commands: Commands,
     bindings: Query<&SettingBinding>,
@@ -258,10 +274,58 @@ fn on_setting_change(
         let value = b.snap(change.value);
         commands.entity(change.source).insert(SliderValue(value));
         (b.set)(&mut settings, value);
+        settings.recompute(); // abgeleitete Werte (Kamera, Walk-Border, ...) nachziehen
     }
 }
 
-fn update_value_texts(
+/// `Pressed` ist solange vorhanden, wie der Button gehalten wird. Deshalb wird nur
+/// geschrieben, wenn sich der Wert wirklich ändert (sonst würde `GameSettings`
+/// jeden Frame als geändert markiert und Kamera/Fenster ständig neu gesetzt).
+pub fn aspect_button_system(
+    query: Query<(Has<Pressed>, &AspectButton)>,
+    mut settings: ResMut<GameSettings>,
+) {
+    for (pressed, btn) in &query {
+        if pressed && settings.ui.aspect != btn.0 {
+            settings.ui.aspect = btn.0;
+            settings.recompute();
+        }
+    }
+}
+
+pub fn resolution_button_system(
+    query: Query<(Has<Pressed>, &ResolutionButton)>,
+    mut settings: ResMut<GameSettings>,
+) {
+    for (pressed, btn) in &query {
+        if pressed && settings.ui.window_height != btn.0 {
+            settings.ui.window_height = btn.0;
+            settings.recompute();
+        }
+    }
+}
+
+/// Markiert den aktuell gewählten Button farblich.
+pub fn update_option_highlight(
+    settings: Res<GameSettings>,
+    mut aspects: Query<(&AspectButton, &mut BackgroundColor), Without<ResolutionButton>>,
+    mut resolutions: Query<(&ResolutionButton, &mut BackgroundColor), Without<AspectButton>>,
+) {
+    for (btn, mut bg) in &mut aspects {
+        let col = if btn.0 == settings.ui.aspect { COL_SELECTED } else { COL_BG };
+        if bg.0 != col {
+            bg.0 = col;
+        }
+    }
+    for (btn, mut bg) in &mut resolutions {
+        let col = if btn.0 == settings.ui.window_height { COL_SELECTED } else { COL_BG };
+        if bg.0 != col {
+            bg.0 = col;
+        }
+    }
+}
+
+pub fn update_value_texts(
     settings: Res<GameSettings>,
     mut texts: Query<(&SettingValueText, &mut Text)>,
 ) {
@@ -273,8 +337,9 @@ fn update_value_texts(
         text.0 = b.format((b.get)(&settings));
     }
 }
+
 /// Thumb-Position aus dem Slider-Wert berechnen.
-fn update_slider_pos(
+pub fn update_slider_pos(
     sliders: Query<
         (Entity, &SliderValue, &SliderRange),
         (With<DemoSlider>, Or<(Changed<SliderValue>, Changed<SliderRange>)>),
@@ -291,14 +356,15 @@ fn update_slider_pos(
     }
 }
 
-
-fn go_back_button(
+pub fn go_back_button(
     query: Query<Has<Pressed>, With<GoBackButton>>,
     mut next_state: ResMut<NextState<GameState>>,
     previous: Res<LastState>,
 ) {
     for pressed in &query {
-        if !pressed { return; }
+        if !pressed {
+            continue;
+        }
         if previous.0 == Some(GameState::InGame) {
             next_state.set(GameState::InGame);
         } else {

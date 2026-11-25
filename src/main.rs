@@ -15,7 +15,7 @@ use components::*;
 use resources::*;
 use welcome::welcome_screen::*;
 use ingame::ingame_screen::*;
-use settings::settings_screen::*;
+use settings::settings::*;
 use ingame::items::structs::*;
 use ingame::recipes::structs::*;
 use ingame::entity::structs::*;
@@ -28,8 +28,8 @@ fn setup_cam(
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
             scaling_mode: ScalingMode::AutoMax {
-                max_width: s.camera_width,
-                max_height: s.camera_height,
+                max_width: s.derived.camera_width,
+                max_height: s.derived.camera_height,
             },
             ..OrthographicProjection::default_2d()
         }),
@@ -49,8 +49,8 @@ fn update_cam(
     for mut projection in &mut cameras {
         if let Projection::Orthographic(ortho) = &mut *projection {
             ortho.scaling_mode = ScalingMode::AutoMax {
-                max_width: s.camera_width,
-                max_height: s.camera_height,
+                max_width: s.derived.camera_width,
+                max_height: s.derived.camera_height,
             }
         }
     }

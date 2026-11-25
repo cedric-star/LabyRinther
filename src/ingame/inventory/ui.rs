@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::ingame::structs::*;
 use crate::ingame::inventory::structs::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::util::ui::constants::*;
 
 
@@ -10,7 +10,7 @@ pub fn get_inventory(
     asset_server: &AssetServer,
     s: &GameSettings,
 ) -> impl Bundle {
-    let scale = s.ui_scale * 0.27;
+    let scale = s.ui.ui_scale * 0.27;
     let slot_pic: Handle<Image> = asset_server.load("ingame_ui/item_slot.png");
     let pic_normal = slot_pic.clone();
     let pic_usables = slot_pic.clone();

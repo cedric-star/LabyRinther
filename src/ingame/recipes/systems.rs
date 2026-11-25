@@ -3,7 +3,7 @@ use bevy::window::PrimaryWindow;
 use bevy::picking::hover::Hovered;
 use std::collections::HashMap;
 use crate::ingame::items::structs::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::ingame::player::structs::*;
 use crate::util::ui::constants::*;
 use crate::ingame::inventory::structs::*;
@@ -90,7 +90,7 @@ pub fn sync_craftable_ui(
     // fehlende slots spawnen
     for (i, stack) in craftable.0.iter().enumerate() {
         if existing.contains_key(&i) { continue; }
-        let scale = s.ui_scale;
+        let scale = s.ui.ui_scale;
         let asset = items.0.get(&stack.id).unwrap().asset.clone();
 
         commands.entity(list_entity).with_children(|parent| {

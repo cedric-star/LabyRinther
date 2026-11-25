@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::ingame::player::structs::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::util::ui::constants::*;
 use crate::components::*;
 use crate::ingame::structs::*;
@@ -21,7 +21,7 @@ pub fn get_bars(
     player: &Player,
 ) -> impl Bundle {
 
-    let scale = s.ui_scale;
+    let scale = s.ui.ui_scale;
     (
         IngameUi,
         GameEntity,

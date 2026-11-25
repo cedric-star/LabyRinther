@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::window::*;
 use avian2d::prelude::*;
 use crate::components::*;
-use crate::settings::settings_screen::*;
+use crate::settings::settings::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::items::modifier::*;
@@ -91,8 +91,8 @@ pub fn controls(
     let p = p_transform.translation.truncate();
     let offset = p - cam.translation.truncate();
     let clamped = offset.clamp(
-        Vec2::new(-s.player_walk_border_width, -s.player_walk_border_height),
-        Vec2::new(s.player_walk_border_width, s.player_walk_border_height),
+        Vec2::new(-s.derived.player_walk_border_width, -s.derived.player_walk_border_height),
+        Vec2::new(s.derived.player_walk_border_width, s.derived.player_walk_border_height),
     );
     let target = p - clamped;
     cam.translation.x = target.x;
