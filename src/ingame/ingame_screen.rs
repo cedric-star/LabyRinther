@@ -85,6 +85,7 @@ pub fn ingame_plugin(app: &mut App) {
                 set_hotkeys, //tastenerennung für 0-9 und setzen hotkeys + und e für inventar öffnen     
                 update_selected_hotbar_slot_ui, //ausgewählten hotbarslot im ui anzeigen
                 inventory_click.before(update_inventory), //erkennt klick in inventar -> sschwebende anzeige
+                mov_cam, //kamera soll player verfolgen
             ).run_if(in_state(GameState::InGame))
         )
 
@@ -113,43 +114,44 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                set_enemy_player_seen,
+                set_enemy_player_seen, //überwacht enemies und esetzt wenn player gesehen wurde
+                set_enemies_num_res, //überwacht und setzt anzahl an gegnern
+                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(1))), //gegner jede sekunde spawnen
+                draw_enemy_health_bar, //malt enemy health bar, anhand der health
             ).run_if(in_state(GameState::InGame)),
         )
 
+        //entity normale sachen (animationen, attacks)
+        .add_systems(
+            Update,
+            (   
+                switch_clip, //überwacht animationsstate und setzt entsprechende animationssprites 
+                animate_entity, //schaltet frames aus spriteatlas für animationen zeitbasiert weiter
+                animate_held_item, //animiert sprite in hand des attackers & setzt animationsinfos im struct für waffentypspezifische angriffe
+                set_attacker, //aktiven angriff zeitbasiert setzen/beenden
+            ).run_if(in_state(GameState::InGame)),
+        )
 
  
-        .add_systems(
-            Update,
-            (    
-                mov_cam,
-            ).run_if(in_state(GameState::InGame)),
-        )
+        //stats/modifier spezifische systeme (equipment -> stat setzen)
         .add_systems(
             Update,
             (
-                animate_entity,
-                switch_clip,
-                set_attacker,
-                //resolve_hits,
-                animate_held_item,
-                set_enemies_num_res,
-                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(1))),
+                rebuild_equipped_stats, //geht equipped items in inventar durch und setzt stats (modifier)
+                sync_vitals, //setzt maximales mana/health anhand von stats
+                sync_inventory_rows, //inventarreihenanzahl anhand von stats setzen
+                
             ).run_if(in_state(GameState::InGame)),
         )
-        .add_systems(
-            Update,
-            (
-                rebuild_equipped_stats,
-                sync_vitals,
-                sync_inventory_rows,
-                draw_enemy_health_bar,
-            )
-                .chain()
-                .run_if(in_state(GameState::InGame)),
-        )
+        //---------
+
+        //---------
+        //nach nocrmalen updates
+        
+        //angriff/schaden
         .add_systems(
             PostUpdate,
-            weapon_contact.after(TransformSystems::Propagate),
+            weapon_contact.after(TransformSystems::Propagate), //erkennt hit und verteilt schaden/knockback,...
         );
+        //---------
 }
