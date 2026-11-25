@@ -38,7 +38,7 @@ pub struct Enemy {
 #[derive(Component, PartialEq)]
 pub enum EnemyTarget {
     NextPlayer,
-    Nothing,
+    Nothing(Vec2),//einfach irgendeine random richtung
 }
 
 #[derive(Component)]
@@ -55,7 +55,7 @@ impl Enemy {
     pub fn new() -> Self {
         Self {
             weapon: ItemId::WoddenDagger,
-            target: EnemyTarget::Nothing,
+            target: EnemyTarget::Nothing(Vec2::ZERO),
             stop_distance: 4.0,
             heading: Direction::North,
         }

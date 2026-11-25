@@ -28,7 +28,6 @@ pub fn move_enemies(
     mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
     player: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
-    
     const ACCEL: f32 = 8.0;
 
     let p_pos = player.translation.truncate();
@@ -37,7 +36,14 @@ pub fn move_enemies(
 
 
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
-        if enemy.target == EnemyTarget::Nothing { continue; }
+        //wenn enemy einfach nur rumlaufen soll
+        if matches!(enemy.target, EnemyTarget::Nothing(_)) { 
+            
+            continue; 
+        }
+        
+
+        //wenn enemy gegner verfolgen soll
         let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
         let mut new_anim = *anim;
 
