@@ -63,6 +63,13 @@ pub fn settings_plugin(app: &mut App) {
 // Settings-Structs
 // ---------------------------------------------------------------------------
 
+#[derive(Resource, Clone)]
+pub struct GameSettings {
+    pub ui: UiSettings,
+    pub gameplay: GameplaySettings,
+    pub derived: DerivedSettings,
+}
+
 /// Vom Spieler im Menü einstellbar.
 #[derive(Clone)]
 pub struct UiSettings {
@@ -82,6 +89,7 @@ pub struct GameplaySettings {
     pub chunks_enemy_spawnable: f32,
     /// Teiler für die Walk-Border (vorher die Magic Number 1.5)
     pub walk_border_factor: f32,
+    pub enemy_waves: EnemyWaveSettings,
 }
 
 /// Wird nie direkt geschrieben, nur von `GameSettings::recompute()` berechnet.
@@ -94,12 +102,12 @@ pub struct DerivedSettings {
     pub window_width: f32,
 }
 
-#[derive(Resource, Clone)]
-pub struct GameSettings {
-    pub ui: UiSettings,
-    pub gameplay: GameplaySettings,
-    pub derived: DerivedSettings,
+#[derive(Clone)]
+pub struct EnemyWaveSettings {
+    pub free_time: f32, //sekunden zwischen waves
+    pub enemy_num: u32, //insgesamt/maximal gespawnte enemies pro wave
 }
+
 
 impl Default for GameSettings {
     fn default() -> Self {
@@ -114,6 +122,10 @@ impl Default for GameSettings {
             gameplay: GameplaySettings {
                 chunks_enemy_spawnable: 1.0,
                 walk_border_factor: 1.5,
+                enemy_waves: EnemyWaveSettings {
+                    free_time: 5.0,
+                    enemy_num: 5,
+                }
             },
             derived: DerivedSettings::default(),
         };

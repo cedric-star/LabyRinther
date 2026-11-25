@@ -9,16 +9,7 @@ use crate::constants::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::structs::*;
-
-pub fn set_enemies_num_res(
-    mut enemies_res: ResMut<Enemies>,
-    enemies: Query<&Enemy>,
-) {
-    let num = enemies.iter().count() as u32;
-    if num != enemies_res.num {
-        enemies_res.num = num;
-    }
-}
+use crate::ingame::entity::enemy_waves::*;
 
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(
@@ -30,9 +21,14 @@ pub fn spawn_enemy_near_player(
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     spatial_query: SpatialQuery,
-    enemy_res: Res<Enemies>,
+    mut enemy_res: ResMut<Enemies>,
 ) {
-    if enemy_res.num >= enemy_res.max { return; }
+    //anhand von wave-logik spawnen / abbrechen
+    if !enemy_res.is_active || 
+        enemy_res.spawned_this_wave >= s.gameplay.enemy_waves.enemy_num 
+    { return; }
+
+
     //player
     let p_pos = player.translation;
     let p_chunk_pos = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_chunk();
@@ -67,6 +63,8 @@ pub fn spawn_enemy_near_player(
                 &asset_server, 
                 &mut texture_atlas_layouts
             ));
+            enemy_res.spawned_this_wave += 1;
+            enemy_res.alive += 1;
             break;
         }//wenn nicht insgesammt 5 mal neu probieren einen punkt zu finden
     }

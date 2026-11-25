@@ -19,6 +19,7 @@ use settings::settings::*;
 use ingame::items::structs::*;
 use ingame::recipes::structs::*;
 use ingame::entity::structs::*;
+use ingame::entity::enemy_waves::*;
 
 fn setup_cam(
     mut commands: Commands,

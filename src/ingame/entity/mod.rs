@@ -4,3 +4,4 @@ pub mod ui;
 pub mod util;
 pub mod move_enemy;
 pub mod spawn_enemy;
+pub mod enemy_waves;

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::ingame::entity::structs::*;
+use crate::ingame::entity::enemy_waves::*;
 
 pub fn draw_enemy_health_bar(
     enemies: Query<&Health, With<Enemy>>,
@@ -18,10 +19,14 @@ pub fn draw_enemy_health_bar(
 pub fn despawn_enemy_by_health(
     enemies: Query<(&Health, Entity), With<Enemy>>,
     mut commands: Commands,
+    mut enemy_res: ResMut<Enemies>,
 ) {
     for (health, entity) in &enemies {
         if health.health_points <= 0.0 {
             commands.entity(entity).despawn();
+            if enemy_res.alive != 0 {
+                enemy_res.alive = enemy_res.alive.saturating_sub(1);//over/underflow verhinder
+            }
         }
     }
 }

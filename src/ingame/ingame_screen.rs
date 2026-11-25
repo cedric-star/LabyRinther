@@ -19,6 +19,7 @@ use crate::ingame::entity::systems::*;
 use crate::ingame::items::attack::structs::*;
 use crate::ingame::entity::move_enemy::*;
 use crate::ingame::entity::spawn_enemy::*;
+use crate::ingame::entity::enemy_waves::*;
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -115,8 +116,8 @@ pub fn ingame_plugin(app: &mut App) {
             Update,
             (
                 set_enemy_player_seen, //überwacht enemies und esetzt wenn player gesehen wurde
-                set_enemies_num_res, //überwacht und setzt anzahl an gegnern
-                spawn_enemy_near_player.run_if(on_timer(Duration::from_secs(1))), //gegner jede sekunde spawnen
+                set_waves, //überwacht waves und setzt aktiv/inaktiv
+                spawn_enemy_near_player.run_if(on_timer(Duration::from_millis(200))), //gegner jede sekunde spawnen
                 draw_enemy_health_bar, //malt enemy health bar, anhand der health
             ).run_if(in_state(GameState::InGame)),
         )
