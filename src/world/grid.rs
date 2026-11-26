@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
 use crate::constants::*;
-use crate::ingame::entity::structs::*;
+use crate::ingame::entity::enemy::*;
 
 pub trait Grid {
     //eingabe tilekoordinate -> tile? (floor, wall, ...)

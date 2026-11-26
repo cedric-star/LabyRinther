@@ -115,6 +115,7 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
+                set_enemy_movement, //zustand zwischen laufen und stehen  schalten wenn gegner kein ziel hat
                 set_enemy_player_seen, //überwacht enemies und esetzt wenn player gesehen wurde
                 set_waves, //überwacht waves und setzt aktiv/inaktiv
                 spawn_enemy_near_player.run_if(on_timer(Duration::from_millis(200))), //gegner jede sekunde spawnen

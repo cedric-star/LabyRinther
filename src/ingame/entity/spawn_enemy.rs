@@ -10,6 +10,7 @@ use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::structs::*;
 use crate::ingame::entity::enemy_waves::*;
+use crate::ingame::entity::enemy::*;
 
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(

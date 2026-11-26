@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{constants::*, ingame::entity::structs::EnemyHealthBar};
+use crate::{constants::*, ingame::entity::enemy::EnemyHealthBar};
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {

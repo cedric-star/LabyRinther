@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::ingame::entity::structs::*;
 use crate::ingame::entity::enemy_waves::*;
+use crate::ingame::entity::enemy::*;
 
 pub fn draw_enemy_health_bar(
     enemies: Query<&Health, With<Enemy>>,

@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use avian2d::prelude::*;
-use crate::ingame::entity::structs::EnemyTarget::NextPlayer;
-use crate::ingame::entity::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::world::grid::*;
+use crate::ingame::entity::enemy::*;
 
 //hat ein enemy einen player gesehen? -> dann soll verfolgung aufgenommen werden!
 pub fn set_enemy_player_seen(
@@ -15,14 +14,49 @@ pub fn set_enemy_player_seen(
 ) {
     for (mut enemy, transform) in &mut enemies {
         let can_view = grid.can_view(&enemy, transform, &player);
-        if enemy.target != NextPlayer && can_view {
+        if enemy.target != EnemyTarget::NextPlayer && can_view {
             enemy.target = EnemyTarget::NextPlayer;
             println!("see player!!!");
         }
     }
 }
 
-//bewege eneies in richtung player
+//schaltet zwischen movementstate(warten, laufen, ...)
+pub fn set_enemy_movement(
+    mut enemies: Query<&mut Enemy>,
+    time: Res<Time>,
+) {
+    let delta_t = time.delta_secs();
+
+    for mut enemy in &mut enemies {
+        let mut w_state = match &mut enemy.target {
+            EnemyTarget::Nothing(s) => { s }
+            _ => { continue; }
+        };
+
+
+        let mut next_state: Option<MovementState> = None;
+
+        match &mut w_state {
+            MovementState::Standing(s) => {
+                s.current += delta_t;
+                if s.current >= s.max { next_state = Some(MovementState::Walking(WalkingMovementState::default()))}
+            }
+            MovementState::Walking(w) => {
+                w.current += delta_t;
+                if w.current >= w.max { next_state = Some(MovementState::Standing(StandingMovementState::default()))}
+            }
+        }
+
+        if let Some(state) = next_state {
+            *w_state = state;
+            println!("geschaltet: {:?}", w_state);
+        }
+
+    }
+}
+
+//bewege enemies: rumlaufen oder in richtung player
 pub fn move_enemies(
     time: Res<Time>,
     mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
@@ -30,47 +64,52 @@ pub fn move_enemies(
 ) {
     const ACCEL: f32 = 8.0;
 
+    //player position (welt/px)
     let p_pos = player.translation.truncate();
+
+    //für bewegung: beschleunigung
     let t = (ACCEL * time.delta_secs()).min(1.0);
 
-
-
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
-        //wenn enemy einfach nur rumlaufen soll
-        if matches!(enemy.target, EnemyTarget::Nothing(_)) { 
-            
-            continue; 
-        }
-        
-
-        //wenn enemy gegner verfolgen soll
-        let to_player = p_pos - transform.translation.truncate(); //wohin soll enemy laufen?
-        let mut new_anim = *anim;
-
-        //wenn enemy vom gegner weg ist (länge des vectors)
-        if to_player.length() > enemy.stop_distance {
-            let direction = to_player.normalize(); //richtungsvektor länge 1
-            let desired = direction * stats.get(Stat::WalkSpeed); //vektor auf richtung * geschwindigkeit setzen
-
-            l_vel.0 = l_vel.0.lerp(desired, t);
-
-            //animation je nach richtung setzen
-            new_anim = if direction.x.abs() > direction.y.abs() {
-                if direction.x > 0.0 { HumanoidState::WalkingRight.into() }
-                else { HumanoidState::WalkingLeft.into() }
-            } else if direction.y > 0.0 { HumanoidState::WalkingBack.into() }
-            else { HumanoidState::WalkingFront.into() }
-        } else {
-            l_vel.0 = l_vel.0.lerp(Vec2::ZERO, t);
-            if let Anim::Humanoid(s) = new_anim {
-                new_anim = s.to_standing().into();
+        //in welche richtung soll der Enemy laufen? -> None = stehen bleiben
+        let dir: Option<Vec2> = match &enemy.target {
+            EnemyTarget::Nothing(MovementState::Standing(_)) => None,
+            EnemyTarget::Nothing(MovementState::Walking(w)) => Some(w.direction),
+            EnemyTarget::NextPlayer => {
+                let to_player = p_pos - transform.translation.truncate();
+                (to_player.length() > enemy.stop_distance).then(|| to_player.normalize())
             }
-        }
+        };
+
+        //gschwindigkeit und passende animation
+        let (desired, new_anim) = match dir {
+            Some(d) => (d * stats.get(Stat::WalkSpeed), walking_anim(d)),
+            None => (
+                Vec2::ZERO,
+                match *anim {
+                    Anim::Humanoid(s) => s.to_standing().into(),
+                    other => other,
+                },
+            ),
+        };
+
+        l_vel.0 = l_vel.0.lerp(desired, t);
 
         //animation nur setzen, wenn geändert
         if *anim != new_anim {
             *anim = new_anim;
         }
-        
+    }
+}
+
+/// Lauf-Animation anhand der dominanten Achse der Richtung.
+fn walking_anim(dir: Vec2) -> Anim {
+    if dir.x.abs() > dir.y.abs() {
+        if dir.x > 0.0 { HumanoidState::WalkingRight.into() }
+        else { HumanoidState::WalkingLeft.into() }
+    } else if dir.y > 0.0 {
+        HumanoidState::WalkingBack.into()
+    } else {
+        HumanoidState::WalkingFront.into()
     }
 }

@@ -4,6 +4,7 @@ use crate::ingame::items::structs::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::items::attack::structs::*;
 use crate::ingame::entity::structs::*;
+use crate::ingame::entity::enemy::*;
 
 //setzt im active attack cooldown/hit zeiten
 //setzt active attack auf none wenn zeit vorbei

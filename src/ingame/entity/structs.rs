@@ -25,47 +25,5 @@ pub struct Velocity {
     pub y: f32,
 }
 
-
-#[derive(Component)]
-#[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hittable)]
-pub struct Enemy {
-    pub weapon: ItemId,
-    pub heading: Direction,
-    pub target: EnemyTarget,
-    pub stop_distance: f32,
-}
-
-#[derive(Component, PartialEq)]
-pub enum EnemyTarget {
-    NextPlayer,
-    Nothing(Vec2),//einfach irgendeine random richtung
-}
-
-#[derive(Component)]
-#[require(Transform)]
-pub struct EnemyHealthBar;
-
-#[derive(Component)]
-#[require(Transform)]
-pub struct EnemyHealthBarBackground;
-
-
-
-impl Enemy {
-    pub fn new() -> Self {
-        Self {
-            weapon: ItemId::WoddenDagger,
-            target: EnemyTarget::Nothing(Vec2::ZERO),
-            stop_distance: 4.0,
-            heading: Direction::North,
-        }
-    }
-}
-
-
-//hitbox
-
 #[derive(Component, Default)]
 pub struct Hittable;
-
-
