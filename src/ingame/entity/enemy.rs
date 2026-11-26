@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use rand::prelude::*;
+use avian2d::prelude::*;
 use crate::ingame::items::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::ingame::items::attack::structs::*;
@@ -7,7 +8,7 @@ use crate::components::*;
 use crate::ingame::entity::structs::*;
 
 #[derive(Component)]
-#[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hittable)]
+#[require(Transform, Velocity, Stats, Health, Mana, Equipment, Attacker, Hittable, CollidingEntities)]
 pub struct Enemy {
     pub weapon: ItemId,
     pub heading: Direction,

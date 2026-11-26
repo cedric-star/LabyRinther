@@ -16,26 +16,29 @@ pub fn set_enemy_player_seen(
         let can_view = grid.can_view(&enemy, transform, &player);
         if enemy.target != EnemyTarget::NextPlayer && can_view {
             enemy.target = EnemyTarget::NextPlayer;
-            println!("see player!!!");
         }
     }
 }
 
 //schaltet zwischen movementstate(warten, laufen, ...)
 pub fn set_enemy_movement(
-    mut enemies: Query<&mut Enemy>,
+    mut enemies: Query<(&mut Enemy, &CollidingEntities)>,
     time: Res<Time>,
 ) {
     let delta_t = time.delta_secs();
 
-    for mut enemy in &mut enemies {
+    for (mut enemy, colliding) in &mut enemies {
         let mut w_state = match &mut enemy.target {
             EnemyTarget::Nothing(s) => { s }
             _ => { continue; }
         };
 
-
         let mut next_state: Option<MovementState> = None;
+
+        //wenn eine collision da ist (egal womit) dann richtung ändern und laufen
+        if !colliding.is_empty() { 
+            next_state = Some(MovementState::Walking(WalkingMovementState::default()));
+        }        
 
         match &mut w_state {
             MovementState::Standing(s) => {
@@ -50,7 +53,6 @@ pub fn set_enemy_movement(
 
         if let Some(state) = next_state {
             *w_state = state;
-            println!("geschaltet: {:?}", w_state);
         }
 
     }
