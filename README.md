@@ -8,6 +8,12 @@ Dieses Projekt steht unter einer modifizierten MIT-Lizenz (siehe LICENSE).
 Private Nutzung und Weitergabe sind erlaubt, Namensnennung ist immer Pflicht.
 Für kommerzielle Nutzung bitte vorher Kontakt aufnehmen: [cdrc.wnsch@gmail.com]
 
+# IDEEN
+- ich will KEIN adventure ich will ein roguelike 
+- gegner in wellen kommen immer stärker
+- man muss waffen aus gegner drops und boss drops craften und kämpfen
+
+- keine großartigen anderen dinge ig nochmal nachdenkene uiuiui
 # NEXT
 
 - settings aufsplitten -> über game änderbar und nicht, über ui änderbar

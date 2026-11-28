@@ -11,6 +11,8 @@ use crate::ingame::items::util::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::animation::*;
 use crate::ingame::items::attack::structs::*;
+use crate::net::client::NetClient;
+use crate::net::protocol::ClientMessage;
 
 pub fn mana_regen(mut q: Query<(&mut Mana, &Stats), With<Player>>) {
     for (mut mana, stats) in &mut q {
@@ -114,6 +116,7 @@ pub fn weapon_use(
     mut commands: Commands,
     windows: Query<&Window, With<PrimaryWindow>>,
     camera: Single<(&Camera, &GlobalTransform), With<Camera2d>>,
+    net: Option<ResMut<NetClient>>, //nur auf client vorhanden
 ) {
     let (inventory, transform, mut attacker) = player_data.into_inner();
     
@@ -148,6 +151,9 @@ pub fn weapon_use(
         aim,
         hit_entities: Vec::new(),
     });
-
+    
+    if let Some(mut net) = net {
+        net.send(&ClientMessage::Attack { item: item.id, aim: (aim.x, aim.y) });
+    }
 
 }

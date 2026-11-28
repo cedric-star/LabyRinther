@@ -6,6 +6,7 @@ mod util;
 mod welcome;
 mod ingame;
 mod settings;
+mod net;
 
 use bevy::prelude::*;
 use avian2d::prelude::*;
@@ -84,6 +85,6 @@ fn main() {
         .add_systems(Startup, setup_cam)
         .add_systems(StateTransition, track_previous_state.before(EnterSchedules::<GameState>::default()),)
         .add_systems(Update, (update_cam, track_previous_state))
-        .add_plugins((welcome_plugin, ingame_plugin, settings_plugin))
+        .add_plugins((welcome_plugin, ingame_plugin, settings_plugin, net::net_plugin))
         .run();
 }

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Component, Debug, Clone)]
@@ -10,7 +11,7 @@ pub struct AnimClip {
     pub repeat: bool,
 }
 
-#[derive(Clone, Copy, Component, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Component, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Anim {
     Humanoid(HumanoidState),
 }
@@ -44,7 +45,7 @@ impl AnimationTimer {
 
 
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum HumanoidState {
     WalkingLeft,
     WalkingRight,

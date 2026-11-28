@@ -11,11 +11,11 @@ use crate::ingame::animation::*;
 use crate::ingame::structs::*;
 use crate::ingame::entity::enemy_waves::*;
 use crate::ingame::entity::enemy::*;
+use crate::net::RemotePlayer;
 
 //system dass enemies spawnt
 pub fn spawn_enemy_near_player(
     s: Res<GameSettings>,
-    player: Single<&Transform, With<Player>>,
     region_pool: Res<RegionPool>,
     chunks: Query<&Chunk>,
     mut commands: Commands,
@@ -23,6 +23,7 @@ pub fn spawn_enemy_near_player(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     spatial_query: SpatialQuery,
     mut enemy_res: ResMut<Enemies>,
+    players: Query<&Transform, Or<(With<Player>, With<RemotePlayer>)>>,
 ) {
     //anhand von wave-logik spawnen / abbrechen
     if !enemy_res.is_active || 
@@ -30,9 +31,10 @@ pub fn spawn_enemy_near_player(
     { return; }
 
 
-    //player
+    //irgendeinen anwesenden Spieler als Anker wählen (Host-Spieler + Remote-Spieler)
+    let player_list: Vec<&Transform> = players.iter().collect();
+    let Some(&player) = player_list.choose(&mut rand::rng()) else { return; };
     let p_pos = player.translation;
-    let p_chunk_pos = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_chunk();
 
     //region in dem player is
     let r_cords = IVec2::new(p_pos.x as i32, p_pos.y as i32).world_to_region();
@@ -42,7 +44,7 @@ pub fn spawn_enemy_near_player(
     let chunk_vec: Vec<&Chunk> = chunks.iter().collect();
 
     //filtered: only chunks near player (number based on settings)
-    let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.gameplay.chunks_enemy_spawnable, p_chunk_pos);
+    let chunks_2_spawn_enemies: Vec<&Chunk> = chunks_spawn_enemy(chunk_vec, s.gameplay.chunks_enemy_spawnable, IVec2::transform_to_tile(player).tile_to_chunk());
 
     for _ in 1..=5 {
         //a world koordinate, where a place is free

@@ -20,6 +20,7 @@ use crate::ingame::items::attack::structs::*;
 use crate::ingame::entity::move_enemy::*;
 use crate::ingame::entity::spawn_enemy::*;
 use crate::ingame::entity::enemy_waves::*;
+use crate::net::{enemy_spawn_ready, tick_enemy_spawn_timer, has_authority};
 
 pub fn ingame_plugin(app: &mut App) {
     app
@@ -30,7 +31,7 @@ pub fn ingame_plugin(app: &mut App) {
         //---------
         //startup
         .add_systems(OnEnter(GameState::InGame),(
-            startup.run_if(not(any_with_component::<Player>)),//nur wennn player nicht schon existiert
+            startup.run_if(not(any_with_component::<Player>)),//nur wenn player nicht schon existiert
             spawn_ui,
         ).chain())
         //---------
@@ -41,7 +42,7 @@ pub fn ingame_plugin(app: &mut App) {
         cleanup_ui,
         )
 
-        //wenn in welcom gegangen wird, alles löschen/aufräumen
+        //wenn in welcome gegangen wird, alles löschen/aufräumen
         .add_systems(OnEnter(GameState::Welcome),
          cleanup_game
         )
@@ -54,17 +55,16 @@ pub fn ingame_plugin(app: &mut App) {
             (
                 controls, //spieler mit wasd bewegen
                 load_map, //map laden (chunks, ...) für player, um chunksize
-                move_enemies, //gegner automatisch bewegen (einfach rumlaufen oder verfolgen, ...)
+                move_enemies.run_if(has_authority), // NEU: nur Host/Singleplayer simuliert Gegner
             ).run_if(in_state(GameState::InGame)),
         )
         .add_systems(
             FixedUpdate,
             (
-                set_enemy_movement, //zuerst enemy movement setzen (normales umherlaufen), dann laufen (wegen kollisionen)
-                move_enemies, //gegner automatisch bewegen (einfach rumlaufen oder verfolgen, ...)
+                set_enemy_movement.run_if(has_authority), // NEU
+                move_enemies.run_if(has_authority),      // NEU
             ).chain().run_if(in_state(GameState::InGame)),
         )
-        
         //---------
 
         //---------
@@ -75,26 +75,26 @@ pub fn ingame_plugin(app: &mut App) {
             Update,
             (
                 //crafting
-                set_craftable_items.run_if(on_timer(Duration::from_millis(200))), //craftable items berechnen
-                craftable_click, //erkennt klicks im craft menü -> einzelne items/alle craften und in schwebende ansich heben
+                set_craftable_items.run_if(on_timer(Duration::from_millis(200))),
+                craftable_click,
 
                 //items im ui anhand von informationen anzeigen
-                update_cursor_visual, //aktualisiert schwebende anzeige im ui -> item sprite setzen
-                update_equipment_ui, //zeigt items aus euqipment inventar im ui an
-                sync_craftable_ui, //zeigt craftable items links im ui, anhand verfügbarer items im inventar
-                update_inventory,//items im inventar im ui anzeigen
-                update_hotbar_items_ui, //zeigt items im ui aus hotbar an 
+                update_cursor_visual,
+                update_equipment_ui,
+                sync_craftable_ui,
+                update_inventory,
+                update_hotbar_items_ui,
 
                 //tooltips
-                update_inventory_info_text, //tooltip für items aus normalen inventar slots
-                update_euqipped_info_text, //tooltip für items aus equipment slots
-                craftable_hover, //wenn über craftable item gehovered -> tooltip anzeigen 
+                update_inventory_info_text,
+                update_euqipped_info_text,
+                craftable_hover,
 
                 //andere
-                set_hotkeys, //tastenerennung für 0-9 und setzen hotkeys + und e für inventar öffnen     
-                update_selected_hotbar_slot_ui, //ausgewählten hotbarslot im ui anzeigen
-                inventory_click.before(update_inventory), //erkennt klick in inventar -> sschwebende anzeige
-                mov_cam, //kamera soll player verfolgen
+                set_hotkeys,
+                update_selected_hotbar_slot_ui,
+                inventory_click.before(update_inventory),
+                mov_cam,
             ).run_if(in_state(GameState::InGame))
         )
 
@@ -102,11 +102,10 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                update_bars, //bars oben rechts in ecke: mana, health, armor
-                mana_regen.run_if(on_timer(Duration::from_secs(1))), //mana regenerieren
-                health_regen.run_if(on_timer(Duration::from_secs(1))), //health regenerieren
-                despawn_enemy_by_health, //gegner weg, wenn tot
-
+                update_bars,
+                mana_regen.run_if(on_timer(Duration::from_secs(1))),
+                health_regen.run_if(on_timer(Duration::from_secs(1))),
+                despawn_enemy_by_health.run_if(has_authority), // NEU: Tod von Gegnern entscheidet der Host
             ).run_if(in_state(GameState::InGame)),
         )
 
@@ -114,53 +113,53 @@ pub fn ingame_plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                use_item_system, //wenn ein item ausgewählt und benutzt wird -> aktion durchführen
-                weapon_use, //wenn weapon geklickt
+                use_item_system,
+                weapon_use,
             ).run_if(in_state(GameState::InGame)),
         )
 
-        //enemy spezifische systee
+        //enemy spezifische systeme
         .add_systems(
             Update,
             (
-                set_enemy_player_seen, //überwacht enemies und esetzt wenn player gesehen wurde
-                set_waves, //überwacht waves und setzt aktiv/inaktiv
-                spawn_enemy_near_player.run_if(on_timer(Duration::from_millis(200))), //gegner jede sekunde spawnen
-                draw_enemy_health_bar, //malt enemy health bar, anhand der health
+                set_enemy_player_seen.run_if(has_authority), 
+                set_waves.run_if(has_authority),        
+                spawn_enemy_near_player.run_if(enemy_spawn_ready),
+                tick_enemy_spawn_timer,
+                draw_enemy_health_bar, // läuft überall: Geister haben Health + EnemyHealthBar
             ).run_if(in_state(GameState::InGame)),
         )
 
         //entity normale sachen (animationen, attacks)
         .add_systems(
             Update,
-            (   
-                switch_clip, //überwacht animationsstate und setzt entsprechende animationssprites 
-                animate_entity, //schaltet frames aus spriteatlas für animationen zeitbasiert weiter
-                animate_held_item, //animiert sprite in hand des attackers & setzt animationsinfos im struct für waffentypspezifische angriffe
-                set_attacker, //aktiven angriff zeitbasiert setzen/beenden
+            (
+                switch_clip,
+                animate_entity,
+                animate_held_item,
+                set_attacker,
             ).run_if(in_state(GameState::InGame)),
         )
 
- 
         //stats/modifier spezifische systeme (equipment -> stat setzen)
         .add_systems(
             Update,
             (
-                rebuild_equipped_stats, //geht equipped items in inventar durch und setzt stats (modifier)
-                sync_vitals, //setzt maximales mana/health anhand von stats
-                sync_inventory_rows, //inventarreihenanzahl anhand von stats setzen
-                
+                rebuild_equipped_stats,
+                sync_vitals,
+                sync_inventory_rows,
             ).run_if(in_state(GameState::InGame)),
         )
         //---------
 
         //---------
-        //nach nocrmalen updates
-        
+        //nach normalen updates
+
         //angriff/schaden
         .add_systems(
             PostUpdate,
-            weapon_contact.after(TransformSystems::Propagate), //erkennt hit und verteilt schaden/knockback,...
+            // NEU: Treffer/Schaden wird nur vom Host berechnet
+            weapon_contact.after(TransformSystems::Propagate).run_if(has_authority),
         );
         //---------
 }

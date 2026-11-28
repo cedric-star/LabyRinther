@@ -8,10 +8,11 @@ use crate::world::region::*;
 use crate::settings::settings::*;
 use crate::ingame::player::structs::*;
 use crate::ingame::structs::*;
+use crate::net::RemotePlayer; 
 
 pub fn load_map(
     mut commands: Commands,
-    players: Query<&Transform, With<Player>>,
+        players: Query<&Transform, Or<(With<Player>, With<RemotePlayer>)>>,
     mut pool: ResMut<ChunkPool>,
     asset_server: Res<AssetServer>,
     seed: Res<WorldSeed>,

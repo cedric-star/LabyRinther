@@ -5,20 +5,25 @@ use crate::ingame::player::structs::*;
 use crate::ingame::items::modifier::*;
 use crate::world::grid::*;
 use crate::ingame::entity::enemy::*;
+use crate::net::RemotePlayer;
 
 //hat ein enemy einen player gesehen? -> dann soll verfolgung aufgenommen werden!
 pub fn set_enemy_player_seen(
     mut enemies: Query<(&mut Enemy, &Transform)>,
     grid: WorldGrid,
-    player: Single<&Transform, With<Player>>,
+    players: Query<&Transform, Or<(With<Player>, With<RemotePlayer>)>>, // GEÄNDERT: war Single<&Transform, With<Player>>
 ) {
     for (mut enemy, transform) in &mut enemies {
-        let can_view = grid.can_view(&enemy, transform, &player);
-        if enemy.target != EnemyTarget::NextPlayer && can_view {
-            enemy.target = EnemyTarget::NextPlayer;
+        if enemy.target == EnemyTarget::NextPlayer { continue; }
+        for p in &players { // NEU: irgendein Spieler reicht
+            if grid.can_view(&enemy, transform, p) {
+                enemy.target = EnemyTarget::NextPlayer;
+                break;
+            }
         }
     }
 }
+
 
 //schaltet zwischen movementstate(warten, laufen, ...)
 pub fn set_enemy_movement(
@@ -62,17 +67,25 @@ pub fn set_enemy_movement(
 pub fn move_enemies(
     time: Res<Time>,
     mut enemies: Query<(&mut LinearVelocity, &Transform, &mut Anim, &Enemy, &Stats)>,
-    player: Single<&Transform, (With<Player>, Without<Enemy>)>,
+    players: Query<&Transform, (Or<(With<Player>, With<RemotePlayer>)>, Without<Enemy>)>
 ) {
     const ACCEL: f32 = 8.0;
-
-    //player position (welt/px)
-    let p_pos = player.translation.truncate();
 
     //für bewegung: beschleunigung
     let t = (ACCEL * time.delta_secs()).min(1.0);
 
     for (mut l_vel, transform, mut anim, enemy, stats) in &mut enemies {
+
+        //nächsten spieler finden
+        let Some(p_pos) = players.iter()
+            .map(|p| p.translation.truncate())
+            .min_by(|a, b| {
+                a.distance_squared(transform.translation.truncate())
+                    .partial_cmp(&b.distance_squared(transform.translation.truncate()))
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+        else { continue };
+
         //in welche richtung soll der Enemy laufen? -> None = stehen bleiben
         let dir: Option<Vec2> = match &enemy.target {
             EnemyTarget::Nothing(MovementState::Standing(_)) => None,

@@ -7,6 +7,7 @@ pub enum GameState {
     Welcome,
     InGame,
     Settings,
+    Join, //bildschirm zum verbinden mit host
 }
 
 #[derive(Resource, Default, Debug)]
